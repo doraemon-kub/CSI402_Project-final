@@ -1,0 +1,1318 @@
+@{
+    Layout = null; // หน้า Wireframe แยกอิสระ 100% ไม่ยุ่งกับ Layout หน้าเว็บจริง
+    string active = ViewBag.ActiveView as string ?? "home";
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ระบบการซื้อขายและของใช้สัตว์เลี้ยง - Comprehensive Wireframe Specification (วิชา CSI402)</title>
+    <!-- Google Fonts: Sarabun / Prompt -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --wf-bg: #f3f4f6;
+            --wf-box-bg: #ffffff;
+            --wf-border: #4b5563;
+            --wf-border-light: #9ca3af;
+            --wf-placeholder: #e5e7eb;
+            --wf-text: #1f2937;
+            --wf-annotation: #2563eb;
+        }
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #1e293b;
+            color: #334155;
+            margin: 0;
+            padding: 0;
+        }
+        .wireframe-app {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        /* Sidebar Navigation */
+        .wf-sidebar {
+            width: 320px;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #334155;
+            flex-shrink: 0;
+        }
+        .wf-sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+        }
+        .wf-nav-list {
+            padding: 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .wf-nav-category {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            font-weight: 700;
+            padding: 12px 12px 4px;
+        }
+        .wf-nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            color: #cbd5e1;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+        }
+        .wf-nav-item:hover {
+            background-color: #1e293b;
+            color: #ffffff;
+        }
+        .wf-nav-item.active {
+            background-color: #3b82f6;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        /* Canvas Stage */
+        .wf-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: #334155;
+        }
+        .wf-stage-topbar {
+            background-color: #1e293b;
+            padding: 12px 24px;
+            border-bottom: 1px solid #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ffffff;
+        }
+        .wf-stage-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+        }
+        /* Blueprint Paper Frame */
+        .wireframe-paper {
+            width: 100%;
+            max-width: 1100px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 2px solid #cbd5e1;
+            padding: 30px;
+            min-height: 800px;
+            position: relative;
+        }
+        /* Blueprint Component Styles */
+        .wf-box {
+            border: 2px dashed var(--wf-border-light);
+            background-color: #fafafa;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .wf-img-placeholder {
+            border: 2px solid var(--wf-border-light);
+            background-color: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-weight: 600;
+            font-size: 0.85rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .wf-img-placeholder::before, .wf-img-placeholder::after {
+            content: '';
+            position: absolute;
+            width: 140%;
+            height: 1px;
+            background-color: #d1d5db;
+        }
+        .wf-img-placeholder::before { transform: rotate(25deg); }
+        .wf-img-placeholder::after { transform: rotate(-25deg); }
+        
+        .wf-btn {
+            border: 2px solid var(--wf-border);
+            background-color: #ffffff;
+            color: var(--wf-text);
+            font-weight: 600;
+            border-radius: 6px;
+            padding: 6px 14px;
+            display: inline-block;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        .wf-btn-dark {
+            background-color: #374151;
+            color: #ffffff;
+            border-color: #374151;
+        }
+        .wf-input {
+            border: 2px solid var(--wf-border-light);
+            background-color: #ffffff;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            width: 100%;
+            color: #4b5563;
+        }
+        .wf-tag {
+            background-color: #e5e7eb;
+            color: #374151;
+            border: 1px solid #9ca3af;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        /* Annotation Callouts for Lecturer */
+        .wf-req-badge {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #93c5fd;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .wf-browser-frame {
+            border: 2px solid #374151;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+        .wf-browser-bar {
+            background-color: #e5e7eb;
+            border-bottom: 2px solid #374151;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .wf-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #9ca3af;
+        }
+        /* Print Styles */
+        @@media print {
+            body { background: #fff !important; }
+            .wf-sidebar, .wf-stage-topbar, .no-print { display: none !important; }
+            .wf-stage { overflow: visible !important; }
+            .wf-stage-scroll { padding: 0 !important; }
+            .wireframe-paper { box-shadow: none !important; border: 1px solid #000 !important; max-width: 100% !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wireframe-app">
+        <!-- 1. Left Sidebar: เลือกดู Wireframe ครบทุกหน้า -->
+        <aside class="wf-sidebar no-print">
+            <div class="wf-sidebar-header">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-layout-text-window-reverse text-warning fs-4"></i>
+                    <div>
+                        <h6 class="fw-bold m-0 text-white">Wireframe Spec Studio</h6>
+                        <small class="text-secondary" style="font-size: 0.72rem;">วิชา CSI402 - Activity 2</small>
+                    </div>
+                </div>
+                <div class="mt-2 small text-muted">
+                    ผู้จัดทำ: ภูไพศาล อุดมเพชรไพศาล (67088026)
+                </div>
+            </div>
+
+            <div class="wf-nav-list">
+                <!-- Group 1: Storefront & Customer -->
+                <div class="wf-nav-category">🛒 หน้าร้าน & ลูกค้า (Storefront)</div>
+                <a asp-action="Index" asp-route-view="home" class="wf-nav-item @(active == "home" ? "active" : "")">
+                    <span>1. หน้าร้านค้า (Catalog & Filters)</span>
+                    <span class="badge bg-secondary">Req 1, 2, 7, 8, 9, 10</span>
+                </a>
+                <a asp-action="Index" asp-route-view="details" class="wf-nav-item @(active == "details" ? "active" : "")">
+                    <span>2. รายละเอียดสินค้า (Product Details)</span>
+                    <span class="badge bg-secondary">Req 7, 8, 10</span>
+                </a>
+                <a asp-action="Index" asp-route-view="cart" class="wf-nav-item @(active == "cart" ? "active" : "")">
+                    <span>3. ตะกร้าสินค้า (Cart & 5 Promos)</span>
+                    <span class="badge bg-secondary">Req 3, 4, 11–16</span>
+                </a>
+                <a asp-action="Index" asp-route-view="checkout" class="wf-nav-item @(active == "checkout" ? "active" : "")">
+                    <span>4. ชำระเงิน & ที่อยู่ (Checkout)</span>
+                    <span class="badge bg-secondary">Req 19</span>
+                </a>
+                <a asp-action="Index" asp-route-view="profile" class="wf-nav-item @(active == "profile" ? "active" : "")">
+                    <span>5. โปรไฟล์ & สมุดที่อยู่ (Profile)</span>
+                    <span class="badge bg-secondary">Address Book</span>
+                </a>
+                <a asp-action="Index" asp-route-view="orders" class="wf-nav-item @(active == "orders" ? "active" : "")">
+                    <span>6. ประวัติคำสั่งซื้อ & คืนเงิน (Orders)</span>
+                    <span class="badge bg-secondary">Req 20</span>
+                </a>
+                <a asp-action="Index" asp-route-view="support" class="wf-nav-item @(active == "support" ? "active" : "")">
+                    <span>7. แจ้งปัญหาลูกค้า (Helpdesk)</span>
+                    <span class="badge bg-secondary">Req 22</span>
+                </a>
+                <a asp-action="Index" asp-route-view="auth" class="wf-nav-item @(active == "auth" ? "active" : "")">
+                    <span>8. เข้าสู่ระบบ & สมัครสมาชิก (Auth)</span>
+                    <span class="badge bg-secondary">Security</span>
+                </a>
+
+                <!-- Group 2: Back-office Operations -->
+                <div class="wf-nav-category">📦 ระบบจัดการหลังบ้าน (Back-Office)</div>
+                <a asp-action="Index" asp-route-view="inventory" class="wf-nav-item @(active == "inventory" ? "active" : "")">
+                    <span>9. คลังสินค้า (Inventory Staff)</span>
+                    <span class="badge bg-secondary">Req 6, 17, 18</span>
+                </a>
+                <a asp-action="Index" asp-route-view="orderstaff" class="wf-nav-item @(active == "orderstaff" ? "active" : "")">
+                    <span>10. ฝ่ายคำสั่งซื้อ (Order Staff)</span>
+                    <span class="badge bg-secondary">Pack & Prep</span>
+                </a>
+                <a asp-action="Index" asp-route-view="shipping" class="wf-nav-item @(active == "shipping" ? "active" : "")">
+                    <span>11. ฝ่ายจัดส่งพัสดุ (Shipping Staff)</span>
+                    <span class="badge bg-secondary">Req 4, 14, 16</span>
+                </a>
+                <a asp-action="Index" asp-route-view="marketing" class="wf-nav-item @(active == "marketing" ? "active" : "")">
+                    <span>12. ฝ่ายการตลาด (Marketing Staff)</span>
+                    <span class="badge bg-secondary">Req 5, 25, 26, 27</span>
+                </a>
+                <a asp-action="Index" asp-route-view="accounting" class="wf-nav-item @(active == "accounting" ? "active" : "")">
+                    <span>13. ฝ่ายการเงิน/บัญชี (Accounting)</span>
+                    <span class="badge bg-secondary">Req 19, 20, 21</span>
+                </a>
+                <a asp-action="Index" asp-route-view="itsupport" class="wf-nav-item @(active == "itsupport" ? "active" : "")">
+                    <span>14. ฝ่ายไอทีซัพพอร์ต (IT Support)</span>
+                    <span class="badge bg-secondary">Req 23, 24</span>
+                </a>
+                <a asp-action="Index" asp-route-view="admin" class="wf-nav-item @(active == "admin" ? "active" : "")">
+                    <span>15. ผู้ดูแลระบบ (Admin RBAC)</span>
+                    <span class="badge bg-secondary">Roles</span>
+                </a>
+                <a asp-action="Index" asp-route-view="owner" class="wf-nav-item @(active == "owner" ? "active" : "")">
+                    <span>16. เจ้าของธุรกิจ (Owner BI)</span>
+                    <span class="badge bg-secondary">Overview</span>
+                </a>
+            </div>
+
+            <div class="p-3 border-top border-secondary">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-warning w-100 btn-sm">
+                    <i class="bi bi-arrow-left"></i> กลับสู่เว็บไซต์จริง (Live App)
+                </a>
+            </div>
+        </aside>
+
+        <!-- 2. Main Canvas Stage: แสดงโครงร่าง Wireframe ตามหน้าที่เลือก -->
+        <div class="wf-stage">
+            <div class="wf-stage-topbar no-print">
+                <div class="d-flex align-items-center gap-3">
+                    <h5 class="fw-bold m-0">
+                        <i class="bi bi-bounding-box-circles text-warning me-2"></i> 
+                        แบบร่างโครงสร้าง UI Wireframe: <span class="text-warning text-uppercase">@active</span>
+                    </h5>
+                </div>
+                <div class="d-flex gap-2">
+                    <button onclick="window.print()" class="btn btn-sm btn-light fw-bold">
+                        <i class="bi bi-printer me-1"></i> พิมพ์ / บันทึกเป็น PDF (Print to PDF)
+                    </button>
+                </div>
+            </div>
+
+            <div class="wf-stage-scroll">
+                <div class="wireframe-paper">
+
+                    <!-- ============================================================= -->
+                    <!-- 1. WIREFRAME: STOREFRONT / HOME -->
+                    <!-- ============================================================= -->
+                    @if (active == "home")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 01: หน้าร้านค้าและค้นหาสินค้า (Storefront & Catalog)</h4>
+                                <small class="text-muted">เป้าหมาย: ลูกค้า/ผู้เยี่ยมชมเลือกซื้อสินค้า คัดกรองตามสายพันธุ์ ช่วงวัย และดูส่วนลด</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="wf-req-badge">Req 1, 2, 7, 8, 9, 10</span>
+                                <span class="wf-req-badge">Promotion 1-5</span>
+                            </div>
+                        </div>
+
+                        <!-- Browser Mockup -->
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar">
+                                <div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div>
+                                <span class="small text-muted ms-2">https://petstorepro.com/</span>
+                            </div>
+
+                            <div class="p-3">
+                                <!-- Top Bar -->
+                                <div class="wf-box p-2 d-flex justify-content-between align-items-center mb-2" style="background: #eee;">
+                                    <small>[TEXT: ส่งฟรีทั่วไทยเมื่อสั่งครบ 800 บาท (ไม่เกิน 10kg) | Tel: 02-999-8888]</small>
+                                    <small>[BUTTON: เข้าสู่ระบบ] / [BUTTON: สมัครสมาชิก]</small>
+                                </div>
+
+                                <!-- Header / Navbar -->
+                                <div class="wf-box p-3 d-flex justify-content-between align-items-center mb-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="fw-bold fs-5">[LOGO: PetStore Pro]</div>
+                                        <div class="d-flex gap-2">
+                                            <span class="wf-btn">สินค้าทั้งหมด</span>
+                                            <span class="wf-btn">🐶 สุนัข (Req 1)</span>
+                                            <span class="wf-btn">🐱 แมว (Req 1)</span>
+                                            <span class="wf-btn">🏷️ โปรโมชั่น 5 แบบ</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <div class="wf-btn wf-btn-dark"><i class="bi bi-cart"></i> ตะกร้าสินค้า (3)</div>
+                                    </div>
+                                </div>
+
+                                <!-- Hero Banner -->
+                                <div class="wf-box p-4 mb-3" style="border: 2px solid #000; background-color: #f9fafb;">
+                                    <div class="row align-items-center">
+                                        <div class="col-8">
+                                            <span class="wf-tag mb-2">แคมเปญโปรโมชั่นพิเศษ (Req 13)</span>
+                                            <h4 class="fw-bold mb-2">[HERO BANNER: โปรโมชั่นสัตว์เลี้ยง 5 เงื่อนไขอัตโนมัติ]</h4>
+                                            <div class="d-flex flex-wrap gap-1 mt-2">
+                                                <span class="wf-tag">ซื้อ 3 ชิ้นลด 50.-</span>
+                                                <span class="wf-tag">อาหาร 2 รายการลด 10%</span>
+                                                <span class="wf-tag">ส่งฟรี (นน.ไม่เกิน 10kg)</span>
+                                                <span class="wf-tag">ช้อปพันแถมเสื้อสัตว์เลี้ยง</span>
+                                                <span class="wf-tag">อาหารแบรนด์เดียวกันลด 15%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 text-end">
+                                            <div class="wf-btn wf-btn-dark py-3 px-4">[BUTTON: ตรวจสอบตะกร้า & ส่วนลด]</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Search & Layer Filter Box (Req 1, 2, 7, 9, 10) -->
+                                <div class="wf-box p-3 mb-4">
+                                    <div class="small fw-bold mb-2 text-primary">[ANNOTATION: แถบตัวกรองสินค้าอัจฉริยะ (Smart Filter Layer)]</div>
+                                    <div class="row g-2">
+                                        <div class="col-3">
+                                            <div class="wf-input">[SEARCH: ค้นหาชื่อสินค้า/แบรนด์...]</div>
+                                        </div>
+                                        <div class="col-2">
+                                            <div class="wf-input">[DROPDOWN: ประเภทสัตว์ (หมา/แมว)] (Req 1)</div>
+                                        </div>
+                                        <div class="col-2">
+                                            <div class="wf-input">[DROPDOWN: หมวดหมู่ (อาหาร/ของใช้)] (Req 9)</div>
+                                        </div>
+                                        <div class="col-2">
+                                            <div class="wf-input">[DROPDOWN: ช่วงวัย Layer (เด็ก/โต/สูงวัย)] (Req 7, 10)</div>
+                                        </div>
+                                        <div class="col-2">
+                                            <div class="wf-input">[DROPDOWN: โรคประจำตัว/สูตร] (Req 7)</div>
+                                        </div>
+                                        <div class="col-1">
+                                            <div class="wf-btn wf-btn-dark w-100">[กรอง]</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Product Grid Header -->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold m-0">[HEADING: รายการสินค้าทั้งหมด (8 รายการ)]</h6>
+                                    <small class="text-muted">[TEXT: ระบบคำนวณราคาและส่วนลดอัตโนมัติเมื่อใส่ตะกร้า (Req 3)]</small>
+                                </div>
+
+                                <!-- Product Grid (Req 8 Social Proof) -->
+                                <div class="row g-3 mb-4">
+                                    @for (int i = 1; i <= 4; i++)
+                                    {
+                                        <div class="col-3">
+                                            <div class="wf-box p-2 h-100">
+                                                <div class="position-relative mb-2">
+                                                    <div class="wf-img-placeholder" style="height: 130px;">
+                                                        [IMAGE: รูปสินค้า @i]
+                                                    </div>
+                                                    <span class="badge bg-dark position-absolute top-0 start-0 m-1" style="font-size: 0.68rem;">
+                                                        🔥 15 คนในตะกร้า (Req 8)
+                                                    </span>
+                                                    <span class="badge bg-secondary position-absolute top-0 end-0 m-1" style="font-size: 0.68rem;">
+                                                        🍼 วัยเด็ก (Req 10)
+                                                    </span>
+                                                </div>
+                                                <small class="text-muted d-block">[แบรนด์: Royal Canin | ⚖️ 3.0 kg] (Req 2)</small>
+                                                <div class="fw-bold my-1 text-truncate">[ชื่อสินค้า อาหารสัตว์เลี้ยงสูตรพิเศษ]</div>
+                                                <div class="d-flex gap-1 mb-2">
+                                                    <span class="wf-tag">สุนัข</span>
+                                                    <span class="wf-tag">โรคไต</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <div>
+                                                        <span class="fw-bold">฿620</span>
+                                                        <span class="text-decoration-line-through small text-muted">฿690</span>
+                                                    </div>
+                                                </div>
+                                                <div class="wf-btn wf-btn-dark w-100 py-1">[ + ใส่ตะกร้า ]</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Footer Wireframe -->
+                                <div class="wf-box p-3 text-center text-muted" style="background: #eee;">
+                                    <div class="row">
+                                        <div class="col-4 text-start">[FOOTER: เกี่ยวกับ PetStore Pro / Social Icons]</div>
+                                        <div class="col-4">[FOOTER: หมวดหมู่ยอดนิยม & การบริการ]</div>
+                                        <div class="col-4 text-end">[FOOTER: ที่อยู่ร้าน & ช่องทางชำระเงิน PromptPay/บัตร]</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 2. WIREFRAME: PRODUCT DETAILS -->
+                    <!-- ============================================================= -->
+                    else if (active == "details")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 02: รายละเอียดสินค้า (Product Details & Layer)</h4>
+                                <small class="text-muted">เป้าหมาย: แสดงข้อมูลน้ำหนัก, สูตรเฉพาะโรค, ป้ายคนใส่ตะกร้า และสินค้าแนะนำช่วงวัยเดียวกัน</small>
+                            </div>
+                            <span class="wf-req-badge">Req 2, 7, 8, 10</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-4">
+                                <div class="row g-4 mb-4">
+                                    <div class="col-5">
+                                        <div class="wf-img-placeholder" style="height: 320px;">
+                                            [IMAGE: รูปสินค้าขนาดใหญ่]
+                                        </div>
+                                    </div>
+                                    <div class="col-7">
+                                        <span class="badge bg-dark mb-2">🔥 มี 24 คนกำลังใส่สินค้านี้ในตะกร้า (Req 8 Social Proof)</span>
+                                        <h3 class="fw-bold mb-2">[TITLE: Royal Canin Medium Adult อาหารสุนัขพันธุ์กลาง]</h3>
+                                        <p class="text-muted small mb-3">[DESCRIPTION: รายละเอียดคุณค่าทางอาหาร เสริมสร้างภูมิคุ้มกัน และดูแลระบบทางเดินอาหาร]</p>
+
+                                        <!-- Layer & Specs Box -->
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-3"><div class="wf-box p-2 text-center small">สัตว์: 🐶 สุนัข</div></div>
+                                            <div class="col-3"><div class="wf-box p-2 text-center small">ช่วงวัย: 🐕 โตเต็มวัย (Req 10)</div></div>
+                                            <div class="col-3"><div class="wf-box p-2 text-center small">น้ำหนัก: ⚖️ 3.0 kg (Req 2)</div></div>
+                                            <div class="col-3"><div class="wf-box p-2 text-center small">สูตร: ดูแลสุขภาพ</div></div>
+                                        </div>
+
+                                        <div class="d-flex align-items-baseline gap-2 mb-3">
+                                            <span class="fs-3 fw-bold">฿620</span>
+                                            <span class="text-decoration-line-through text-muted">฿690</span>
+                                            <span class="wf-tag">ราคาพิเศษลดทันที (Req 3)</span>
+                                        </div>
+
+                                        <div class="d-flex gap-2">
+                                            <div class="wf-input text-center" style="width: 80px;">[QTY: 1]</div>
+                                            <div class="wf-btn wf-btn-dark flex-grow-1 py-2">[BUTTON: + เพิ่มลงในตะกร้าสินค้า]</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Recommended Products Shelf by Age (Req 7, 10) -->
+                                <div class="wf-box p-3">
+                                    <h6 class="fw-bold mb-3">[SHELF: สินค้าแนะนำสำหรับช่วงวัยนี้ (Layer Recommendation Req 7, 10)]</h6>
+                                    <div class="row g-2">
+                                        @for (int j = 1; j <= 4; j++)
+                                        {
+                                            <div class="col-3">
+                                                <div class="wf-box p-2">
+                                                    <div class="wf-img-placeholder mb-2" style="height: 80px;">[IMG]</div>
+                                                    <small class="fw-bold d-block text-truncate">[สินค้าแนะนำช่วงวัย @j]</small>
+                                                    <small class="text-muted">฿450</small>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 3. WIREFRAME: CART & PROMOTIONS -->
+                    <!-- ============================================================= -->
+                    else if (active == "cart")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 03: ตะกร้าสินค้าและการคำนวณโปรโมชั่น (Cart & 5 Promos)</h4>
+                                <small class="text-muted">เป้าหมาย: ตรวจสอบเงื่อนไข 5 โปรโมชั่น, แถบวัดน้ำหนัก 10kg, คิดค่าจัดส่งตามน้ำหนัก และของแถม</small>
+                            </div>
+                            <span class="wf-req-badge">Req 3, 4, 11–16</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-4">
+                                <div class="row g-4">
+                                    <!-- Items List (Req 11) -->
+                                    <div class="col-8">
+                                        <div class="wf-box p-3 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 class="fw-bold m-0">[TABLE: สินค้าในตะกร้า (3 ชิ้น | นน. รวม 13.0 kg)]</h6>
+                                                <span class="wf-req-badge">Req 11 (เพิ่ม/ลด/ลบ)</span>
+                                            </div>
+                                            <table class="table table-bordered small">
+                                                <thead class="table-light">
+                                                    <tr><th>สินค้า</th><th>ราคาเดิม</th><th>จำนวน</th><th>ราคารวม</th><th>ลบ</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>[IMG] Royal Canin Medium Adult (3 kg x 2)</td>
+                                                        <td>฿620</td>
+                                                        <td>[ - ] 2 [ + ]</td>
+                                                        <td>฿1,240</td>
+                                                        <td>[ลบ]</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>[IMG] กระสอบอาหารฟาร์ม BigDog (7 kg x 1)</td>
+                                                        <td>฿600</td>
+                                                        <td>[ - ] 1 [ + ]</td>
+                                                        <td>฿600</td>
+                                                        <td>[ลบ]</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Weight Meter Box (Req 4, 14, 15, 16) -->
+                                        <div class="wf-box p-3 mb-3" style="border: 2px solid #ef4444;">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <strong class="text-danger">[WEIGHT METER: แถบวัดน้ำหนักพัสดุรวม]</strong>
+                                                <span class="fw-bold">⚖️ 13.0 / 10.0 kg</span>
+                                            </div>
+                                            <div class="progress mb-2" style="height: 12px;">
+                                                <div class="progress-bar bg-danger" style="width: 100%;"></div>
+                                            </div>
+                                            <small class="text-danger d-block">
+                                                [ANNOTATION Req 16]: น้ำหนักเกินเกณฑ์ 10 kg (+3 kg) มีค่าบริการจัดส่งเพิ่มเติมกิโลกรัมละ 20 บาท (+฿60)
+                                            </small>
+                                        </div>
+
+                                        <!-- Free Gift Box (Promo 4) -->
+                                        <div class="wf-box p-3" style="background-color: #fefce8; border: 2px solid #eab308;">
+                                            <strong>🎁 [FREE GIFT BANNER: ยอดซื้อถึงกำหนด รับฟรี เสื้อยืดสัตว์เลี้ยง Pet Lover x1]</strong>
+                                            <small class="d-block text-muted">(โปรโมชั่นที่ 4: ช้อปครบ 1,000 บาท ได้รับของแถมฟรีอัตโนมัติ)</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Summary & Auto Promo Engine (Req 3, 12, 13) -->
+                                    <div class="col-4">
+                                        <div class="wf-box p-4" style="border: 2px solid #000;">
+                                            <h6 class="fw-bold mb-3">[SUMMARY: สรุปยอดชำระเงิน]</h6>
+                                            <div class="d-flex justify-content-between mb-2 small">
+                                                <span>ราคารวมสินค้าเดิม:</span>
+                                                <span class="text-decoration-line-through">฿1,840</span>
+                                            </div>
+
+                                            <!-- Auto Applied Promos (Req 12, 13) -->
+                                            <div class="wf-box p-2 mb-3 small" style="background-color: #fef2f2;">
+                                                <strong class="text-danger d-block mb-1">[PROMOTIONS เข้าเงื่อนไขอัตโนมัติ]:</strong>
+                                                <div class="d-flex justify-content-between">- ซื้อครบ 3 ชิ้น: <span>-฿50</span></div>
+                                                <div class="d-flex justify-content-between">- อาหารแบรนด์เดียวกัน: <span>-฿120</span></div>
+                                                <div class="d-flex justify-content-between fw-bold text-danger pt-1 border-top">
+                                                    <span>รวมส่วนลดโปร:</span> <span>-฿170</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between mb-2 small">
+                                                <span>ค่าจัดส่ง (นน. 13 kg):</span>
+                                                <span>฿60 (ส่วนเกิน 3kg x ฿20)</span>
+                                            </div>
+
+                                            <hr />
+                                            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                                                <span>ยอดสุทธิ:</span>
+                                                <span class="text-danger">฿1,730</span>
+                                            </div>
+
+                                            <div class="wf-btn wf-btn-dark w-100 py-2">[BUTTON: ดำเนินการชำระเงิน]</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 4. WIREFRAME: CHECKOUT -->
+                    <!-- ============================================================= -->
+                    else if (active == "checkout")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 04: ชำระเงินและที่อยู่จัดส่ง (Checkout)</h4>
+                                <small class="text-muted">เป้าหมาย: บันทึกข้อมูลที่อยู่, ชำระเงินผ่าน PromptPay/แนบสลิป, บันทึกออเดอร์ตัดสต็อก</small>
+                            </div>
+                            <span class="wf-req-badge">Req 19</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-4">
+                                <div class="row g-4">
+                                    <div class="col-7">
+                                        <div class="wf-box p-3 mb-3">
+                                            <h6 class="fw-bold mb-3">[FORM: ข้อมูลผู้รับและที่อยู่จัดส่งสินค้า]</h6>
+                                            <div class="mb-2"><div class="wf-input">[INPUT: ชื่อ-นามสกุล ผู้รับพัสดุ]</div></div>
+                                            <div class="mb-2"><div class="wf-input">[INPUT: เบอร์โทรศัพท์ติดต่อ]</div></div>
+                                            <div class="mb-2"><div class="wf-input" style="height: 60px;">[TEXTAREA: ที่อยู่จัดส่ง บ้านเลขที่/ซอย/แขวง/เขต/จ.]</div></div>
+                                        </div>
+
+                                        <div class="wf-box p-3 text-center">
+                                            <h6 class="fw-bold mb-2">[PAYMENT: ช่องทางชำระเงิน (PromptPay QR)]</h6>
+                                            <div class="wf-img-placeholder mx-auto mb-2" style="width: 140px; height: 140px;">
+                                                [QR CODE PROMPTPAY]
+                                            </div>
+                                            <div class="wf-input">[FILE UPLOAD: แนบหลักฐานสลิปการโอนเงิน]</div>
+                                            <div class="wf-btn wf-btn-dark w-100 py-3 mt-3">[BUTTON: ยืนยันการสั่งซื้อทันที]</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-5">
+                                        <div class="wf-box p-3">
+                                            <h6 class="fw-bold mb-2">[ORDER SUMMARY]</h6>
+                                            <div class="small text-muted mb-2">- สินค้า 2 รายการ (รวม 13 kg)</div>
+                                            <div class="small text-muted mb-2">- ส่วนลดโปรโมชั่น: -฿170</div>
+                                            <div class="small text-muted mb-2">- ค่าส่งส่วนเกิน: +฿60</div>
+                                            <div class="fw-bold fs-5 text-danger mt-3 pt-2 border-top">ยอดชำระ: ฿1,730</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 5. WIREFRAME: PROFILE & ADDRESSES -->
+                    <!-- ============================================================= -->
+                    else if (active == "profile")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 05: ข้อมูลส่วนตัวและสมุดที่อยู่ (Profile & Address Book)</h4>
+                                <small class="text-muted">เป้าหมาย: ลูกค้าจัดการข้อมูลส่วนตัว, เพิ่ม/แก้ไขที่อยู่จัดส่งหลายแห่ง, กำหนดที่อยู่หลัก</small>
+                            </div>
+                            <span class="wf-req-badge">Customer Role</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-4">
+                                <div class="row g-4">
+                                    <div class="col-4">
+                                        <div class="wf-box p-3 text-center mb-3">
+                                            <div class="wf-img-placeholder rounded-circle mx-auto mb-2" style="width: 80px; height: 80px;">[AVATAR]</div>
+                                            <div class="fw-bold">[ชื่อลูกค้า: คุณกิตติชัย]</div>
+                                            <small class="text-muted">@@customer (Role: Customer)</small>
+                                        </div>
+                                        <div class="wf-box p-3">
+                                            <h6 class="fw-bold mb-2">[FORM: แก้ไขข้อมูลส่วนตัว]</h6>
+                                            <div class="mb-2"><div class="wf-input">[ชื่อ-นามสกุล]</div></div>
+                                            <div class="mb-2"><div class="wf-input">[อีเมล]</div></div>
+                                            <div class="mb-2"><div class="wf-input">[เบอร์โทรศัพท์]</div></div>
+                                            <div class="wf-btn wf-btn-dark w-100">[บันทึกโปรไฟล์]</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="wf-box p-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="fw-bold m-0">[ADDRESS BOOK: สมุดที่อยู่จัดส่งสินค้า]</h6>
+                                                <div class="wf-btn">[ + เพิ่มที่อยู่ใหม่ ]</div>
+                                            </div>
+                                            <div class="wf-box p-3 mb-2" style="border: 2px solid #2563eb;">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <strong>บ้าน (ที่อยู่หลัก)</strong>
+                                                    <span class="badge bg-primary">Default</span>
+                                                </div>
+                                                <small class="text-muted d-block">คุณกิตติชัย | 081-234-5678</small>
+                                                <small class="d-block mb-2">99/12 ถ.พหลโยธิน แขวงลาดยาว เขตจตุจักร กทม. 10900</small>
+                                                <div class="d-flex gap-2">
+                                                    <span class="wf-btn py-1">[แก้ไข]</span>
+                                                    <span class="wf-btn py-1">[ลบ]</span>
+                                                </div>
+                                            </div>
+                                            <div class="wf-box p-3">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <strong>ที่ทำงาน (ออฟฟิศ)</strong>
+                                                </div>
+                                                <small class="text-muted d-block">คุณกิตติชัย | 081-234-5678</small>
+                                                <small class="d-block mb-2">อาคารเพ็ททาวเวอร์ ชั้น 12 ถ.สุขุมวิท กทม. 10110</small>
+                                                <div class="d-flex gap-2">
+                                                    <span class="wf-btn py-1">[ตั้งเป็นที่อยู่หลัก]</span>
+                                                    <span class="wf-btn py-1">[แก้ไข]</span>
+                                                    <span class="wf-btn py-1">[ลบ]</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 6. WIREFRAME: ORDERS & REFUNDS -->
+                    <!-- ============================================================= -->
+                    else if (active == "orders")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 06: ประวัติคำสั่งซื้อและการติดตามพัสดุ (Orders & Tracking)</h4>
+                                <small class="text-muted">เป้าหมาย: แสดงสถานะการจัดส่ง, เลข Tracking, ปุ่มขอยกเลิกคำสั่งซื้อและขอคืนเงิน</small>
+                            </div>
+                            <span class="wf-req-badge">Req 20</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-4">
+                                <div class="wf-box p-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="fw-bold fs-5">[ORDER #ORD-2026-001]</div>
+                                        <span class="badge bg-success">จัดส่งสินค้าแล้ว 🚚</span>
+                                    </div>
+                                    <div class="p-2 mb-2 bg-light border rounded">
+                                        <small class="fw-bold text-success">🚚 พัสดุจัดส่งโดย Flash Express</small>
+                                        <div class="fw-bold">เลขพัสดุ: TH0921837192A (นน.ชั่งจริง: 13.0 kg)</div>
+                                    </div>
+                                    <div class="small text-muted mb-2">- Royal Canin Medium Adult (x2) | ฿1,240</div>
+                                    <div class="small text-muted mb-2">- ของแถมฟรี: เสื้อยืดสัตว์เลี้ยง Pet Lover (x1)</div>
+                                    <div class="d-flex justify-content-between pt-2 border-top">
+                                        <span class="fw-bold">ยอดสุทธิ: ฿1,066</span>
+                                        <span class="text-muted small">สั่งซื้อเมื่อ: 13/09/2026</span>
+                                    </div>
+                                </div>
+
+                                <div class="wf-box p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="fw-bold fs-5">[ORDER #ORD-2026-002]</div>
+                                        <span class="badge bg-warning text-dark">ชำระแล้ว (กำลังจัดเตรียม)</span>
+                                    </div>
+                                    <div class="small text-muted mb-2">- กระสอบอาหาร BigDog Pro 10kg (x1) | ฿1,150</div>
+                                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                        <span class="fw-bold">ยอดสุทธิ: ฿1,498</span>
+                                        <div class="wf-btn text-danger">[BUTTON: ขอยกเลิกคำสั่งซื้อ / ขอคืนเงิน (Req 20)]</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 7. WIREFRAME: CUSTOMER HELPDESK -->
+                    <!-- ============================================================= -->
+                    else if (active == "support")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 07: ศูนย์รับแจ้งปัญหาการใช้งาน (Customer Helpdesk)</h4>
+                                <small class="text-muted">เป้าหมาย: ลูกค้าส่งคำร้องแจ้งปัญหา และติดตามผลการแก้ไขของ IT Support</small>
+                            </div>
+                            <span class="wf-req-badge">Req 22, 24</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-4">
+                                <div class="row g-4">
+                                    <div class="col-5">
+                                        <div class="wf-box p-3">
+                                            <h6 class="fw-bold mb-3">[FORM: เปิดคำร้องแจ้งปัญหาใหม่ (Req 22)]</h6>
+                                            <div class="mb-2"><div class="wf-input">[ชื่อผู้แจ้ง]</div></div>
+                                            <div class="mb-2"><div class="wf-input">[อีเมลติดต่อกลับ]</div></div>
+                                            <div class="mb-2"><div class="wf-input">[DROPDOWN: หมวดหมู่ปัญหา (โปรโมชั่น/การเงิน/ระบบ)]</div></div>
+                                            <div class="mb-2"><div class="wf-input">[DROPDOWN: ความเร่งด่วน (ด่วนมาก/ปานกลาง/ทั่วไป)]</div></div>
+                                            <div class="mb-2"><div class="wf-input">[หัวข้อปัญหา]</div></div>
+                                            <div class="mb-2"><div class="wf-input" style="height: 70px;">[รายละเอียดปัญหาและขั้นตอนที่พบ]</div></div>
+                                            <div class="wf-btn wf-btn-dark w-100">[ส่งเรื่องแจ้งปัญหา]</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-7">
+                                        <div class="wf-box p-3">
+                                            <h6 class="fw-bold mb-3">[HISTORY: ประวัติการแจ้งปัญหาและผลแก้ไข]</h6>
+                                            <div class="wf-box p-2 mb-2">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <strong>#TCK-801: สอบถามส่วนลดซื้ออาหารแบรนด์เดียวกัน</strong>
+                                                    <span class="badge bg-success">แก้ไขแล้ว ✅</span>
+                                                </div>
+                                                <small class="text-muted d-block mb-1">ลูกค้า: เลือก Royal Canin 2 ชิ้นแล้วส่วนลดแสดงตรงไหน</small>
+                                                <div class="p-2 bg-light border small text-success">
+                                                    <strong>ผลการแก้ไขจากเจ้าหน้าที่ (IT Support Req 24):</strong> ได้ตรวจสอบระบบคำนวณอัตโนมัติพบว่าทำงานถูกต้อง และชี้แจงลูกค้าเรียบร้อย
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 8. WIREFRAME: AUTH LOGIN / REGISTER -->
+                    <!-- ============================================================= -->
+                    else if (active == "auth")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 08: เข้าสู่ระบบและสมัครสมาชิก (Authentication)</h4>
+                                <small class="text-muted">เป้าหมาย: ระบบรักษาความปลอดภัย แยกตามบทบาท 10 Role พร้อมระบบ 1-Click Fast Switch</small>
+                            </div>
+                            <span class="wf-req-badge">Security & RBAC</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-4">
+                                <div class="row justify-content-center g-4">
+                                    <div class="col-6">
+                                        <div class="wf-box p-4 text-center">
+                                            <h5 class="fw-bold mb-3">[LOGIN FORM: เข้าสู่ระบบ PetStore Pro]</h5>
+                                            <div class="mb-3 text-start">
+                                                <small class="fw-bold text-muted">ชื่อผู้ใช้หรืออีเมล</small>
+                                                <div class="wf-input">[INPUT: Username / Email]</div>
+                                            </div>
+                                            <div class="mb-3 text-start">
+                                                <small class="fw-bold text-muted">รหัสผ่าน</small>
+                                                <div class="wf-input">[INPUT: Password (••••••)]</div>
+                                            </div>
+                                            <div class="wf-btn wf-btn-dark w-100 py-2 mb-3">[BUTTON: เข้าสู่ระบบ]</div>
+                                            <small class="text-muted">[LINK: สมัครสมาชิกใหม่]</small>
+
+                                            <!-- Fast Switcher Box -->
+                                            <div class="wf-box p-3 mt-4 text-start" style="background: #f9fafb;">
+                                                <strong class="d-block mb-1 text-primary">⚡ 1-Click Role Login (สำหรับทดสอบ 10 บทบาท):</strong>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <span class="wf-btn py-1 px-2" style="font-size: 0.72rem;">Customer</span>
+                                                    <span class="wf-btn py-1 px-2" style="font-size: 0.72rem;">Inventory</span>
+                                                    <span class="wf-btn py-1 px-2" style="font-size: 0.72rem;">Order</span>
+                                                    <span class="wf-btn py-1 px-2" style="font-size: 0.72rem;">Shipping</span>
+                                                    <span class="wf-btn py-1 px-2" style="font-size: 0.72rem;">Marketing</span>
+                                                    <span class="wf-btn py-1 px-2" style="font-size: 0.72rem;">Accounting</span>
+                                                    <span class="wf-btn py-1 px-2" style="font-size: 0.72rem;">IT Support</span>
+                                                    <span class="wf-btn py-1 px-2" style="font-size: 0.72rem;">Admin</span>
+                                                    <span class="wf-btn py-1 px-2" style="font-size: 0.72rem;">Owner</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 9. WIREFRAME: INVENTORY STAFF -->
+                    <!-- ============================================================= -->
+                    else if (active == "inventory")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 09: คลังสินค้าและสินค้าใกล้หมด (Inventory Staff)</h4>
+                                <small class="text-muted">เป้าหมาย: ตรวจสอบสต็อก, แจ้งเตือน Low Stock Alert (Req 18), ปรับสต็อกด่วน, เพิ่ม/แก้ไขสินค้า (Req 6, 17)</small>
+                            </div>
+                            <span class="wf-req-badge">Req 6, 17, 18</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-3">
+                                <!-- KPI Alert Cards (Req 18) -->
+                                <div class="row g-2 mb-3">
+                                    <div class="col-4"><div class="wf-box p-3 text-center">[KPI: สินค้าทั้งหมด 4 SKU]</div></div>
+                                    <div class="col-4"><div class="wf-box p-3 text-center" style="border: 2px solid #eab308; background:#fefce8;"><strong>⚠️ เตือนสต็อกต่ำ: 2 รายการ (Req 18)</strong></div></div>
+                                    <div class="col-4"><div class="wf-box p-3 text-center" style="border: 2px solid #ef4444; background:#fef2f2;"><strong>❌ สินค้าหมด: 0 รายการ</strong></div></div>
+                                </div>
+
+                                <!-- Actions Bar -->
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="fw-bold">[TABLE: ตารางข้อมูลสินค้าและการคัดแยกน้ำหนัก]</div>
+                                    <div class="wf-btn wf-btn-dark">[ + เพิ่มสินค้าใหม่เข้าคลัง (Req 6, 17) ]</div>
+                                </div>
+
+                                <!-- Inventory Table -->
+                                <table class="table table-bordered small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>รหัส</th><th>ชื่อสินค้า</th><th>หมวด/สัตว์</th><th>น้ำหนัก (kg) (Req 2)</th><th>ราคา</th><th>คงเหลือ</th><th>เกณฑ์เตือน</th><th>ปรับสต็อก</th><th>จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="table-warning">
+                                            <td>#1</td><td>[IMG] Royal Canin Medium Adult</td><td>อาหาร / สุนัข</td><td>3.0 kg</td><td>฿690</td><td><strong>3 ชิ้น (ต่ำ)</strong></td><td>5 ชิ้น</td><td>[-1] [+5]</td><td>[แก้ไข] [ลบ]</td>
+                                        </tr>
+                                        <tr>
+                                            <td>#2</td><td>[IMG] Me-O Gold Kitten</td><td>อาหาร / แมว</td><td>1.2 kg</td><td>฿280</td><td>15 ชิ้น (ปกติ)</td><td>5 ชิ้น</td><td>[-1] [+5]</td><td>[แก้ไข] [ลบ]</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 10. WIREFRAME: ORDER STAFF -->
+                    <!-- ============================================================= -->
+                    else if (active == "orderstaff")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 10: ฝ่ายคำสั่งซื้อและเตรียมสินค้า (Order Staff)</h4>
+                                <small class="text-muted">เป้าหมาย: ตรวจสอบออเดอร์หลังชำระเงิน, จัดเตรียมสินค้าและของแถม, เปลี่ยนสถานะเป็นกำลังจัดเตรียม</small>
+                            </div>
+                            <span class="wf-req-badge">Order Staff Role</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-3">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6"><div class="wf-box p-3 text-center">[KPI: ออเดอร์รอจัดเตรียม (8 รายการ)]</div></div>
+                                    <div class="col-6"><div class="wf-box p-3 text-center">[KPI: กำลังแพ็กสินค้า (3 รายการ)]</div></div>
+                                </div>
+
+                                <div class="wf-box p-3">
+                                    <h6 class="fw-bold mb-3">[ORDER PACKING QUEUE: คิวคำสั่งซื้อที่ต้องจัดเตรียม]</h6>
+                                    <table class="table table-bordered small">
+                                        <thead class="table-light">
+                                            <tr><th>เลขออเดอร์</th><th>ลูกค้า</th><th>รายการสินค้าที่ต้องหยิบ</th><th>ของแถมโปร</th><th>น้ำหนักรวม</th><th>สถานะ</th><th>การเปลี่ยนสถานะ</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>#ORD-1001</td>
+                                                <td>คุณกิตติชัย (กทม.)</td>
+                                                <td>- Royal Canin x 2</td>
+                                                <td><span class="wf-tag">เสื้อยืดแถม x1</span></td>
+                                                <td>6.0 kg</td>
+                                                <td><span class="badge bg-info">รอจัดของ</span></td>
+                                                <td><div class="wf-btn wf-btn-dark py-1">[เริ่มแพ็กสินค้า]</div></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 11. WIREFRAME: SHIPPING STAFF -->
+                    <!-- ============================================================= -->
+                    else if (active == "shipping")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 11: ฝ่ายจัดส่งและบันทึกพัสดุ (Shipping Staff)</h4>
+                                <small class="text-muted">เป้าหมาย: ตรวจสอบน้ำหนักจริงเทียบกับระบบ (Req 4, 14, 16), บันทึกเลข Tracking, เปลี่ยนสถานะเป็นจัดส่งแล้ว</small>
+                            </div>
+                            <span class="wf-req-badge">Req 4, 14, 16</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-3">
+                                <div class="wf-box p-3 mb-3">
+                                    <h6 class="fw-bold mb-3">[DISPATCH QUEUE: บันทึกเลขพัสดุและชั่งน้ำหนักจริง]</h6>
+                                    <table class="table table-bordered small">
+                                        <thead class="table-light">
+                                            <tr><th>เลขออเดอร์</th><th>ผู้รับ</th><th>นน.ระบบ</th><th>นน.ชั่งจริง (kg)</th><th>บริษัทขนส่ง</th><th>เลขพัสดุ Tracking</th><th>แอ็กชัน</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>#ORD-1002</td>
+                                                <td>คุณวราภรณ์</td>
+                                                <td>12.8 kg</td>
+                                                <td><div class="wf-input py-1" style="width: 80px;">[13.0 kg]</div></td>
+                                                <td><div class="wf-input py-1">[Flash Express]</div></td>
+                                                <td><div class="wf-input py-1">[กรอกเลข TH092183...]</div></td>
+                                                <td><div class="wf-btn wf-btn-dark py-1">[บันทึกจัดส่ง]</div></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 12. WIREFRAME: MARKETING STAFF -->
+                    <!-- ============================================================= -->
+                    else if (active == "marketing")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 12: ฝ่ายการตลาดและจัดการโปรโมชั่น (Marketing Staff)</h4>
+                                <small class="text-muted">เป้าหมาย: สร้าง/แก้ไขโปรโมชั่น, เปิด/ปิดสถานะ (Req 5), กำหนดแบรนด์/วันเริ่ม-สิ้นสุด (Req 25, 26), ดูสถิติใช้งาน (Req 27)</small>
+                            </div>
+                            <span class="wf-req-badge">Req 5, 25, 26, 27</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-3">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-4"><div class="wf-box p-3 text-center">[KPI: โปรทั้งหมด 5 แคมเปญ]</div></div>
+                                    <div class="col-4"><div class="wf-box p-3 text-center">[KPI: เปิดใช้งานอยู่ 5 แคมเปญ]</div></div>
+                                    <div class="col-4"><div class="wf-box p-3 text-center"><strong>สถิติการใช้งานรวม: 148 ครั้ง (Req 27)</strong></div></div>
+                                </div>
+
+                                <div class="wf-box p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="fw-bold m-0">[CAMPAIGNS TABLE: แคมเปญและเงื่อนไขโปรโมชั่น]</h6>
+                                        <div class="wf-btn wf-btn-dark">[ + สร้างแคมเปญใหม่ (Req 25) ]</div>
+                                    </div>
+                                    <table class="table table-bordered small">
+                                        <thead class="table-light">
+                                            <tr><th>รหัส</th><th>ชื่อโปรโมชั่น</th><th>เงื่อนไข</th><th>ระยะเวลา (Req 26)</th><th>สถิติใช้ (Req 27)</th><th>สถานะ (Req 5)</th><th>สวิตช์</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>BUY3SAVE</td>
+                                                <td>ซื้อครบ 3 ชิ้นลด 50 บาท</td>
+                                                <td>ขั้นต่ำ 3 ชิ้น</td>
+                                                <td>01/08/2026 - 31/10/2026</td>
+                                                <td><strong>148 ครั้ง</strong></td>
+                                                <td><span class="badge bg-success">เปิดใช้งาน</span></td>
+                                                <td><div class="wf-btn py-1">[ปิดชั่วคราว]</div></td>
+                                            </tr>
+                                            <tr>
+                                                <td>SAMEBRAND15</td>
+                                                <td>อาหารแบรนด์เดียวกันลด 15%</td>
+                                                <td>แบรนด์เดียวกัน 2 ชิ้น</td>
+                                                <td>01/08/2026 - 30/11/2026</td>
+                                                <td><strong>82 ครั้ง</strong></td>
+                                                <td><span class="badge bg-success">เปิดใช้งาน</span></td>
+                                                <td><div class="wf-btn py-1">[ปิดชั่วคราว]</div></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 13. WIREFRAME: ACCOUNTING STAFF -->
+                    <!-- ============================================================= -->
+                    else if (active == "accounting")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 13: ฝ่ายการเงินและบัญชีร้านค้า (Accounting Staff)</h4>
+                                <small class="text-muted">เป้าหมาย: ตรวจสอบชำระเงิน (Req 19), อนุมัติคืนเงิน Refund (Req 20), รายงานรายรับ-รายจ่าย (Req 21)</small>
+                            </div>
+                            <span class="wf-req-badge">Req 19, 20, 21</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-3">
+                                <!-- Financial Report Summary (Req 21) -->
+                                <div class="row g-2 mb-3">
+                                    <div class="col-3"><div class="wf-box p-3 text-center">[รายรับรวม: ฿1,245,000]</div></div>
+                                    <div class="col-3"><div class="wf-box p-3 text-center">[รายจ่าย/ต้นทุน: ฿720,000]</div></div>
+                                    <div class="col-3"><div class="wf-box p-3 text-center">[ยอดคืนเงิน: ฿840]</div></div>
+                                    <div class="col-3"><div class="wf-box p-3 text-center"><strong>กำไรสุทธิ: ฿524,160</strong></div></div>
+                                </div>
+
+                                <!-- Pending Refund Approval (Req 20) -->
+                                <div class="wf-box p-3 mb-3" style="border: 2px solid #ef4444;">
+                                    <h6 class="fw-bold mb-2 text-danger">[REFUND REQUESTS: คำขอคืนเงินที่รอดำเนินการ (Req 20)]</h6>
+                                    <table class="table table-bordered small">
+                                        <thead class="table-light">
+                                            <tr><th>เลขออเดอร์</th><th>ลูกค้า</th><th>ยอดเงินคืน</th><th>เหตุผลยกเลิก</th><th>การอนุมัติ</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>#ORD-1070</td><td>คุณณัฐพล</td><td>฿840.00</td><td>สั่งผิดช่วงวัย</td>
+                                                <td><div class="wf-btn wf-btn-dark py-1">[อนุมัติคืนเงิน & แนบสลิป]</div></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Payment Status Check (Req 19) -->
+                                <div class="wf-box p-3">
+                                    <h6 class="fw-bold mb-2">[PAYMENTS: ตรวจสอบสถานะการชำระเงินล่าสุด (Req 19)]</h6>
+                                    <table class="table table-bordered small">
+                                        <thead class="table-light">
+                                            <tr><th>เลขออเดอร์</th><th>วันที่</th><th>ยอดเงิน</th><th>วิธีชำระ</th><th>สถานะสลิป</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>#ORD-1082</td><td>13/09/2026</td><td>฿1,480.00</td><td>PromptPay</td><td><span class="badge bg-success">ตรวจสอบแล้ว</span></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 14. WIREFRAME: IT SUPPORT -->
+                    <!-- ============================================================= -->
+                    else if (active == "itsupport")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 14: ฝ่ายสนับสนุนทางเทคนิค (IT Support Helpdesk)</h4>
+                                <small class="text-muted">เป้าหมาย: รับเรื่องปัญหา (Req 23), ตรวจสอบข้อผิดพลาดระบบ, บันทึกประวัติและผลการแก้ไข (Req 24)</small>
+                            </div>
+                            <span class="wf-req-badge">Req 23, 24</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-3">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-4"><div class="wf-box p-3 text-center">[เรื่องใหม่: 1 เรื่อง]</div></div>
+                                    <div class="col-4"><div class="wf-box p-3 text-center">[กำลังตรวจสอบ: 1 เรื่อง]</div></div>
+                                    <div class="col-4"><div class="wf-box p-3 text-center">[แก้ไขเสร็จสิ้น: 5 เรื่อง]</div></div>
+                                </div>
+
+                                <div class="wf-box p-3">
+                                    <h6 class="fw-bold mb-3">[TICKETS BOARD: รายการปัญหาและบันทึกประวัติแก้ไข (Req 23, 24)]</h6>
+                                    <table class="table table-bordered small">
+                                        <thead class="table-light">
+                                            <tr><th>รหัส</th><th>ผู้แจ้ง</th><th>หัวข้อ</th><th>สถานะ</th><th>ช่างรับผิดชอบ</th><th>บันทึกการแก้ไข (Req 24)</th><th>จัดการ</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>#TCK-802</td><td>คุณสุชาดา</td><td>อัปโหลดสลิปค้าง</td>
+                                                <td><span class="badge bg-warning text-dark">กำลังตรวจ</span></td>
+                                                <td>สมศักดิ์ (IT)</td>
+                                                <td>- กำลังไล่ดู Gateway Logs</td>
+                                                <td><div class="wf-btn wf-btn-dark py-1">[บันทึกแก้ไข & ปิดงาน]</div></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 15. WIREFRAME: ADMIN -->
+                    <!-- ============================================================= -->
+                    else if (active == "admin")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 15: ผู้ดูแลระบบและกำหนดสิทธิ์ (Admin RBAC)</h4>
+                                <small class="text-muted">เป้าหมาย: จัดการบัญชีผู้ใช้, กำหนดสิทธิ์การเข้าถึงของ 10 บทบาท (Role & Permissions Matrix)</small>
+                            </div>
+                            <span class="wf-req-badge">Admin Role</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold m-0">[USERS & ROLES MATRIX: ตารางผู้ใช้งานและบทบาท 10 Role]</h6>
+                                    <div class="wf-btn wf-btn-dark">[ + เพิ่มพนักงานใหม่ ]</div>
+                                </div>
+                                <table class="table table-bordered small">
+                                    <thead class="table-light">
+                                        <tr><th>ID</th><th>Username</th><th>ชื่อ-นามสกุล</th><th>อีเมล</th><th>บทบาท (Role)</th><th>สถานะ</th><th>ปรับสิทธิ์</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>#1</td><td>owner</td><td>คุณภูไพศาล</td><td>owner@petshop.com</td><td><span class="badge bg-dark">Owner</span></td><td>Active</td><td>[แก้ไขสิทธิ์]</td></tr>
+                                        <tr><td>#4</td><td>inventory</td><td>สมชาย สายตรวจ</td><td>inventory@petshop.com</td><td><span class="badge bg-primary">InventoryStaff</span></td><td>Active</td><td>[แก้ไขสิทธิ์]</td></tr>
+                                        <tr><td>#9</td><td>customer</td><td>กิตติชัย</td><td>customer@example.com</td><td><span class="badge bg-secondary">Customer</span></td><td>Active</td><td>[แก้ไขสิทธิ์]</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ============================================================= -->
+                    <!-- 16. WIREFRAME: OWNER BI DASHBOARD -->
+                    <!-- ============================================================= -->
+                    else if (active == "owner")
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                            <div>
+                                <h4 class="fw-bold m-0">WIREFRAME 16: ภาพรวมธุรกิจและผู้บริหารสูงสุด (Owner BI Dashboard)</h4>
+                                <small class="text-muted">เป้าหมาย: ภาพรวมยอดขายรวม, กำไรสุทธิ, สัดส่วนยอดขายสุนัข vs แมว, 5 สินค้าขายดี และทางลัดทุกแผนก</small>
+                            </div>
+                            <span class="wf-req-badge">Owner Role</span>
+                        </div>
+
+                        <div class="wf-browser-frame">
+                            <div class="wf-browser-bar"><div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div></div>
+                            <div class="p-3">
+                                <!-- Executive KPI Cards -->
+                                <div class="row g-2 mb-3">
+                                    <div class="col-3"><div class="wf-box p-3 text-center" style="background: #2563eb; color: #fff;"><strong>ยอดขายรวม: ฿1,245,000</strong></div></div>
+                                    <div class="col-3"><div class="wf-box p-3 text-center" style="background: #059669; color: #fff;"><strong>กำไรสุทธิ: ฿382,000</strong></div></div>
+                                    <div class="col-3"><div class="wf-box p-3 text-center" style="background: #d97706; color: #fff;"><strong>ต้นทุนสินค้า: ฿720,000</strong></div></div>
+                                    <div class="col-3"><div class="wf-box p-3 text-center" style="background: #dc2626; color: #fff;"><strong>ยอดขอคืนเงิน: ฿840</strong></div></div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-6">
+                                        <div class="wf-box p-3 h-100">
+                                            <h6 class="fw-bold mb-2">[CHART: สัดส่วนยอดขายตามประเภทสัตว์เลี้ยง (Req 1, 9)]</h6>
+                                            <div class="mb-2">🐶 สุนัข: 65%</div>
+                                            <div class="progress mb-2"><div class="progress-bar" style="width: 65%;"></div></div>
+                                            <div class="mb-2">🐱 แมว: 35%</div>
+                                            <div class="progress"><div class="progress-bar bg-warning" style="width: 35%;"></div></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="wf-box p-3 h-100">
+                                            <h6 class="fw-bold mb-2">[BEST SELLERS: 5 อันดับสินค้าขายดี (Req 8)]</h6>
+                                            <small class="d-block mb-1">1. Royal Canin Medium Adult (340 ถุง)</small>
+                                            <small class="d-block mb-1">2. ทรายแมวเต้าหู้ Eco Catz (280 ถุง)</small>
+                                            <small class="d-block mb-1">3. Me-O Gold Kitten (195 ถุง)</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Super Access Shortcuts -->
+                                <div class="wf-box p-3">
+                                    <h6 class="fw-bold mb-2">[SUPER-ACCESS SHORTCUTS: ทางลัดตรวจงานทุกแผนกของผู้บริหาร]</h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <span class="wf-btn">คลังสินค้า</span>
+                                        <span class="wf-btn">คำสั่งซื้อ</span>
+                                        <span class="wf-btn">การจัดส่ง</span>
+                                        <span class="wf-btn">การตลาด</span>
+                                        <span class="wf-btn">การเงิน/บัญชี</span>
+                                        <span class="wf-btn">IT Support</span>
+                                        <span class="wf-btn">Admin</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
