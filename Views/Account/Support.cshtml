@@ -1,0 +1,104 @@
+@using CSI402_Project_final.Models
+@{
+    ViewData["Title"] = "แจ้งปัญหาการใช้งานระบบ (Helpdesk)";
+    var tickets = ViewBag.MyTickets as List<SupportTicket> ?? new();
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1"><i class="bi bi-headset text-danger"></i> ศูนย์ช่วยเหลือและแจ้งปัญหา (Customer Helpdesk)</h3>
+        <span class="text-muted">ลูกค้าสามารถแจ้งปัญหาหรือข้อผิดพลาดในการใช้งานระบบ (Req 22) และติดตามการแก้ไขของทีมงาน</span>
+    </div>
+
+    <div class="row g-4">
+        <!-- แบบฟอร์มแจ้งปัญหาใหม่ (Req 22) -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-pencil-square"></i> เปิดคำร้องแจ้งปัญหาใหม่</h5>
+                <form asp-action="SubmitTicket" method="post">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">ชื่อผู้แจ้ง</label>
+                        <input type="text" name="customerName" class="form-control" value="คุณกิตติชัย เจริญผล" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">อีเมลติดต่อกลับ</label>
+                        <input type="email" name="email" class="form-control" value="customer@example.com" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">หมวดหมู่ปัญหา</label>
+                        <select name="category" class="form-select">
+                            <option value="โปรโมชั่นและส่วนลด">🏷️ โปรโมชั่นและส่วนลด</option>
+                            <option value="การสั่งซื้อและการชำระเงิน">💳 การสั่งซื้อและการชำระเงิน</option>
+                            <option value="การจัดส่งพัสดุ">🚚 การจัดส่งพัสดุ</option>
+                            <option value="ระบบและบัญชีผู้ใช้">👤 ระบบและบัญชีผู้ใช้</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">ระดับความเร่งด่วน</label>
+                        <select name="priority" class="form-select">
+                            <option value="@TicketPriority.Low">🟢 ทั่วไป (Low)</option>
+                            <option value="@TicketPriority.Medium" selected>🟡 ปานกลาง (Medium)</option>
+                            <option value="@TicketPriority.High">🟠 สูง (High)</option>
+                            <option value="@TicketPriority.Urgent">🔴 เร่งด่วนมาก (Urgent)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">หัวข้อปัญหา</label>
+                        <input type="text" name="subject" class="form-control" placeholder="เช่น ไม่ได้รับส่วนลดซื้อครบ 3 ชิ้น" required />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">รายละเอียดปัญหา</label>
+                        <textarea name="description" class="form-control" rows="4" placeholder="โปรดระบุรายละเอียด เช่น รหัสคำสั่งซื้อ หรือขั้นตอนที่เกิดข้อผิดพลาด" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-pet-primary w-100 fw-bold py-2">
+                        <i class="bi bi-send-fill"></i> ส่งเรื่องแจ้งปัญหา
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- รายการปัญหาที่เคยแจ้งและผลการแก้ไข (Req 23, 24) -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-clock-history"></i> ประวัติการแจ้งปัญหาของคุณ</h5>
+                
+                @if (!tickets.Any())
+                {
+                    <div class="text-center py-4 text-muted">ยังไม่มีประวัติการแจ้งปัญหา</div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var t in tickets)
+                        {
+                            <div class="border rounded-3 p-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-dark">#@t.TicketCode - @t.Subject</span>
+                                    <span class="badge @(t.Status == TicketStatus.Resolved ? "bg-success" : 
+                                                        t.Status == TicketStatus.Investigating ? "bg-warning text-dark" : "bg-secondary")">
+                                        @(t.Status == TicketStatus.New ? "เรื่องใหม่" :
+                                          t.Status == TicketStatus.Investigating ? "ทีมงานกำลังตรวจสอบ" :
+                                          t.Status == TicketStatus.Resolved ? "แก้ไขเสร็จสิ้น ✅" : "ปิดเรื่อง")
+                                    </span>
+                                </div>
+                                <p class="small text-muted mb-2">@t.Description</p>
+                                <div class="small text-muted d-flex justify-content-between">
+                                    <span>หมวดหมู่: @t.Category</span>
+                                    <span>แจ้งเมื่อ: @t.CreatedAt.ToString("dd/MM/yyyy HH:mm น.")</span>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(t.ResolutionDetails))
+                                {
+                                    <div class="mt-2 p-2 bg-success-subtle border border-success-subtle rounded-2 small text-success">
+                                        <strong><i class="bi bi-check-circle"></i> ผลการแก้ไขจากเจ้าหน้าที่ (@t.AssignedTechnician):</strong>
+                                        <div>@t.ResolutionDetails</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

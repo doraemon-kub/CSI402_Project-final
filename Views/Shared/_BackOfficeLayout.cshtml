@@ -1,0 +1,348 @@
+@using CSI402_Project_final.Models
+@using System.Security.Claims
+@inject CSI402_Project_final.Models.PetShopRepository Repo
+@{
+    var currentRole = User.FindFirstValue(ClaimTypes.Role) ?? "Guest";
+    var username = User.Identity?.Name ?? "พนักงาน";
+    var fullName = User.FindFirst("FullName")?.Value ?? username;
+    string activeCtrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    bool isOwner = currentRole == "Owner";
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PetStore Back-Office</title>
+    <!-- Google Fonts: Prompt -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+        /* Desktop Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: #0f172a;
+            color: #94a3b8;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-brand {
+            padding: 18px 20px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #f8fafc;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-menu {
+            padding: 12px 0;
+            flex: 1;
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: #1e293b;
+            color: #38bdf8;
+            border-left: 4px solid #38bdf8;
+        }
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0; /* ป้องกัน flex child ล้น */
+        }
+        .topbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .main-body {
+            padding: 16px;
+            flex: 1;
+        }
+        @@media (min-width: 768px) {
+            .main-body {
+                padding: 24px;
+            }
+        }
+        /* Mobile/Tablet Offcanvas Menu */
+        @@media (max-width: 991.98px) {
+            .sidebar-desktop {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- 1. Desktop Sidebar (แสดงเฉพาะจอใหญ่) -->
+        <aside class="sidebar sidebar-desktop">
+            <div class="sidebar-brand">
+                <i class="bi bi-gear-wide-connected text-warning"></i> Back-Office Hub
+            </div>
+            <div class="sidebar-menu">
+                <div class="px-3 py-2 small text-uppercase fw-bold text-white-50" style="font-size: 0.75rem;">
+                    @(isOwner ? "สิทธิ์เข้าถึงทั้งหมด (Owner)" : $"สิทธิ์: {currentRole}")
+                </div>
+                
+                @if (isOwner || currentRole == "InventoryStaff")
+                {
+                    <a asp-controller="Inventory" asp-action="Index" class="sidebar-link @(activeCtrl == "Inventory" ? "active" : "")">
+                        <i class="bi bi-boxes"></i> คลังสินค้า (Inventory)
+                    </a>
+                }
+                @if (isOwner || currentRole == "OrderStaff")
+                {
+                    <a asp-controller="Order" asp-action="Index" class="sidebar-link @(activeCtrl == "Order" ? "active" : "")">
+                        <i class="bi bi-card-checklist"></i> คำสั่งซื้อ (Order)
+                    </a>
+                }
+                @if (isOwner || currentRole == "ShippingStaff")
+                {
+                    <a asp-controller="Shipping" asp-action="Index" class="sidebar-link @(activeCtrl == "Shipping" ? "active" : "")">
+                        <i class="bi bi-truck"></i> จัดการจัดส่ง (Shipping)
+                    </a>
+                }
+                @if (isOwner || currentRole == "MarketingStaff")
+                {
+                    <a asp-controller="Marketing" asp-action="Index" class="sidebar-link @(activeCtrl == "Marketing" ? "active" : "")">
+                        <i class="bi bi-tags"></i> แคมเปญโปรโมชั่น (MKT)
+                    </a>
+                }
+                @if (isOwner || currentRole == "AccountingStaff")
+                {
+                    <a asp-controller="Accounting" asp-action="Index" class="sidebar-link @(activeCtrl == "Accounting" ? "active" : "")">
+                        <i class="bi bi-cash-coin"></i> การเงินและบัญชี (ACC)
+                    </a>
+                }
+                @if (isOwner || currentRole == "ITSupport")
+                {
+                    <a asp-controller="Support" asp-action="Index" class="sidebar-link @(activeCtrl == "Support" ? "active" : "")">
+                        <i class="bi bi-headset"></i> IT Support Helpdesk
+                    </a>
+                }
+                @if (isOwner || currentRole == "Admin")
+                {
+                    <a asp-controller="Admin" asp-action="Index" class="sidebar-link @(activeCtrl == "Admin" ? "active" : "")">
+                        <i class="bi bi-person-gear"></i> สิทธิ์และผู้ใช้ (Admin)
+                    </a>
+                }
+                @if (isOwner)
+                {
+                    <a asp-controller="Owner" asp-action="Index" class="sidebar-link @(activeCtrl == "Owner" ? "active" : "")">
+                        <i class="bi bi-graph-up-arrow"></i> ภาพรวมธุรกิจ (Owner)
+                    </a>
+                }
+            </div>
+            
+            <div class="p-3 border-top border-secondary">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light w-100 btn-sm mb-2">
+                    <i class="bi bi-shop me-1"></i> ไปหน้าร้านค้า
+                </a>
+                <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger w-100 btn-sm">
+                        <i class="bi bi-box-arrow-right me-1"></i> ออกจากระบบ
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- 2. Mobile/Tablet Offcanvas Drawer (สำหรับ iPad, Tablet, Phone) -->
+        <div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="sidebarOffcanvas" style="width: 280px;">
+            <div class="offcanvas-header border-bottom border-secondary">
+                <h5 class="offcanvas-title fw-bold text-warning"><i class="bi bi-gear-wide-connected"></i> Back-Office</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+            </div>
+            <div class="offcanvas-body p-0 d-flex flex-column">
+                <div class="p-3 bg-black bg-opacity-25 border-bottom border-secondary">
+                    <div class="small text-muted">ผู้ใช้ปัจจุบัน:</div>
+                    <div class="fw-bold text-white text-truncate">@fullName</div>
+                    <span class="badge bg-primary mt-1">@currentRole</span>
+                </div>
+                <div class="py-2 flex-grow-1">
+                    @if (isOwner || currentRole == "InventoryStaff")
+                    {
+                        <a asp-controller="Inventory" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                            <i class="bi bi-boxes me-2 text-warning"></i> คลังสินค้า (Inventory)
+                        </a>
+                    }
+                    @if (isOwner || currentRole == "OrderStaff")
+                    {
+                        <a asp-controller="Order" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                            <i class="bi bi-card-checklist me-2 text-warning"></i> คำสั่งซื้อ (Order)
+                        </a>
+                    }
+                    @if (isOwner || currentRole == "ShippingStaff")
+                    {
+                        <a asp-controller="Shipping" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                            <i class="bi bi-truck me-2 text-warning"></i> จัดการจัดส่ง (Shipping)
+                        </a>
+                    }
+                    @if (isOwner || currentRole == "MarketingStaff")
+                    {
+                        <a asp-controller="Marketing" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                            <i class="bi bi-tags me-2 text-warning"></i> แคมเปญโปรโมชั่น (MKT)
+                        </a>
+                    }
+                    @if (isOwner || currentRole == "AccountingStaff")
+                    {
+                        <a asp-controller="Accounting" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                            <i class="bi bi-cash-coin me-2 text-warning"></i> การเงินและบัญชี (ACC)
+                        </a>
+                    }
+                    @if (isOwner || currentRole == "ITSupport")
+                    {
+                        <a asp-controller="Support" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                            <i class="bi bi-headset me-2 text-warning"></i> IT Support Helpdesk
+                        </a>
+                    }
+                    @if (isOwner || currentRole == "Admin")
+                    {
+                        <a asp-controller="Admin" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                            <i class="bi bi-person-gear me-2 text-warning"></i> สิทธิ์และผู้ใช้ (Admin)
+                        </a>
+                    }
+                    @if (isOwner)
+                    {
+                        <a asp-controller="Owner" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                            <i class="bi bi-graph-up-arrow me-2 text-warning"></i> ภาพรวมธุรกิจ (Owner)
+                        </a>
+                    }
+                </div>
+                <div class="p-3 border-top border-secondary">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light w-100 btn-sm mb-2">
+                        <i class="bi bi-shop me-1"></i> หน้าร้านค้า
+                    </a>
+                    <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger w-100 btn-sm">
+                            <i class="bi bi-box-arrow-right me-1"></i> ออกจากระบบ
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Main Content Area -->
+        <div class="content-area">
+            <!-- Topbar with Offcanvas Toggle Button on Mobile/Tablet -->
+            <header class="topbar">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-secondary d-lg-none py-1 px-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
+                    <h6 class="m-0 fw-bold text-truncate" style="max-width: 250px;">@ViewData["Title"]</h6>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="text-end d-none d-sm-block">
+                        <div class="small fw-bold text-dark text-truncate" style="max-width: 160px;">@fullName</div>
+                        <span class="badge bg-primary" style="font-size: 0.65rem;">@currentRole</span>
+                    </div>
+                    <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-danger px-2" title="ออกจากระบบ">
+                            <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">ออก</span>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <!-- Notifications -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="px-3 pt-3">
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 small" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            }
+
+            <!-- Body View -->
+            <main class="main-body">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <!-- Real-time Live Toast Container สำหรับพนักงาน -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+        <div id="staffRealtimeToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2" id="staffRealtimeToastBody">
+                    <i class="bi bi-broadcast text-warning fs-5"></i>
+                    <span>ระบบแจ้งเตือน Real-time พร้อมใช้งาน</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        const staffHubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/petShopHub")
+            .withAutomaticReconnect()
+            .build();
+
+        // 1. รับแจ้งเตือนออเดอร์ใหม่แบบ Real-Time (Order Staff / Owner)
+        staffHubConnection.on("ReceiveNewOrderAlert", function (orderId, customerName, grandTotal) {
+            showStaffToast(`🔔 ออเดอร์ใหม่! #${orderId} จาก ${customerName} (ยอด ฿${grandTotal})`);
+            // ถ้าอยู่ในหน้าออเดอร์ ให้รีโหลดหรือแสดงไฮไลต์
+            if (window.location.pathname.includes("/Order")) {
+                setTimeout(() => window.location.reload(), 2000);
+            }
+        });
+
+        // 2. รับแจ้งเตือนสินค้าสต็อกต่ำกว่าเกณฑ์แบบ Real-Time (Req 18: Inventory Staff)
+        staffHubConnection.on("ReceiveLowStockAlert", function (productName, currentStock) {
+            showStaffToast(`⚠️ เตือนสต็อกต่ำ! สินค้า '${productName}' เหลือเพียง ${currentStock} ชิ้น`);
+        });
+
+        staffHubConnection.start().catch(err => console.log("Staff SignalR Error: ", err));
+
+        function showStaffToast(message) {
+            const toastEl = document.getElementById('staffRealtimeToast');
+            const toastBody = document.getElementById('staffRealtimeToastBody');
+            if (toastEl && toastBody) {
+                toastBody.innerHTML = `<i class="bi bi-bell-fill text-warning fs-5"></i> <span>${message}</span>`;
+                const bsToast = new bootstrap.Toast(toastEl, { delay: 6000 });
+                bsToast.show();
+            }
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

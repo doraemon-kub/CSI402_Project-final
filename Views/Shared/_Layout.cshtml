@@ -1,50 +1,492 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@using CSI402_Project_final.Models
+@using System.Security.Claims
+@inject CSI402_Project_final.Models.PetShopRepository Repo
+@{
+    var isAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
+    var currentUsername = User.Identity?.Name ?? "";
+    var currentRoleName = User.FindFirstValue(ClaimTypes.Role) ?? "Guest";
+    var fullName = User.FindFirst("FullName")?.Value ?? currentUsername;
+    var cartCount = Repo.CurrentCart.TotalItemCount;
+    var isStaffOrAdmin = isAuthenticated && currentRoleName != "Customer" && currentRoleName != "Guest";
+}
+<!DOCTYPE html>
+<html lang="th">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CSI402_Project_final</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CSI402_Project_final.styles.css" asp-append-version="true" />
+    <title>@ViewData["Title"] - PetStore Pro</title>
+    <!-- Google Fonts: Prompt -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #ff6b35;
+            --primary-hover: #e85924;
+            --secondary-color: #004e89;
+            --bg-light: #f8fafc;
+        }
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--bg-light);
+            color: #334155;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        /* Top Mini Bar Responsive */
+        .top-mini-bar {
+            background-color: #0f172a;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            padding: 6px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        .top-mini-bar a {
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .top-mini-bar a:hover {
+            color: var(--primary-color);
+        }
+        /* Main Navbar */
+        .navbar-main {
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 10px 0;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        .pet-brand {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.5px;
+        }
+        .pet-brand:hover {
+            color: var(--primary-hover);
+        }
+        .nav-link {
+            font-weight: 500;
+            color: #334155 !important;
+            padding: 8px 12px !important;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-size: 0.92rem;
+        }
+        .nav-link:hover {
+            color: var(--primary-color) !important;
+            background-color: #fff7ed;
+        }
+        .btn-pet-primary {
+            background: linear-gradient(135deg, #ff7a3d, #ff5e62);
+            color: #ffffff;
+            border: none;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 7px 16px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.25);
+            font-size: 0.88rem;
+        }
+        .btn-pet-primary:hover {
+            background: linear-gradient(135deg, #e86326, #e64c50);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+        .badge-cart {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            font-weight: 700;
+            border: 2px solid #ffffff;
+        }
+        .main-container {
+            flex: 1;
+            padding-bottom: 40px;
+        }
+        /* Footer */
+        .site-footer {
+            background-color: #0f172a;
+            color: #94a3b8;
+            font-size: 0.88rem;
+            padding-top: 45px;
+            border-top: 4px solid var(--primary-color);
+        }
+        .footer-title {
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .footer-title::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 25px;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        .footer-links a:hover {
+            color: #ffffff;
+            transform: translateX(4px);
+        }
+        .social-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: #1e293b;
+            color: #cbd5e1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .social-btn:hover {
+            background-color: var(--primary-color);
+            color: #ffffff;
+        }
+        .bottom-bar {
+            background-color: #090d16;
+            padding: 16px 0;
+            font-size: 0.8rem;
+            border-top: 1px solid #1e293b;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">CSI402_Project_final</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+    <!-- 1. Top Mini Bar (Responsive for Phone/Tablet) -->
+    <div class="top-mini-bar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="small d-flex align-items-center gap-2">
+                <span class="text-truncate"><i class="bi bi-truck text-warning me-1"></i> ส่งฟรีเมื่อครบ ฿800 (<10kg)</span>
+                <span class="d-none d-md-inline text-secondary">|</span>
+                <span class="d-none d-md-inline"><i class="bi bi-telephone me-1"></i> 02-999-8888</span>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+            <div class="d-flex align-items-center gap-2 small">
+                @if (isAuthenticated)
+                {
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle d-flex align-items-center gap-1" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle text-warning"></i>
+                            <span class="d-none d-sm-inline">@fullName</span>
+                            <span class="badge @(isStaffOrAdmin ? "bg-warning text-dark" : "bg-primary")" style="font-size: 0.65rem;">@currentRoleName</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-1">
+                            <li class="px-3 py-2 border-bottom bg-light rounded-top">
+                                <div class="small fw-bold text-dark text-truncate" style="max-width: 200px;">@fullName</div>
+                                <div class="small text-muted">@currentRoleName</div>
+                            </li>
+                            @if (isStaffOrAdmin)
+                            {
+                                <li>
+                                    <a class="dropdown-item py-2 text-primary fw-bold" 
+                                       asp-controller="@(currentRoleName == "InventoryStaff" ? "Inventory" : 
+                                                         currentRoleName == "OrderStaff" ? "Order" : 
+                                                         currentRoleName == "ShippingStaff" ? "Shipping" : 
+                                                         currentRoleName == "MarketingStaff" ? "Marketing" : 
+                                                         currentRoleName == "AccountingStaff" ? "Accounting" : 
+                                                         currentRoleName == "ITSupport" ? "Support" : 
+                                                         currentRoleName == "Admin" ? "Admin" : "Owner")" 
+                                       asp-action="Index">
+                                        <i class="bi bi-speedometer2 me-2"></i> ระบบจัดการหลังบ้าน
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                            }
+                            <li>
+                                <a class="dropdown-item py-2" asp-controller="Account" asp-action="Profile">
+                                    <i class="bi bi-person-gear me-2 text-primary"></i> ข้อมูลส่วนตัวและที่อยู่
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" asp-controller="Account" asp-action="Orders">
+                                    <i class="bi bi-clock-history me-2 text-muted"></i> ประวัติคำสั่งซื้อ
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" asp-controller="Account" asp-action="Support">
+                                    <i class="bi bi-headset me-2 text-muted"></i> แจ้งปัญหา (Helpdesk)
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item py-2 text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i> ออกจากระบบ
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a asp-controller="Auth" asp-action="Login" class="d-flex align-items-center gap-1">
+                        <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ
+                    </a>
+                    <span class="text-secondary">/</span>
+                    <a asp-controller="Auth" asp-action="Register" class="text-warning">
+                        สมัครสมาชิก
+                    </a>
+                }
+            </div>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <!-- 2. Main Navigation Bar with Mobile Quick Actions -->
+    <nav class="navbar navbar-expand-lg navbar-main sticky-top">
         <div class="container">
-            &copy; 2569 - CSI402_Project_final - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <a class="pet-brand" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-bag-heart-fill"></i> PetStore Pro
+            </a>
+
+            <!-- Mobile Quick Actions: Cart Button Outside Collapse on Small Screens -->
+            <div class="d-flex align-items-center gap-2 d-lg-none">
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-pet-primary position-relative px-2 py-1" style="font-size: 0.8rem;">
+                    <i class="bi bi-cart3"></i>
+                    <span class="badge-cart">@cartCount</span>
+                </a>
+                <button class="navbar-toggler p-2 border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+
+            <div class="collapse navbar-collapse" id="navMain">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 mt-3 mt-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-shop me-1"></i> สินค้าทั้งหมด
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Dog">
+                            🐶 อาหาร/ของใช้สุนัข
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Cat">
+                            🐱 อาหาร/ของใช้แมว
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger fw-semibold" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-tag-fill me-1 text-danger"></i> โปรโมชั่น 5 แบบ
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Desktop Quick Actions -->
+                <div class="d-none d-lg-flex align-items-center gap-2">
+                    @if (isStaffOrAdmin)
+                    {
+                        <a asp-controller="@(currentRoleName == "InventoryStaff" ? "Inventory" : 
+                                            currentRoleName == "OrderStaff" ? "Order" : 
+                                            currentRoleName == "ShippingStaff" ? "Shipping" : 
+                                            currentRoleName == "MarketingStaff" ? "Marketing" : 
+                                            currentRoleName == "AccountingStaff" ? "Accounting" : 
+                                            currentRoleName == "ITSupport" ? "Support" : 
+                                            currentRoleName == "Admin" ? "Admin" : "Owner")" 
+                           asp-action="Index" class="btn btn-outline-dark btn-sm">
+                            <i class="bi bi-grid-1x2-fill text-warning me-1"></i> ระบบหลังบ้าน
+                        </a>
+                    }
+                    else if (isAuthenticated)
+                    {
+                        <a asp-controller="Account" asp-action="Orders" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-box-seam me-1"></i> ออเดอร์ของฉัน
+                        </a>
+                    }
+
+                    <a asp-controller="Cart" asp-action="Index" class="btn btn-pet-primary position-relative px-3">
+                        <i class="bi bi-cart3 me-1"></i> ตะกร้าสินค้า
+                        <span class="badge-cart">@cartCount</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 3. Global Notification Flash Message -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="container mt-3">
+            <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3 py-2 small" role="alert">
+                <i class="bi bi-check-circle-fill me-2 text-success"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    }
+
+    <!-- 4. Content Area -->
+    <main class="main-container">
+        @RenderBody()
+    </main>
+
+    <!-- 5. Fully Responsive E-Commerce Footer -->
+    <footer class="site-footer">
+        <div class="container pb-4">
+            <div class="row g-4">
+                <!-- Col 1: About -->
+                <div class="col-12 col-md-6 col-lg-4">
+                    <a class="pet-brand text-white mb-2" asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-bag-heart-fill text-warning"></i> PetStore Pro
+                    </a>
+                    <p class="small text-white-50 pe-md-4 mt-2">
+                        แหล่งรวมอาหาร ขนม และของใช้สัตว์เลี้ยงเกรดพรีเมียม ตอบโจทย์ทุกช่วงวัย พร้อมระบบคำนวณโปรโมชั่นและค่าจัดส่งตามน้ำหนักอัตโนมัติ
+                    </p>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="#" class="social-btn" title="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-btn" title="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="social-btn" title="Line"><i class="bi bi-line"></i></a>
+                        <a href="#" class="social-btn" title="TikTok"><i class="bi bi-tiktok"></i></a>
+                    </div>
+                </div>
+
+                <!-- Col 2: Categories -->
+                <div class="col-6 col-md-6 col-lg-2 footer-links">
+                    <h6 class="footer-title">หมวดหมู่สินค้า</h6>
+                    <ul class="list-unstyled small">
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Dog">อาหารสุนัข</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Cat">อาหารแมว</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-category="@ProductCategory.Hygiene">ทรายแมว</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-category="@ProductCategory.Supply">ของเล่น/เบาะนอน</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-specialNeed="โรคไต">อาหารโรคไต</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Customer Service -->
+                <div class="col-6 col-md-6 col-lg-3 footer-links">
+                    <h6 class="footer-title">บริการ & ช่วยเหลือ</h6>
+                    <ul class="list-unstyled small">
+                        <li><a asp-controller="Account" asp-action="Orders">ติดตามสถานะพัสดุ</a></li>
+                        <li><a asp-controller="Account" asp-action="Support">แจ้งปัญหาการใช้งาน</a></li>
+                        <li><a asp-controller="Cart" asp-action="Index">เงื่อนไขโปรโมชั่น</a></li>
+                        @if (!isAuthenticated)
+                        {
+                            <li><a asp-controller="Auth" asp-action="Login" class="text-warning">เข้าสู่ระบบพนักงาน / สมาชิก</a></li>
+                        }
+                    </ul>
+                </div>
+
+                <!-- Col 4: Contact -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <h6 class="footer-title">ติดต่อเรา</h6>
+                    <ul class="list-unstyled small text-white-50 mb-3">
+                        <li class="mb-1"><i class="bi bi-geo-alt text-warning me-2"></i> จตุจักร กรุงเทพฯ 10900</li>
+                        <li class="mb-1"><i class="bi bi-envelope text-warning me-2"></i> contact@petstorepro.com</li>
+                        <li><i class="bi bi-clock text-warning me-2"></i> 08:00 - 21:00 น. ทุกวัน</li>
+                    </ul>
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-secondary py-1 px-2" style="font-size: 0.7rem;">PromptPay</span>
+                        <span class="badge bg-secondary py-1 px-2" style="font-size: 0.7rem;">Visa/Mastercard</span>
+                        <span class="badge bg-secondary py-1 px-2" style="font-size: 0.7rem;">Flash</span>
+                        <span class="badge bg-secondary py-1 px-2" style="font-size: 0.7rem;">Kerry</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div class="bottom-bar">
+            <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 text-white-50 small text-center text-sm-start">
+                <div>© 2026 PetStore Pro. All rights reserved. (Activity 2 CSI402)</div>
+                <div class="d-flex gap-3">
+                    <a href="#" class="text-white-50 text-decoration-none">นโยบายความเป็นส่วนตัว</a>
+                    <span>•</span>
+                    <a href="#" class="text-white-50 text-decoration-none">ข้อกำหนดการใช้งาน</a>
+                </div>
+            </div>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Real-time Live Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+        <div id="liveRealtimeToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2" id="liveRealtimeToastBody">
+                    <i class="bi bi-broadcast text-warning fs-5"></i>
+                    <span>กำลังเชื่อมต่อสัญญาณ Real-time...</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Microsoft SignalR JavaScript Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        // เริ่มต้นการเชื่อมต่อ SignalR WebSocket
+        const petShopConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/petShopHub")
+            .withAutomaticReconnect()
+            .build();
+
+        // 1. รับการอัปเดตจำนวนคนใส่ตะกร้าแบบ Real-time (Req 8)
+        petShopConnection.on("ReceiveCartCountUpdate", function (productId, newCount) {
+            const countValEl = document.getElementById(`cart-count-val-${productId}`);
+            const badgeEl = document.getElementById(`cart-count-badge-${productId}`);
+            if (countValEl) {
+                countValEl.innerText = newCount;
+                if (badgeEl) {
+                    badgeEl.classList.remove("bg-danger");
+                    badgeEl.classList.add("bg-warning", "text-dark");
+                    setTimeout(() => {
+                        badgeEl.classList.remove("bg-warning", "text-dark");
+                        badgeEl.classList.add("bg-danger");
+                    }, 1200);
+                }
+            }
+        });
+
+        // 2. รับแจ้งเตือนเมื่อพัสดุจัดส่งแล้ว
+        petShopConnection.on("ReceiveOrderShippedAlert", function (orderId, trackingNumber, courier) {
+            showRealtimeToast(`🚚 ออเดอร์ #${orderId} ถูกจัดส่งแล้ว! (${courier}: ${trackingNumber})`);
+        });
+
+        // 3. รับแจ้งเตือนเมื่อมีออเดอร์ใหม่
+        petShopConnection.on("ReceiveNewOrderAlert", function (orderId, customerName, grandTotal) {
+            showRealtimeToast(`🎉 มีคำสั่งซื้อใหม่ #${orderId} จาก ${customerName} (฿${grandTotal})`);
+        });
+
+        petShopConnection.start().catch(err => console.log("SignalR Connection Error: ", err));
+
+        function showRealtimeToast(message) {
+            const toastEl = document.getElementById('liveRealtimeToast');
+            const toastBody = document.getElementById('liveRealtimeToastBody');
+            if (toastEl && toastBody) {
+                toastBody.innerHTML = `<i class="bi bi-bell-fill text-warning fs-5"></i> <span>${message}</span>`;
+                const bsToast = new bootstrap.Toast(toastEl, { delay: 5000 });
+                bsToast.show();
+            }
+        }
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

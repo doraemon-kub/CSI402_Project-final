@@ -1,0 +1,211 @@
+@model List<CSI402_Project_final.Models.Product>
+@using CSI402_Project_final.Models
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "3. ระบบจัดการสินค้าและสต็อก (Inventory Staff)";
+    int lowStock = ViewBag.LowStockCount ?? 0;
+    int outOfStock = ViewBag.OutOfStockCount ?? 0;
+}
+
+<!-- Summary Alert Cards (Req 18: ระบบแจ้งเตือนเมื่อสินค้าต่ำกว่าระดับที่กำหนด) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">สินค้าทั้งหมดในคลัง</div>
+                    <div class="fs-3 fw-bold text-dark">@Model.Count SKU</div>
+                </div>
+                <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-3"><i class="bi bi-boxes"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 @(lowStock > 0 ? "bg-warning-subtle border border-warning" : "bg-white")">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold">⚠️ แจ้งเตือน: สต็อกต่ำกว่าเกณฑ์ (Low Stock)</div>
+                    <div class="fs-3 fw-bold text-warning">@lowStock รายการ</div>
+                </div>
+                <div class="p-3 bg-warning text-dark rounded-3 fs-3"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 @(outOfStock > 0 ? "bg-danger-subtle border border-danger" : "bg-white")">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold">❌ สินค้าหมดสต็อก (Out of Stock)</div>
+                    <div class="fs-3 fw-bold text-danger">@outOfStock รายการ</div>
+                </div>
+                <div class="p-3 bg-danger text-white rounded-3 fs-3"><i class="bi bi-x-octagon-fill"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Header Actions -->
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold m-0 text-dark">ตารางข้อมูลสินค้าและระดับสต็อก (Req 6, 17, 18)</h5>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+            <i class="bi bi-plus-circle me-1"></i> เพิ่มสินค้าใหม่เข้าระบบ
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>รหัส</th>
+                    <th>สินค้า</th>
+                    <th>ประเภท/หมวด</th>
+                    <th>น้ำหนัก (kg)</th>
+                    <th>ราคาปกติ / พิเศษ</th>
+                    <th>สต็อกคงเหลือ</th>
+                    <th>เกณฑ์เตือน</th>
+                    <th>สถานะ</th>
+                    <th>ปรับสต็อก</th>
+                    <th>จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr class="@(item.IsOutOfStock ? "table-danger" : item.IsLowStock ? "table-warning" : "")">
+                        <td class="fw-bold">#@item.Id</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="@item.ImageUrl" class="rounded-2" style="width: 45px; height: 45px; object-fit: cover;" />
+                                <div>
+                                    <div class="fw-bold text-dark">@item.Name</div>
+                                    <small class="text-muted">แบรนด์: @item.Brand | ช่วงวัย: @item.AgeStage</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                @(item.PetType == PetCategory.Dog ? "สุนัข" : "แมว") / @item.Category
+                            </span>
+                        </td>
+                        <td><strong>⚖️ @item.WeightKg kg</strong></td>
+                        <td>
+                            <div class="fw-bold">฿@item.Price.ToString("N0")</div>
+                            @if (item.SpecialDiscountPrice.HasValue)
+                            {
+                                <small class="text-danger">ลดเหลือ ฿@item.SpecialDiscountPrice.Value.ToString("N0")</small>
+                            }
+                        </td>
+                        <td>
+                            <span class="fs-6 fw-bold @(item.IsOutOfStock ? "text-danger" : item.IsLowStock ? "text-warning" : "text-success")">
+                                @item.StockQuantity ชิ้น
+                            </span>
+                        </td>
+                        <td><small class="text-muted">@item.LowStockThreshold ชิ้น</small></td>
+                        <td>
+                            @if (item.IsOutOfStock)
+                            {
+                                <span class="badge bg-danger">หมดสต็อก</span>
+                            }
+                            else if (item.IsLowStock)
+                            {
+                                <span class="badge bg-warning text-dark">ใกล้หมด!</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">ปกติ</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-action="UpdateStock" method="post" class="d-flex gap-1">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" name="adjustment" value="-1" class="btn btn-sm btn-outline-danger px-2">-1</button>
+                                <button type="submit" name="adjustment" value="5" class="btn btn-sm btn-outline-success px-2">+5</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form asp-action="DeleteProduct" method="post" onsubmit="return confirm('ยืนยันลบสินค้านี้?');">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger border-0">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal เพิ่มสินค้าใหม่ (Req 6, 17) -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form asp-action="SaveProduct" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">เพิ่มสินค้าใหม่เข้าคลังสินค้า</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label small fw-bold">ชื่อสินค้า</label>
+                        <input type="text" name="Name" class="form-control" required placeholder="เช่น Royal Canin Maxi Puppy" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">แบรนด์สินค้า</label>
+                        <input type="text" name="Brand" class="form-control" required placeholder="เช่น Royal Canin" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">สัตว์เลี้ยง</label>
+                        <select name="PetType" class="form-select">
+                            <option value="@PetCategory.Dog">🐶 สุนัข</option>
+                            <option value="@PetCategory.Cat">🐱 แมว</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">หมวดหมู่</label>
+                        <select name="Category" class="form-select">
+                            <option value="@ProductCategory.Food">🍲 อาหาร</option>
+                            <option value="@ProductCategory.Supply">🧸 ของใช้</option>
+                            <option value="@ProductCategory.Hygiene">🧼 สุขอนามัย</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">ช่วงวัย (Layer)</label>
+                        <select name="AgeStage" class="form-select">
+                            <option value="@AgeStage.PuppyOrKitten">วัยเด็ก (ลูกสุนัข/ลูกแมว)</option>
+                            <option value="@AgeStage.Adult">โตเต็มวัย (Adult)</option>
+                            <option value="@AgeStage.Senior">สูงวัย (Senior)</option>
+                            <option value="@AgeStage.AllAges">ทุกช่วงวัย</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">น้ำหนักสินค้า (kg)</label>
+                        <input type="number" step="0.1" name="WeightKg" class="form-control" value="1.0" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">ราคาปกติ (บาท)</label>
+                        <input type="number" name="Price" class="form-control" value="500" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">จำนวนสต็อก</label>
+                        <input type="number" name="StockQuantity" class="form-control" value="20" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">เกณฑ์เตือนสต็อกต่ำ</label>
+                        <input type="number" name="LowStockThreshold" class="form-control" value="5" required />
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label small fw-bold">คำอธิบายสินค้า</label>
+                        <textarea name="Description" class="form-control" rows="2" placeholder="รายละเอียดคุณค่าทางอาหารและคุณสมบัติ"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกสินค้า</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

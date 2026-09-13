@@ -1,0 +1,95 @@
+@model CSI402_Project_final.Models.RegisterViewModel
+@{
+    ViewData["Title"] = "สมัครสมาชิกใหม่ - PetStore Pro";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="p-4 text-center text-white" style="background: linear-gradient(135deg, #2a9d8f, #264653);">
+                    <div class="fs-1 mb-2"><i class="bi bi-person-plus-fill"></i></div>
+                    <h4 class="fw-bold m-0">สมัครสมาชิก PetStore Pro</h4>
+                    <p class="small text-white-50 m-0">ร่วมเป็นครอบครัวคนรักสัตว์เลี้ยง รับสิทธิประโยชน์และส่วนลดโปรโมชั่นพิเศษมากมาย</p>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+                    {
+                        <div class="alert alert-danger rounded-3 py-2 small mb-4" role="alert">
+                            <div asp-validation-summary="All" class="m-0"></div>
+                        </div>
+                    }
+
+                    <form asp-action="Register" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">ชื่อ-นามสกุล</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-card-text"></i></span>
+                                <input asp-for="FullName" class="form-control border-start-0" placeholder="เช่น นายสมชาย สายใจรักสัตว์" />
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">ชื่อผู้ใช้ (Username)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-at"></i></span>
+                                    <input asp-for="Username" class="form-control border-start-0" placeholder="somchai_pet" />
+                                </div>
+                                <span asp-validation-for="Username" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">เบอร์โทรศัพท์</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-telephone"></i></span>
+                                    <input asp-for="Phone" class="form-control border-start-0" placeholder="081-xxx-xxxx" />
+                                </div>
+                                <span asp-validation-for="Phone" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">อีเมล (Email)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control border-start-0" placeholder="name@example.com" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock"></i></span>
+                                    <input asp-for="Password" class="form-control border-start-0" />
+                                </div>
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">ยืนยันรหัสผ่าน</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-shield-lock"></i></span>
+                                    <input asp-for="ConfirmPassword" class="form-control border-start-0" />
+                                </div>
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 py-3 fw-bold rounded-3 shadow-sm mb-3">
+                            <i class="bi bi-check-circle-fill me-1"></i> ยืนยันการสมัครสมาชิก
+                        </button>
+
+                        <div class="text-center small text-muted">
+                            มีบัญชีผู้ใช้งานอยู่แล้ว? <a asp-action="Login" class="text-primary fw-bold text-decoration-none">เข้าสู่ระบบ</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,21 @@
+@{
+    ViewData["Title"] = "ไม่มีสิทธิ์เข้าถึง - Access Denied";
+}
+
+<div class="container py-5 text-center">
+    <div class="card border-0 shadow-sm rounded-4 p-5 mx-auto" style="max-width: 550px;">
+        <div class="display-1 text-danger mb-3"><i class="bi bi-shield-x"></i></div>
+        <h3 class="fw-bold text-dark mb-2">ปฏิเสธการเข้าถึง (Access Denied)</h3>
+        <p class="text-muted mb-4">
+            บัญชีผู้ใช้งานของคุณไม่มีสิทธิ์ในการเข้าถึงหน้าระบบงานส่วนนี้ หากคุณเป็นเจ้าหน้าที่ กรุณาเข้าสู่ระบบด้วยบัญชีที่มีสิทธิ์ตามบทบาทที่ถูกต้อง
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark">
+                <i class="bi bi-house"></i> กลับสู่หน้าร้าน
+            </a>
+            <a asp-controller="Auth" asp-action="Login" class="btn btn-primary">
+                <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบด้วยบัญชีอื่น
+            </a>
+        </div>
+    </div>
+</div>

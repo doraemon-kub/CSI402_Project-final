@@ -1,0 +1,187 @@
+@model List<CSI402_Project_final.Models.Promotion>
+@using CSI402_Project_final.Models
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "6. จัดการแคมเปญโปรโมชั่นและการตลาด (Marketing Staff)";
+    int totalPromos = ViewBag.TotalPromotions ?? 0;
+    int activeCount = ViewBag.ActivePromotionsCount ?? 0;
+    int totalUsage = ViewBag.TotalUsageAllPromos ?? 0;
+}
+
+<!-- Summary Statistics Cards (Req 27: แสดงสถิติและจำนวนครั้งที่มีการใช้โปรโมชั่น) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">โปรโมชั่นทั้งหมดในระบบ</div>
+                    <div class="fs-3 fw-bold text-dark">@totalPromos รายการ</div>
+                </div>
+                <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-3"><i class="bi bi-tag-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">โปรโมชั่นที่เปิดใช้งานอยู่ (Active)</div>
+                    <div class="fs-3 fw-bold text-success">@activeCount รายการ</div>
+                </div>
+                <div class="p-3 bg-success-subtle text-success rounded-3 fs-3"><i class="bi bi-lightning-charge-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">จำนวนครั้งที่ลูกค้าใช้โปรโมชั่นรวม (Req 27)</div>
+                    <div class="fs-3 fw-bold text-danger">@totalUsage ครั้ง</div>
+                </div>
+                <div class="p-3 bg-danger-subtle text-danger rounded-3 fs-3"><i class="bi bi-graph-up-arrow"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold m-0 text-dark">รายการแคมเปญโปรโมชั่นและเงื่อนไข (Req 5, 25, 26, 27)</h5>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPromoModal">
+            <i class="bi bi-plus-circle me-1"></i> สร้างแคมเปญโปรโมชั่นใหม่
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>รหัส</th>
+                    <th>ชื่อโปรโมชั่น</th>
+                    <th>ประเภทเงื่อนไข (Req 25)</th>
+                    <th>ระยะเวลา (Req 26)</th>
+                    <th>สถิติใช้งาน (Req 27)</th>
+                    <th>สถานะเปิด/ปิด (Req 5)</th>
+                    <th>การดำเนินการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var promo in Model)
+                {
+                    <tr>
+                        <td><code>@promo.Code</code></td>
+                        <td>
+                            <div class="fw-bold text-dark">@promo.Title</div>
+                            <small class="text-muted">@promo.Description</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                @(promo.Type == PromotionType.Buy3ItemsDiscount ? "ซื้อครบ 3 ชิ้นลดทันที" :
+                                  promo.Type == PromotionType.FoodCategoryDiscount ? "ซื้ออาหาร 2 รายการขึ้นไป" :
+                                  promo.Type == PromotionType.FreeShippingWeightCap ? "ส่งฟรี (นน. <= 10kg)" :
+                                  promo.Type == PromotionType.FreeGiftMilestone ? "แจกของแถมฟรี" : "อาหารแบรนด์เดียวกัน")
+                            </span>
+                        </td>
+                        <td>
+                            <small class="d-block text-muted">เริ่ม: @promo.StartDate.ToString("dd/MM/yyyy")</small>
+                            <small class="d-block text-muted">สิ้นสุด: @promo.EndDate.ToString("dd/MM/yyyy")</small>
+                        </td>
+                        <td>
+                            <span class="fs-6 fw-bold text-danger">@promo.UsageCount ครั้ง</span>
+                        </td>
+                        <td>
+                            @if (promo.IsActive)
+                            {
+                                <span class="badge bg-success">🟢 เปิดใช้งาน</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">⚪ ปิดชั่วคราว</span>
+                            }
+                        </td>
+                        <td>
+                            <!-- สวิตช์เปิด/ปิดโปรโมชั่น (Req 5) -->
+                            <form asp-action="ToggleStatus" method="post">
+                                <input type="hidden" name="id" value="@promo.Id" />
+                                <button type="submit" class="btn btn-sm @(promo.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                    @(promo.IsActive ? "ปิดโปรโมชั่น" : "เปิดโปรโมชั่น")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal สร้างโปรโมชั่นใหม่ (Req 25, 26) -->
+<div class="modal fade" id="createPromoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form asp-action="Create" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">สร้างแคมเปญโปรโมชั่นใหม่</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">รหัสโปรโมชั่น</label>
+                        <input type="text" name="Code" class="form-control" placeholder="เช่น SUPERDOG20" required />
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small fw-bold">ชื่อโปรโมชั่น</label>
+                        <input type="text" name="Title" class="form-control" placeholder="เช่น ซื้ออาหารสุนัขแบรนด์ Royal Canin ลด 15%" required />
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label small fw-bold">คำอธิบายรายละเอียดโปรโมชั่น</label>
+                        <input type="text" name="Description" class="form-control" placeholder="ข้อความสำหรับแสดงให้ลูกค้าเห็นในหน้าร้าน" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">ประเภทเงื่อนไขโปรโมชั่น (Req 25)</label>
+                        <select name="Type" class="form-select">
+                            <option value="@PromotionType.Buy3ItemsDiscount">ซื้อครบ X ชิ้นได้ส่วนลด</option>
+                            <option value="@PromotionType.FoodCategoryDiscount">ซื้อหมวดหมู่อาหาร X รายการขึ้นไป</option>
+                            <option value="@PromotionType.SameBrandFoodDiscount">ซื้ออาหารจากแบรนด์เดียวกัน</option>
+                            <option value="@PromotionType.FreeShippingWeightCap">ส่งฟรีเมื่อยอดถึงกำหนด (นน. ไม่เกิน 10kg)</option>
+                            <option value="@PromotionType.FreeGiftMilestone">รับของแถมฟรีเมื่อยอดถึงกำหนด</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">ส่วนลดเป็นบาท (฿)</label>
+                        <input type="number" name="DiscountAmount" class="form-control" value="0" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">ส่วนลดเป็นเปอร์เซ็นต์ (%)</label>
+                        <input type="number" name="DiscountPercent" class="form-control" value="10" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">ขั้นต่ำจำนวนชิ้น</label>
+                        <input type="number" name="MinQuantity" class="form-control" value="2" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">ขั้นต่ำยอดเงิน (บาท)</label>
+                        <input type="number" name="MinSpend" class="form-control" value="500" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">แบรนด์ที่เข้าร่วม (ถ้ามี)</label>
+                        <input type="text" name="ParticipatingBrand" class="form-control" placeholder="เช่น Royal Canin, Me-O" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">วันที่เริ่มต้น (Req 26)</label>
+                        <input type="datetime-local" name="StartDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">วันที่สิ้นสุด (Req 26)</label>
+                        <input type="datetime-local" name="EndDate" class="form-control" value="@DateTime.Now.AddMonths(1).ToString("yyyy-MM-ddTHH:mm")" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกแคมเปญ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

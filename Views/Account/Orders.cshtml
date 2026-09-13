@@ -1,0 +1,163 @@
+@model List<CSI402_Project_final.Models.Order>
+@using CSI402_Project_final.Models
+@{
+    ViewData["Title"] = "ประวัติคำสั่งซื้อและการติดตามสินค้า";
+    var successOrderId = ViewBag.SuccessOrderId as string;
+}
+
+<div class="container py-4">
+    @if (!string.IsNullOrEmpty(successOrderId))
+    {
+        <div class="alert alert-success border-0 shadow-sm rounded-4 p-4 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                <div>
+                    <h4 class="fw-bold m-0">สั่งซื้อสินค้าสำเร็จ! ขอบคุณที่ไว้วางใจ PetStore Pro</h4>
+                    <p class="m-0 text-muted">เลขอ้างอิงคำสั่งซื้อ: <strong>@successOrderId</strong> ทางเรากำลังจัดเตรียมสินค้าเพื่อจัดส่ง</p>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1"><i class="bi bi-box-seam text-warning"></i> รายการคำสั่งซื้อของคุณ</h3>
+            <span class="text-muted">ตรวจสอบสถานะการแพ็กและเลข Tracking พัสดุ (Customer Role)</span>
+        </div>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark btn-sm">เลือกซื้อสินค้าเพิ่ม</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 text-center py-5">
+            <h5 class="text-muted">ไม่พบประวัติคำสั่งซื้อ</h5>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var order in Model)
+            {
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card-header bg-light py-3 d-flex flex-wrap justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="fw-bold text-dark fs-5">#@order.OrderId</span>
+                                <span class="badge @(order.Status == OrderStatus.Shipped ? "bg-success" : 
+                                                    order.Status == OrderStatus.RefundRequested ? "bg-danger" : 
+                                                    order.Status == OrderStatus.Refunded ? "bg-secondary" : "bg-primary") px-3 py-2">
+                                    @(order.Status == OrderStatus.PaymentVerified ? "ชำระเงินแล้ว (รอจัดของ)" :
+                                      order.Status == OrderStatus.Preparing ? "กำลังจัดเตรียมสินค้า" :
+                                      order.Status == OrderStatus.Shipped ? "จัดส่งสินค้าแล้ว 🚚" :
+                                      order.Status == OrderStatus.RefundRequested ? "รอดำเนินการขอคืนเงิน" :
+                                      order.Status == OrderStatus.Refunded ? "คืนเงินเรียบร้อยแล้ว" : order.Status.ToString())
+                                </span>
+                            </div>
+                            <div class="text-muted small">
+                                สั่งซื้อเมื่อ: @order.OrderDate.ToString("dd/MM/yyyy HH:mm น.")
+                            </div>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <div class="row g-4">
+                                <div class="col-md-7">
+                                    <h6 class="fw-bold text-muted small text-uppercase">รายการสินค้า</h6>
+                                    <div class="list-group list-group-flush">
+                                        @foreach (var item in order.Items)
+                                        {
+                                            <div class="list-group-item px-0 d-flex justify-content-between">
+                                                <div>
+                                                    <div class="fw-bold text-dark">@item.ProductName</div>
+                                                    <small class="text-muted">จำนวน: @item.Quantity ชิ้น | น้ำหนัก: @(item.UnitWeightKg * item.Quantity) kg</small>
+                                                </div>
+                                                <div class="fw-bold text-dark">฿@item.Subtotal.ToString("N0")</div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(order.FreeGiftItem))
+                                    {
+                                        <div class="alert alert-warning py-2 px-3 small mt-2 mb-0">
+                                            🎁 <strong>ของแถมฟรีตามโปรโมชั่น:</strong> @order.FreeGiftItem
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="col-md-5 border-start-md">
+                                    <h6 class="fw-bold text-muted small text-uppercase">การจัดส่งและยอดเงิน</h6>
+                                    
+                                    @if (!string.IsNullOrEmpty(order.TrackingNumber))
+                                    {
+                                        <div class="p-3 bg-success-subtle rounded-3 mb-3 border border-success-subtle">
+                                            <div class="small fw-bold text-success">🚚 พัสดุจัดส่งแล้วโดย @order.Courier</div>
+                                            <div class="fs-5 fw-bold text-dark mt-1">Tracking: @order.TrackingNumber</div>
+                                            <div class="small text-muted">น้ำหนักพัสดุชั่งจริง: @order.ActualWeightKg kg</div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="p-3 bg-light rounded-3 mb-3">
+                                            <div class="small text-muted">สถานะพัสดุ: <strong>กำลังเตรียมบรรจุหีบห่อ</strong></div>
+                                            <div class="small text-muted">น้ำหนักประเมิน: ⚖️ @order.EstimatedWeightKg kg</div>
+                                        </div>
+                                    }
+
+                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                        <span>ราคาสินค้า:</span>
+                                        <span>฿@order.ItemsTotal.ToString("N0")</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between small text-danger mb-1">
+                                        <span>ส่วนลดโปรโมชั่น:</span>
+                                        <span>-฿@order.DiscountTotal.ToString("N0")</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between small text-muted mb-2">
+                                        <span>ค่าจัดส่ง:</span>
+                                        <span>฿@order.ShippingFee.ToString("N0")</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between fw-bold fs-5 text-dark border-top pt-2">
+                                        <span>ยอดชำระสุทธิ:</span>
+                                        <span class="text-danger">฿@order.GrandTotal.ToString("N0")</span>
+                                    </div>
+
+                                    <!-- ขอยกเลิกคำสั่งซื้อ (Req 20) -->
+                                    @if (order.Status == OrderStatus.PaymentVerified || order.Status == OrderStatus.Preparing)
+                                    {
+                                        <div class="mt-3 text-end">
+                                            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelModal-@order.OrderId">
+                                                <i class="bi bi-x-circle"></i> ขอยกเลิกคำสั่งซื้อ / ขอคืนเงิน
+                                            </button>
+                                        </div>
+
+                                        <!-- Modal ขอยกเลิกคำสั่งซื้อ -->
+                                        <div class="modal fade" id="cancelModal-@order.OrderId" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form asp-action="CancelOrder" method="post">
+                                                        <input type="hidden" name="orderId" value="@order.OrderId" />
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title fw-bold text-danger">ขอยกเลิกคำสั่งซื้อ #@order.OrderId</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p class="small text-muted">เมื่อกดยืนยัน คำขอนี้จะถูกส่งไปยังฝ่ายบัญชีเพื่อตรวจสอบและดำเนินการคืนเงินจำนวน <strong>฿@order.GrandTotal.ToString("N0")</strong></p>
+                                                            <label class="form-label small fw-bold">ระบุเหตุผลที่ต้องการยกเลิก:</label>
+                                                            <textarea name="reason" class="form-control" rows="3" placeholder="เช่น สั่งสินค้าผิดสูตร, ต้องการเปลี่ยนที่อยู่..." required></textarea>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                                                            <button type="submit" class="btn btn-danger">ยืนยันขอยกเลิกและคืนเงิน</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

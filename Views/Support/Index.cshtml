@@ -1,0 +1,166 @@
+@model List<CSI402_Project_final.Models.SupportTicket>
+@using CSI402_Project_final.Models
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "8. ศูนย์รับแจ้งและแก้ไขปัญหาระบบ (IT Support)";
+    int newCount = ViewBag.NewCount ?? 0;
+    int invCount = ViewBag.InvestigatingCount ?? 0;
+    int resCount = ViewBag.ResolvedCount ?? 0;
+    var selectedStatus = ViewBag.SelectedStatus as TicketStatus?;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">เรื่องแจ้งใหม่ (ยังไม่ดำเนินการ)</div>
+                    <div class="fs-3 fw-bold text-danger">@newCount เรื่อง</div>
+                </div>
+                <div class="p-3 bg-danger-subtle text-danger rounded-3 fs-3"><i class="bi bi-bell-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">กำลังตรวจสอบ / แก้ไขปัญหา</div>
+                    <div class="fs-3 fw-bold text-warning">@invCount เรื่อง</div>
+                </div>
+                <div class="p-3 bg-warning-subtle text-warning rounded-3 fs-3"><i class="bi bi-tools"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">แก้ไขปัญหาเสร็จสิ้นแล้ว (Resolved)</div>
+                    <div class="fs-3 fw-bold text-success">@resCount เรื่อง</div>
+                </div>
+                <div class="p-3 bg-success-subtle text-success rounded-3 fs-3"><i class="bi bi-check2-all"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold m-0 text-dark">กระดานเรื่องแจ้งปัญหาและบันทึกผลการแก้ไข (Req 23, 24)</h5>
+        <div class="btn-group">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary @(!selectedStatus.HasValue ? "active" : "")">ทั้งหมด</a>
+            <a asp-action="Index" asp-route-status="@TicketStatus.New" class="btn btn-sm btn-outline-secondary @(selectedStatus == TicketStatus.New ? "active" : "")">เรื่องใหม่</a>
+            <a asp-action="Index" asp-route-status="@TicketStatus.Investigating" class="btn btn-sm btn-outline-secondary @(selectedStatus == TicketStatus.Investigating ? "active" : "")">กำลังตรวจสอบ</a>
+            <a asp-action="Index" asp-route-status="@TicketStatus.Resolved" class="btn btn-sm btn-outline-secondary @(selectedStatus == TicketStatus.Resolved ? "active" : "")">เสร็จสิ้น</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>รหัส Ticket</th>
+                    <th>ผู้แจ้ง & ช่องทาง</th>
+                    <th>หมวดหมู่ & ความเร่งด่วน</th>
+                    <th>หัวข้อ & รายละเอียดปัญหา</th>
+                    <th>สถานะ</th>
+                    <th>ช่างผู้รับผิดชอบ</th>
+                    <th>บันทึกการแก้ไข (Req 24)</th>
+                    <th>จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ticket in Model)
+                {
+                    <tr>
+                        <td class="fw-bold text-primary">#@ticket.TicketCode</td>
+                        <td>
+                            <div class="fw-bold">@ticket.CustomerName</div>
+                            <small class="text-muted">@ticket.ContactEmail</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">@ticket.Category</span>
+                            <span class="badge @(ticket.Priority == TicketPriority.Urgent ? "bg-danger" : 
+                                                ticket.Priority == TicketPriority.High ? "bg-warning text-dark" : "bg-info text-dark")">
+                                @ticket.Priority
+                            </span>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">@ticket.Subject</div>
+                            <small class="text-muted text-truncate d-block" style="max-width: 250px;">@ticket.Description</small>
+                        </td>
+                        <td>
+                            <span class="badge @(ticket.Status == TicketStatus.New ? "bg-danger" :
+                                                ticket.Status == TicketStatus.Investigating ? "bg-warning text-dark" :
+                                                ticket.Status == TicketStatus.Resolved ? "bg-success" : "bg-secondary")">
+                                @ticket.Status
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-dark fw-medium">@(ticket.AssignedTechnician ?? "ยังไม่ระบุ")</small>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(ticket.ResolutionDetails))
+                            {
+                                <small class="text-success d-block text-truncate" style="max-width: 200px;" title="@ticket.ResolutionDetails">
+                                    <i class="bi bi-check-circle"></i> @ticket.ResolutionDetails
+                                </small>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">ยังไม่มีบันทึก</span>
+                            }
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#resolveModal-@ticket.Id">
+                                <i class="bi bi-pencil-square"></i> แก้ไข/บันทึก
+                            </button>
+
+                            <!-- Modal บันทึกผลการแก้ไขของ IT Support (Req 23, 24) -->
+                            <div class="modal fade" id="resolveModal-@ticket.Id" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form asp-action="ResolveTicket" method="post">
+                                            <input type="hidden" name="ticketId" value="@ticket.Id" />
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold">อัปเดตและบันทึกประวัติการแก้ไข (#@ticket.TicketCode)</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3 p-3 bg-light rounded-3">
+                                                    <strong>หัวข้อ:</strong> @ticket.Subject<br />
+                                                    <strong>รายละเอียด:</strong> @ticket.Description
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">ชื่อเจ้าหน้าที่ IT ผู้รับผิดชอบ</label>
+                                                    <input type="text" name="technician" class="form-control" value="@(ticket.AssignedTechnician ?? "สมศักดิ์ (IT Support)")" required />
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">อัปเดตสถานะปัญหา (Req 23)</label>
+                                                    <select name="newStatus" class="form-select">
+                                                        <option value="@TicketStatus.Investigating" selected="@(ticket.Status == TicketStatus.Investigating)">กำลังตรวจสอบ (Investigating)</option>
+                                                        <option value="@TicketStatus.Resolved" selected="@(ticket.Status == TicketStatus.Resolved)">แก้ไขเสร็จสิ้น (Resolved)</option>
+                                                        <option value="@TicketStatus.Closed" selected="@(ticket.Status == TicketStatus.Closed)">ปิดเรื่อง (Closed)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">บันทึกรายละเอียดและประวัติการแก้ไข (Req 24)</label>
+                                                    <textarea name="resolutionNote" class="form-control" rows="3" placeholder="ระบุสาเหตุทางเทคนิค และวิธีที่ใช้ในการแก้ไขปัญหา..." required>@ticket.ResolutionDetails</textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                                                <button type="submit" class="btn btn-success">บันทึกประวัติการแก้ไข</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,112 @@
+@model List<CSI402_Project_final.Models.Order>
+@using CSI402_Project_final.Models
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "5. จัดการการจัดส่งและพัสดุ (Shipping Staff)";
+    int readyToShip = ViewBag.ReadyToShipCount ?? 0;
+    int shippedToday = ViewBag.ShippedTodayCount ?? 0;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">พัสดุรอจัดส่งและบันทึก Tracking</div>
+                    <div class="fs-3 fw-bold text-warning">@readyToShip รายการ</div>
+                </div>
+                <div class="p-3 bg-warning-subtle text-warning rounded-3 fs-3"><i class="bi bi-box-arrow-up-right"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">จัดส่งแล้ววันนี้</div>
+                    <div class="fs-3 fw-bold text-success">@shippedToday รายการ</div>
+                </div>
+                <div class="p-3 bg-success-subtle text-success rounded-3 fs-3"><i class="bi bi-truck-front-fill"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <h5 class="fw-bold mb-3 text-dark">บันทึกเลขพัสดุ ชั่งน้ำหนักจริง และเปลี่ยนสถานะ (Req 4, 14, 16)</h5>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>เลขออเดอร์</th>
+                    <th>ผู้รับและที่อยู่</th>
+                    <th>นน. ประเมินระบบ</th>
+                    <th>นน. ชั่งจริง (kg)</th>
+                    <th>บริษัทขนส่ง</th>
+                    <th>เลขพัสดุ (Tracking No.)</th>
+                    <th>สถานะ</th>
+                    <th>การดำเนินการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    <tr>
+                        <td class="fw-bold text-primary">#@order.OrderId</td>
+                        <td>
+                            <div class="fw-bold">@order.CustomerName</div>
+                            <small class="text-muted d-block text-truncate" style="max-width: 180px;">@order.ShippingAddress</small>
+                        </td>
+                        <td>
+                            <span class="badge @(order.EstimatedWeightKg > 10.0 ? "bg-danger" : "bg-secondary")">
+                                ⚖️ @order.EstimatedWeightKg kg
+                            </span>
+                        </td>
+                        
+                        <!-- ฟอร์มบันทึกการจัดส่ง -->
+                        <td colspan="5">
+                            @if (order.Status == OrderStatus.Shipped)
+                            {
+                                <div class="d-flex justify-content-between align-items-center p-2 bg-success-subtle rounded-3">
+                                    <span>นน. ชั่งจริง: <strong>@order.ActualWeightKg kg</strong></span>
+                                    <span>ขนส่ง: <strong>@order.Courier</strong></span>
+                                    <span class="fw-bold text-success">Tracking: @order.TrackingNumber</span>
+                                    <span class="badge bg-success">จัดส่งแล้ว ✅</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <form asp-action="DispatchOrder" method="post" class="row g-2 align-items-center">
+                                    <input type="hidden" name="orderId" value="@order.OrderId" />
+                                    
+                                    <div class="col-sm-3">
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" step="0.1" name="actualWeightKg" class="form-control" value="@order.EstimatedWeightKg" placeholder="นน. จริง" required />
+                                            <span class="input-group-text">kg</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <select name="courier" class="form-select form-select-sm">
+                                            <option value="Flash Express">Flash Express</option>
+                                            <option value="Kerry Express">Kerry Express</option>
+                                            <option value="ไปรษณีย์ไทย (EMS)">ไปรษณีย์ไทย (EMS)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <input type="text" name="trackingNumber" class="form-control form-control-sm" placeholder="กรอกเลขพัสดุ Tracking..." required />
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold">
+                                            <i class="bi bi-send"></i> ส่งพัสดุ
+                                        </button>
+                                    </div>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

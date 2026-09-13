@@ -1,0 +1,123 @@
+@model List<CSI402_Project_final.Models.Order>
+@using CSI402_Project_final.Models
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "4. จัดการคำสั่งซื้อและเตรียมสินค้า (Order Staff)";
+    var selectedStatus = ViewBag.SelectedStatus as OrderStatus?;
+    int pendingCount = ViewBag.PendingCount ?? 0;
+    int preparingCount = ViewBag.PreparingCount ?? 0;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">ออเดอร์ใหม่ชำระเงินแล้ว (รอจัดของ)</div>
+                    <div class="fs-3 fw-bold text-primary">@pendingCount รายการ</div>
+                </div>
+                <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-3"><i class="bi bi-clock-history"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">กำลังแพ็กสินค้า (Preparing)</div>
+                    <div class="fs-3 fw-bold text-warning">@preparingCount รายการ</div>
+                </div>
+                <div class="p-3 bg-warning-subtle text-warning rounded-3 fs-3"><i class="bi bi-box-seam"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold m-0 text-dark">คิวคำสั่งซื้อที่ต้องดำเนินการจัดเตรียม</h5>
+        <div class="btn-group">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary @(!selectedStatus.HasValue ? "active" : "")">ทั้งหมด</a>
+            <a asp-action="Index" asp-route-status="@OrderStatus.PaymentVerified" class="btn btn-sm btn-outline-secondary @(selectedStatus == OrderStatus.PaymentVerified ? "active" : "")">รอจัดของ</a>
+            <a asp-action="Index" asp-route-status="@OrderStatus.Preparing" class="btn btn-sm btn-outline-secondary @(selectedStatus == OrderStatus.Preparing ? "active" : "")">กำลังแพ็ก</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>เลขออเดอร์</th>
+                    <th>ลูกค้า & ที่อยู่</th>
+                    <th>รายการสินค้าที่ต้องหยิบ</th>
+                    <th>ของแถมโปรโมชั่น</th>
+                    <th>น้ำหนักรวม</th>
+                    <th>ยอดเงิน</th>
+                    <th>สถานะ</th>
+                    <th>อัปเดตสถานะ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    <tr>
+                        <td class="fw-bold text-primary">#@order.OrderId</td>
+                        <td>
+                            <div class="fw-bold text-dark">@order.CustomerName</div>
+                            <small class="text-muted text-truncate d-block" style="max-width: 200px;">@order.ShippingAddress</small>
+                            <small class="text-muted">📞 @order.CustomerPhone</small>
+                        </td>
+                        <td>
+                            <ul class="list-unstyled m-0 small">
+                                @foreach (var item in order.Items)
+                                {
+                                    <li><i class="bi bi-dot"></i> @item.ProductName <strong>x @item.Quantity</strong></li>
+                                }
+                            </ul>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(order.FreeGiftItem))
+                            {
+                                <span class="badge bg-warning text-dark"><i class="bi bi-gift"></i> @order.FreeGiftItem</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">-</span>
+                            }
+                        </td>
+                        <td><strong>⚖️ @order.EstimatedWeightKg kg</strong></td>
+                        <td class="fw-bold text-dark">฿@order.GrandTotal.ToString("N0")</td>
+                        <td>
+                            <span class="badge @(order.Status == OrderStatus.PaymentVerified ? "bg-info" :
+                                                order.Status == OrderStatus.Preparing ? "bg-warning text-dark" :
+                                                order.Status == OrderStatus.Shipped ? "bg-success" : "bg-secondary")">
+                                @order.Status
+                            </span>
+                        </td>
+                        <td>
+                            <form asp-action="UpdateStatus" method="post" class="d-flex gap-1">
+                                <input type="hidden" name="orderId" value="@order.OrderId" />
+                                @if (order.Status == OrderStatus.PaymentVerified)
+                                {
+                                    <button type="submit" name="newStatus" value="@OrderStatus.Preparing" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-box"></i> เริ่มแพ็ก
+                                    </button>
+                                }
+                                else if (order.Status == OrderStatus.Preparing)
+                                {
+                                    <button type="submit" name="newStatus" value="@OrderStatus.Shipped" class="btn btn-sm btn-success">
+                                        <i class="bi bi-truck"></i> แพ็กเสร็จพร้อมส่ง
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">เรียบร้อย</span>
+                                }
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

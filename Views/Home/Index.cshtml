@@ -1,8 +1,195 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model List<CSI402_Project_final.Models.Product>
+@using CSI402_Project_final.Models
+@{
+    ViewData["Title"] = "หน้าหลัก - ร้านค้าสัตว์เลี้ยง PetStore Pro";
+    var activePromotions = ViewBag.ActivePromotions as List<Promotion> ?? new();
+    var petType = ViewBag.SelectedPetType as PetCategory?;
+    var category = ViewBag.SelectedCategory as ProductCategory?;
+    var ageStage = ViewBag.SelectedAgeStage as AgeStage?;
+    var specialNeed = ViewBag.SelectedSpecialNeed as string;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container py-3 py-md-4">
+    <!-- Promotional Banner Alert (Req 13) - Fully Responsive -->
+    <div class="p-3 p-md-4 mb-4 rounded-4 text-white shadow-sm" style="background: linear-gradient(135deg, #ff7a3d, #ff5e62);">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-8">
+                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2 fw-bold" style="font-size: 0.8rem;">
+                    <i class="bi bi-stars"></i> แคมเปญโปรโมชั่นพิเศษประจำสัปดาห์
+                </span>
+                <h3 class="fw-bold mb-2 fs-4 fs-md-3">โปรคุ้มจัดเต็มเพื่อสัตว์เลี้ยงที่คุณรัก!</h3>
+                <div class="d-flex flex-wrap gap-2 mt-2 mt-md-3">
+                    <span class="badge bg-white text-dark p-2" style="font-size: 0.78rem;"><i class="bi bi-check-circle-fill text-success"></i> ซื้อครบ 3 ชิ้นลด 50.-</span>
+                    <span class="badge bg-white text-dark p-2" style="font-size: 0.78rem;"><i class="bi bi-check-circle-fill text-success"></i> อาหาร 2 รายการลด 10%</span>
+                    <span class="badge bg-white text-dark p-2" style="font-size: 0.78rem;"><i class="bi bi-check-circle-fill text-success"></i> ส่งฟรีเมื่อไม่เกิน 10kg</span>
+                    <span class="badge bg-white text-dark p-2" style="font-size: 0.78rem;"><i class="bi bi-check-circle-fill text-success"></i> ช้อปครบพัน รับฟรีเสื้อสัตว์เลี้ยง</span>
+                    <span class="badge bg-white text-dark p-2" style="font-size: 0.78rem;"><i class="bi bi-check-circle-fill text-success"></i> อาหารแบรนด์เดียวกันลด 15%</span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-light text-danger fw-bold shadow-sm w-100 w-lg-auto py-2 px-3">
+                    <i class="bi bi-cart-check"></i> ตรวจสอบตะกร้า & ส่วนลด
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Section (Req 1, 2, 7, 9, 10) - Responsive Grid for Phone / Tablet / iPad / Desktop -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-3 p-md-4">
+            <form method="get" asp-controller="Home" asp-action="Index" class="row g-2 g-md-3 align-items-end">
+                <!-- ค้นหาชื่อ/แบรนด์ -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-search"></i> ค้นหาชื่อสินค้า / แบรนด์</label>
+                    <input type="text" name="search" class="form-control" placeholder="เช่น Royal Canin, Me-O..." value="@Context.Request.Query["search"]" />
+                </div>
+                
+                <!-- ประเภทสัตว์ (Req 1, 9) -->
+                <div class="col-6 col-md-3 col-lg-2">
+                    <label class="form-label small fw-bold text-muted mb-1">ประเภทสัตว์เลี้ยง</label>
+                    <select name="petType" class="form-select">
+                        <option value="">ทั้งหมด</option>
+                        <option value="@PetCategory.Dog" selected="@(petType == PetCategory.Dog)">🐶 สุนัข</option>
+                        <option value="@PetCategory.Cat" selected="@(petType == PetCategory.Cat)">🐱 แมว</option>
+                    </select>
+                </div>
+
+                <!-- หมวดหมู่อาหาร/ของใช้ (Req 9) -->
+                <div class="col-6 col-md-3 col-lg-2">
+                    <label class="form-label small fw-bold text-muted mb-1">หมวดหมู่สินค้า</label>
+                    <select name="category" class="form-select">
+                        <option value="">ทั้งหมด</option>
+                        <option value="@ProductCategory.Food" selected="@(category == ProductCategory.Food)">🍲 อาหาร</option>
+                        <option value="@ProductCategory.Supply" selected="@(category == ProductCategory.Supply)">🧸 ของใช้</option>
+                        <option value="@ProductCategory.Hygiene" selected="@(category == ProductCategory.Hygiene)">🧼 สุขอนามัย</option>
+                    </select>
+                </div>
+
+                <!-- คัดแยกช่วงวัยแบ่งเป็น Layer (Req 7, 10) -->
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label class="form-label small fw-bold text-muted mb-1">ช่วงวัย (Layer)</label>
+                    <select name="ageStage" class="form-select">
+                        <option value="">ทุกช่วงวัย</option>
+                        <option value="@AgeStage.PuppyOrKitten" selected="@(ageStage == AgeStage.PuppyOrKitten)">🍼 วัยเด็ก</option>
+                        <option value="@AgeStage.Adult" selected="@(ageStage == AgeStage.Adult)">🐕 โตเต็มวัย</option>
+                        <option value="@AgeStage.Senior" selected="@(ageStage == AgeStage.Senior)">🧓 สูงวัย</option>
+                    </select>
+                </div>
+
+                <!-- สูตรเฉพาะ / โรคประจำตัว (Req 7) -->
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label class="form-label small fw-bold text-muted mb-1">โรคประจำตัว / สูตร</label>
+                    <select name="specialNeed" class="form-select">
+                        <option value="">ทั้งหมด</option>
+                        <option value="โรคไต" selected="@(specialNeed == "โรคไต")">🩺 โรคไต</option>
+                        <option value="บำรุงขน" selected="@(specialNeed == "บำรุงขน")">✨ บำรุงขน</option>
+                        <option value="ทั่วไป" selected="@(specialNeed == "ทั่วไป")">🌿 ทั่วไป</option>
+                    </select>
+                </div>
+
+                <!-- ปุ่มกรอง (ไม่โดนบีบเป็นแนวตั้งอีกต่อไป) -->
+                <div class="col-12 col-md-4 col-lg-1">
+                    <button type="submit" class="btn btn-dark w-100 fw-bold d-flex align-items-center justify-content-center gap-1 py-2">
+                        <i class="bi bi-funnel-fill"></i> <span>กรอง</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Grid Header - Responsive Flex -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-1 mb-3">
+        <h4 class="fw-bold mb-0 fs-5 fs-md-4">
+            รายการสินค้าทั้งหมด 
+            <span class="badge bg-secondary fs-6">@Model.Count รายการ</span>
+        </h4>
+        <small class="text-muted" style="font-size: 0.8rem;">ระบบคำนวณราคาและส่วนลดอัตโนมัติเมื่อกดใส่ตะกร้า</small>
+    </div>
+
+    <!-- Responsive Product Grid: 1 col on mobile, 2 cols on tablet/phablet, 3-4 cols on desktop -->
+    <div class="row g-2 g-md-3 g-lg-4">
+        @if (!Model.Any())
+        {
+            <div class="col-12 text-center py-5">
+                <div class="text-muted fs-5">ไม่พบสินค้าตามเงื่อนไขที่เลือก</div>
+                <a asp-action="Index" class="btn btn-outline-primary mt-3 btn-sm">ล้างตัวกรองทั้งหมด</a>
+            </div>
+        }
+        @foreach (var item in Model)
+        {
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative">
+                    <!-- Badge บอกจำนวนคนใส่ตะกร้า (Req 8 Real-Time Target) -->
+                    <div class="position-absolute top-0 start-0 m-2 m-md-3 z-1">
+                        <span class="badge bg-danger shadow-sm" id="cart-count-badge-@item.Id" style="font-size: 0.7rem;">
+                            <i class="bi bi-fire"></i> <span id="cart-count-val-@item.Id">@item.CartAddCount</span> คนในตะกร้า
+                        </span>
+                    </div>
+
+                    <!-- Badge ช่วงวัย (Req 10) -->
+                    <div class="position-absolute top-0 end-0 m-2 m-md-3 z-1">
+                        <span class="badge bg-info text-dark shadow-sm" style="font-size: 0.7rem;">
+                            @(item.AgeStage == AgeStage.PuppyOrKitten ? "🍼 วัยเด็ก" :
+                              item.AgeStage == AgeStage.Adult ? "🐕 โตเต็มวัย" :
+                              item.AgeStage == AgeStage.Senior ? "🧓 สูงวัย" : "🐾 ทุกวัย")
+                        </span>
+                    </div>
+
+                    <img src="@item.ImageUrl" class="card-img-top" alt="@item.Name" style="height: 140px; object-fit: cover;" />
+                    
+                    <div class="card-body d-flex flex-column p-2 p-md-3">
+                        <div class="small text-muted mb-1 d-flex justify-content-between" style="font-size: 0.75rem;">
+                            <span class="text-truncate">แบรนด์: <strong>@item.Brand</strong></span>
+                            <span class="flex-shrink-0">⚖️ @item.WeightKg kg</span>
+                        </div>
+                        
+                        <h6 class="card-title fw-bold mb-1 mb-md-2 text-truncate" title="@item.Name" style="font-size: 0.88rem;">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="text-dark text-decoration-none">
+                                @item.Name
+                            </a>
+                        </h6>
+
+                        <div class="small text-muted mb-2 d-flex flex-wrap gap-1">
+                            <span class="badge bg-light text-dark border" style="font-size: 0.68rem;">
+                                @(item.PetType == PetCategory.Dog ? "สุนัข" : item.PetType == PetCategory.Cat ? "แมว" : "สัตว์")
+                            </span>
+                            <span class="badge bg-light text-primary border" style="font-size: 0.68rem;">@item.SpecialNeed</span>
+                        </div>
+
+                        <!-- Price Section (Req 3: แสดงราคาเดิมและราคาลด) -->
+                        <div class="mt-auto pt-2 border-top">
+                            <div class="d-flex align-items-baseline gap-2 mb-2">
+                                @if (item.SpecialDiscountPrice.HasValue)
+                                {
+                                    <span class="fs-5 fw-bold text-danger">฿@item.SpecialDiscountPrice.Value.ToString("N0")</span>
+                                    <span class="text-muted text-decoration-line-through small" style="font-size: 0.75rem;">฿@item.Price.ToString("N0")</span>
+                                }
+                                else
+                                {
+                                    <span class="fs-5 fw-bold text-dark">฿@item.Price.ToString("N0")</span>
+                                }
+                            </div>
+
+                            <form asp-controller="Cart" asp-action="Add" method="post">
+                                <input type="hidden" name="productId" value="@item.Id" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                
+                                @if (item.IsOutOfStock)
+                                {
+                                    <button type="button" class="btn btn-secondary w-100 btn-sm" disabled style="font-size: 0.8rem;">หมด</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-pet-primary w-100 btn-sm d-flex align-items-center justify-content-center gap-1" style="font-size: 0.82rem; padding: 6px 8px;">
+                                        <i class="bi bi-cart-plus"></i> <span>เพิ่มลงตะกร้า</span>
+                                    </button>
+                                }
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 </div>

@@ -1,0 +1,196 @@
+@model CSI402_Project_final.Models.ProfileViewModel
+@{
+    ViewData["Title"] = "ข้อมูลส่วนตัวและที่อยู่จัดส่ง (My Profile & Addresses)";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">หน้าแรก</a></li>
+            <li class="breadcrumb-item active">โปรไฟล์ผู้ใช้งาน</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- ฝั่งซ้าย: ข้อมูลบัญชีผู้ใช้ -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4 mb-4">
+                <div class="position-relative d-inline-block mx-auto mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow" 
+                         style="width: 90px; height: 90px; background: linear-gradient(135deg, #ff7a3d, #ff5e62); font-size: 2.5rem;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">@Model.FullName</h5>
+                <p class="text-muted small mb-2"><code>@@@Model.Username</code></p>
+                <div>
+                    <span class="badge bg-primary px-3 py-1 rounded-pill">บทบาท: @Model.Role</span>
+                </div>
+            </div>
+
+            <!-- ฟอร์มแก้ไขข้อมูลส่วนตัว -->
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-pencil-square text-warning me-1"></i> แก้ไขข้อมูลส่วนตัว</h6>
+                <form asp-action="UpdateProfile" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">ชื่อ-นามสกุล</label>
+                        <input type="text" asp-for="FullName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">อีเมล (Email)</label>
+                        <input type="email" asp-for="Email" class="form-control" required />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted">เบอร์โทรศัพท์</label>
+                        <input type="tel" asp-for="Phone" class="form-control" required />
+                    </div>
+                    <button type="submit" class="btn btn-pet-primary w-100 fw-bold">
+                        <i class="bi bi-check2"></i> บันทึกข้อมูลส่วนตัว
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ฝั่งขวา: สมุดที่อยู่จัดส่งสินค้า (Address Book) -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-4">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i> สมุดที่อยู่สำหรับจัดส่งสินค้า</h5>
+                        <p class="small text-muted mb-0">บันทึกที่อยู่ไว้ เพื่อความสะดวกรวดเร็วในการสั่งซื้อสินค้าครั้งต่อไป</p>
+                    </div>
+                    <button type="button" class="btn btn-dark btn-sm d-flex align-items-center gap-1 flex-shrink-0" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                        <i class="bi bi-plus-lg"></i> <span>เพิ่มที่อยู่ใหม่</span>
+                    </button>
+                </div>
+
+                @if (!Model.Addresses.Any())
+                {
+                    <div class="text-center py-5 border rounded-4 bg-light">
+                        <div class="fs-1 text-muted mb-2"><i class="bi bi-house-door"></i></div>
+                        <h6 class="text-muted fw-bold">ยังไม่มีข้อมูลที่อยู่จัดส่ง</h6>
+                        <p class="small text-muted mb-3">กดปุ่ม "เพิ่มที่อยู่ใหม่" เพื่อบันทึกที่อยู่สำหรับจัดส่งพัสดุของคุณ</p>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                            <i class="bi bi-plus-circle me-1"></i> เพิ่มที่อยู่ตอนนี้
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (var addr in Model.Addresses)
+                        {
+                            <div class="col-12">
+                                <div class="border rounded-4 p-3 p-md-4 @(addr.IsDefault ? "border-2 border-danger bg-danger-subtle bg-opacity-10" : "bg-white") shadow-sm position-relative">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-secondary">@addr.Title</span>
+                                            <h6 class="fw-bold text-dark mb-0">@addr.RecipientName</h6>
+                                            <span class="small text-muted">📞 @addr.Phone</span>
+                                        </div>
+                                        @if (addr.IsDefault)
+                                        {
+                                            <span class="badge bg-danger"><i class="bi bi-check-circle-fill me-1"></i> ที่อยู่จัดส่งหลัก</span>
+                                        }
+                                    </div>
+
+                                    <p class="text-dark mb-3 small">
+                                        @addr.DisplayAddress
+                                    </p>
+
+                                    <div class="d-flex flex-wrap gap-2 pt-2 border-top">
+                                        @if (!addr.IsDefault)
+                                        {
+                                            <form asp-action="SetDefaultAddress" method="post" class="m-0">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="addressId" value="@addr.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    ตั้งเป็นที่อยู่หลัก
+                                                </button>
+                                            </form>
+                                        }
+                                        <form asp-action="DeleteAddress" method="post" class="m-0" onsubmit="return confirm('ยืนยันลบที่อยู่นี้?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="addressId" value="@addr.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-trash"></i> ลบที่อยู่
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: เพิ่มที่อยู่จัดส่งใหม่ -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <form asp-action="SaveAddress" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-light border-0 py-3">
+                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-geo-alt text-danger me-1"></i> เพิ่มที่อยู่จัดส่งสินค้าใหม่</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">ชื่อเรียกที่อยู่</label>
+                        <input type="text" name="Title" class="form-control" placeholder="เช่น บ้าน, คอนโด, ที่ทำงาน" value="บ้าน" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">ชื่อ-นามสกุล ผู้รับ</label>
+                        <input type="text" name="RecipientName" class="form-control" value="@Model.FullName" placeholder="ระบุชื่อผู้รับพัสดุ" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">เบอร์โทรศัพท์ติดต่อ</label>
+                        <input type="tel" name="Phone" class="form-control" value="@Model.Phone" placeholder="081-xxx-xxxx" required />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label small fw-bold text-muted">ที่อยู่ (บ้านเลขที่, หมู่บ้าน/อาคาร, ซอย, ถนน)</label>
+                        <textarea name="FullAddress" class="form-control" rows="2" placeholder="เช่น 99/12 หมู่บ้านสุขใจ ซอยพหลโยธิน 34 ถนนพหลโยธิน" required></textarea>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">ตำบล / แขวง</label>
+                        <input type="text" name="Subdistrict" class="form-control" placeholder="เช่น ลาดยาว" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">อำเภอ / เขต</label>
+                        <input type="text" name="District" class="form-control" placeholder="เช่น จตุจักร" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">จังหวัด</label>
+                        <input type="text" name="Province" class="form-control" placeholder="เช่น กรุงเทพมหานคร" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">รหัสไปรษณีย์</label>
+                        <input type="text" name="PostalCode" class="form-control" placeholder="เช่น 10900" required />
+                    </div>
+
+                    <div class="col-12 mt-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="IsDefault" value="true" id="isDefaultCheck" checked>
+                            <label class="form-check-label small fw-bold text-dark" for="isDefaultCheck">
+                                กำหนดให้เป็นที่อยู่จัดส่งหลัก (Default Shipping Address)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0 py-3">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-pet-primary btn-sm px-4">
+                        <i class="bi bi-save me-1"></i> บันทึกที่อยู่
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

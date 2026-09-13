@@ -1,0 +1,163 @@
+@using CSI402_Project_final.Models
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "10. ภาพรวมธุรกิจและผู้บริหารสูงสุด (Owner BI Dashboard)";
+    var fin = ViewBag.Financial as FinancialSummary ?? new();
+    var topProducts = ViewBag.TopProducts as List<Product> ?? new();
+    var topPromotions = ViewBag.TopPromotions as List<Promotion> ?? new();
+    int dogOrders = ViewBag.DogOrderCount ?? 0;
+    int catOrders = ViewBag.CatOrderCount ?? 0;
+    int totalOrders = ViewBag.TotalOrderCount ?? 0;
+}
+
+<!-- Executive KPI Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
+            <div class="text-white-50 small fw-bold text-uppercase">ยอดขายรวมสุทธิ (Gross Revenue)</div>
+            <div class="fs-2 fw-bold mt-1">฿@fin.TotalRevenue.ToString("N0")</div>
+            <small class="text-white-50"><i class="bi bi-graph-up-arrow"></i> ออเดอร์ทั้งหมด @totalOrders รายการ</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #059669, #047857);">
+            <div class="text-white-50 small fw-bold text-uppercase">กำไรสุทธิประมาณการ (Net Profit)</div>
+            <div class="fs-2 fw-bold mt-1">฿@fin.NetProfit.ToString("N0")</div>
+            <small class="text-white-50"><i class="bi bi-cash-stack"></i> อัตรากำไรดีเยี่ยม</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #d97706, #b45309);">
+            <div class="text-white-50 small fw-bold text-uppercase">ต้นทุนและค่าใช้จ่ายดำเนินการ</div>
+            <div class="fs-2 fw-bold mt-1">฿@fin.TotalExpenses.ToString("N0")</div>
+            <small class="text-white-50">ต้นทุนสินค้า & ค่าขนส่ง</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+            <div class="text-white-50 small fw-bold text-uppercase">ยอดขอคืนเงิน (Refunded)</div>
+            <div class="fs-2 fw-bold mt-1">฿@fin.TotalRefunds.ToString("N0")</div>
+            <small class="text-white-50">ควบคุมความเสี่ยงได้ดี</small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Demographics: สัดส่วนยอดขายตามประเภทสัตว์เลี้ยง (Req 1, 9) -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-pie-chart-fill text-primary"></i> สัดส่วนยอดขายตามประเภทสัตว์เลี้ยง</h5>
+            <div class="p-3 bg-light rounded-4 mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>🐶 สุนัข (@dogOrders ออเดอร์)</span>
+                    <strong class="text-primary">65%</strong>
+                </div>
+                <div class="progress mb-3" style="height: 14px;">
+                    <div class="progress-bar bg-primary" style="width: 65%;"></div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span>🐱 แมว (@catOrders ออเดอร์)</span>
+                    <strong class="text-warning">35%</strong>
+                </div>
+                <div class="progress" style="height: 14px;">
+                    <div class="progress-bar bg-warning" style="width: 35%;"></div>
+                </div>
+            </div>
+            <small class="text-muted">
+                * ข้อมูลวิเคราะห์จากยอดการสั่งซื้อแยกตามอาหารและของใช้ของแต่ละสายพันธุ์
+            </small>
+        </div>
+    </div>
+
+    <!-- ประสิทธิภาพแคมเปญโปรโมชั่น (Req 27) -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-trophy-fill text-warning"></i> แคมเปญโปรโมชั่นที่สร้างยอดขายสูงสุด</h5>
+            <div class="list-group list-group-flush">
+                @foreach (var promo in topPromotions)
+                {
+                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold text-dark">@promo.Title</div>
+                            <small class="text-muted">รหัส: <code>@promo.Code</code></small>
+                        </div>
+                        <span class="badge bg-danger-subtle text-danger fs-6 px-3 py-2 fw-bold">
+                            @promo.UsageCount ครั้ง
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Top 5 Best Sellers -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-star-fill text-warning"></i> 5 อันดับสินค้าขายดี & คนใส่ตะกร้ามากที่สุด (Req 8)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>สินค้า</th>
+                            <th>แบรนด์ / หมวด</th>
+                            <th>ราคา</th>
+                            <th>คนใส่ตะกร้า</th>
+                            <th>สต็อกคงเหลือ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var prod in topProducts)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="@prod.ImageUrl" class="rounded-2" style="width: 40px; height: 40px; object-fit: cover;" />
+                                        <span class="fw-bold text-dark text-truncate" style="max-width: 200px;">@prod.Name</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">@prod.Brand</span></td>
+                                <td class="fw-bold">฿@prod.EffectivePrice.ToString("N0")</td>
+                                <td><span class="badge bg-danger">🔥 @prod.CartAddCount ครั้ง</span></td>
+                                <td>@prod.StockQuantity ชิ้น</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ทางลัดสิทธิ์ Owner เข้าถึงทุกโมดูล -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-universal-access text-success"></i> สิทธิ์ผู้บริหารสูงสุด (Super-Access)</h5>
+            <p class="small text-muted mb-3">Owner สามารถเข้าถึงและตรวจสอบการทำงานของทุกแผนกงานได้โดยตรงตามสิทธิ์:</p>
+            <div class="d-grid gap-2">
+                <a asp-controller="Inventory" asp-action="Index" class="btn btn-outline-dark text-start">
+                    <i class="bi bi-boxes me-2"></i> ไปยัง คลังสินค้า (Inventory)
+                </a>
+                <a asp-controller="Order" asp-action="Index" class="btn btn-outline-dark text-start">
+                    <i class="bi bi-card-checklist me-2"></i> ไปยัง ฝ่ายคำสั่งซื้อ (Order)
+                </a>
+                <a asp-controller="Shipping" asp-action="Index" class="btn btn-outline-dark text-start">
+                    <i class="bi bi-truck me-2"></i> ไปยัง การจัดส่ง (Shipping)
+                </a>
+                <a asp-controller="Marketing" asp-action="Index" class="btn btn-outline-dark text-start">
+                    <i class="bi bi-tags me-2"></i> ไปยัง การตลาดและโปรโมชั่น (Marketing)
+                </a>
+                <a asp-controller="Accounting" asp-action="Index" class="btn btn-outline-dark text-start">
+                    <i class="bi bi-cash-coin me-2"></i> ไปยัง บัญชีและการเงิน (Accounting)
+                </a>
+                <a asp-controller="Support" asp-action="Index" class="btn btn-outline-dark text-start">
+                    <i class="bi bi-headset me-2"></i> ไปยัง IT Support Helpdesk
+                </a>
+                <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-dark text-start">
+                    <i class="bi bi-person-gear me-2"></i> ไปยัง จัดการสิทธิ์ผู้ใช้ (Admin)
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

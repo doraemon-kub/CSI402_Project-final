@@ -1,0 +1,151 @@
+@model List<CSI402_Project_final.Models.SystemUser>
+@using CSI402_Project_final.Models
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "9. จัดการบัญชีผู้ใช้และกำหนดสิทธิ์ (Admin)";
+    int totalStaff = ViewBag.TotalStaff ?? 0;
+    int totalCustomers = ViewBag.TotalCustomers ?? 0;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">บัญชีพนักงานทุกแผนก (Staff Roles)</div>
+                    <div class="fs-3 fw-bold text-primary">@totalStaff บัญชี</div>
+                </div>
+                <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-3"><i class="bi bi-people-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">บัญชีลูกค้าสมาชิก (Customer)</div>
+                    <div class="fs-3 fw-bold text-success">@totalCustomers บัญชี</div>
+                </div>
+                <div class="p-3 bg-success-subtle text-success rounded-3 fs-3"><i class="bi bi-person-badge"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold m-0 text-dark">ตารางบัญชีผู้ใช้งานและกำหนดสิทธิ์ตามบทบาท (Role & Permissions Matrix)</h5>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="bi bi-person-plus-fill me-1"></i> เพิ่มผู้ใช้งานใหม่
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>รหัส</th>
+                    <th>ชื่อผู้ใช้ / Username</th>
+                    <th>ชื่อ-นามสกุล</th>
+                    <th>อีเมล</th>
+                    <th>บทบาท (Role ในระบบ)</th>
+                    <th>สถานะบัญชี</th>
+                    <th>จัดการสิทธิ์</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td class="fw-bold">#@user.Id</td>
+                        <td><code>@user.Username</code></td>
+                        <td class="fw-bold text-dark">@user.FullName</td>
+                        <td><small class="text-muted">@user.Email</small></td>
+                        <td>
+                            <span class="badge @(user.Role == UserRole.Owner ? "bg-dark" :
+                                                user.Role == UserRole.Admin ? "bg-danger" :
+                                                user.Role == UserRole.MarketingStaff ? "bg-warning text-dark" :
+                                                user.Role == UserRole.AccountingStaff ? "bg-info text-dark" :
+                                                user.Role == UserRole.Customer ? "bg-light text-dark border" : "bg-primary") px-2 py-1">
+                                @user.Role
+                            </span>
+                        </td>
+                        <td>
+                            @if (user.IsActive)
+                            {
+                                <span class="badge bg-success">ใช้งานปกติ</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">ระงับการใช้งาน</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-action="UpdateUserRole" method="post" class="d-flex align-items-center gap-2">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <select name="newRole" class="form-select form-select-sm" style="width: 150px;">
+                                    <option value="@UserRole.InventoryStaff" selected="@(user.Role == UserRole.InventoryStaff)">Inventory Staff</option>
+                                    <option value="@UserRole.OrderStaff" selected="@(user.Role == UserRole.OrderStaff)">Order Staff</option>
+                                    <option value="@UserRole.ShippingStaff" selected="@(user.Role == UserRole.ShippingStaff)">Shipping Staff</option>
+                                    <option value="@UserRole.MarketingStaff" selected="@(user.Role == UserRole.MarketingStaff)">Marketing Staff</option>
+                                    <option value="@UserRole.AccountingStaff" selected="@(user.Role == UserRole.AccountingStaff)">Accounting Staff</option>
+                                    <option value="@UserRole.ITSupport" selected="@(user.Role == UserRole.ITSupport)">IT Support</option>
+                                    <option value="@UserRole.Admin" selected="@(user.Role == UserRole.Admin)">Admin</option>
+                                    <option value="@UserRole.Owner" selected="@(user.Role == UserRole.Owner)">Owner</option>
+                                    <option value="@UserRole.Customer" selected="@(user.Role == UserRole.Customer)">Customer</option>
+                                </select>
+                                <input type="hidden" name="isActive" value="true" />
+                                <button type="submit" class="btn btn-sm btn-outline-dark">บันทึก</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal เพิ่มผู้ใช้งานใหม่ -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="CreateUser" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">เพิ่มผู้ใช้งานใหม่เข้าสู่ระบบ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Username</label>
+                        <input type="text" name="Username" class="form-control" placeholder="เช่น somchai_inv" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">ชื่อ-นามสกุล</label>
+                        <input type="text" name="FullName" class="form-control" placeholder="เช่น นายสมชาย สายตรวจ" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">อีเมล</label>
+                        <input type="email" name="Email" class="form-control" placeholder="เช่น somchai@petshop.com" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">บทบาทหน้าที่ (Role)</label>
+                        <select name="Role" class="form-select">
+                            <option value="@UserRole.InventoryStaff">Inventory Staff (คลังสินค้า)</option>
+                            <option value="@UserRole.OrderStaff">Order Staff (คำสั่งซื้อ)</option>
+                            <option value="@UserRole.ShippingStaff">Shipping Staff (จัดส่ง)</option>
+                            <option value="@UserRole.MarketingStaff">Marketing Staff (การตลาด)</option>
+                            <option value="@UserRole.AccountingStaff">Accounting Staff (บัญชี)</option>
+                            <option value="@UserRole.ITSupport">IT Support (ซัพพอร์ต)</option>
+                            <option value="@UserRole.Admin">Admin (ผู้ดูแลระบบ)</option>
+                            <option value="@UserRole.Customer">Customer (ลูกค้า)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกผู้ใช้</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
