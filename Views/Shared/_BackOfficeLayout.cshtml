@@ -41,6 +41,11 @@
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
+            transition: margin-left 0.25s ease-in-out;
+        }
+        /* Collapsed Sidebar on Desktop */
+        body.sidebar-collapsed .sidebar-desktop {
+            margin-left: -260px;
         }
         .sidebar-brand {
             padding: 18px 20px;
@@ -265,7 +270,7 @@
             <!-- Topbar with Offcanvas Toggle Button on Mobile/Tablet -->
             <header class="topbar">
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-outline-secondary d-lg-none py-1 px-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+                    <button class="btn btn-outline-secondary py-1 px-2" type="button" id="sidebarToggleBtn" title="เปิด/ปิดเมนูข้าง (Toggle Sidebar)">
                         <i class="bi bi-list fs-5"></i>
                     </button>
                     <h6 class="m-0 fw-bold text-truncate" style="max-width: 250px;">@ViewData["Title"]</h6>
@@ -348,6 +353,43 @@
                 bsToast.show();
             }
         }
+
+        // Universal Sidebar Toggle (Desktop & Mobile)
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn = document.getElementById("sidebarToggleBtn");
+            const offcanvasEl = document.getElementById("sidebarOffcanvas");
+            let bsOffcanvas = null;
+
+            if (offcanvasEl && typeof bootstrap !== "undefined" && bootstrap.Offcanvas) {
+                bsOffcanvas = new bootstrap.Offcanvas(offcanvasEl);
+            }
+
+            // Restore collapsed state on desktop
+            if (window.innerWidth >= 992) {
+                if (localStorage.getItem("backoffice_sidebar_collapsed") === "true") {
+                    document.body.classList.add("sidebar-collapsed");
+                }
+            }
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener("click", function() {
+                    if (window.innerWidth < 992) {
+                        // Mobile / Tablet: Open Offcanvas drawer
+                        if (bsOffcanvas) {
+                            bsOffcanvas.toggle();
+                        } else {
+                            const instance = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                            instance.toggle();
+                        }
+                    } else {
+                        // Desktop: Toggle collapsed class on body
+                        document.body.classList.toggle("sidebar-collapsed");
+                        const isCollapsed = document.body.classList.contains("sidebar-collapsed");
+                        localStorage.setItem("backoffice_sidebar_collapsed", isCollapsed ? "true" : "false");
+                    }
+                });
+            }
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

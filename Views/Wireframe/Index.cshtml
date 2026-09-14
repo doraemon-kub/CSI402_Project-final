@@ -47,6 +47,10 @@
             flex-direction: column;
             border-right: 1px solid #334155;
             flex-shrink: 0;
+            transition: margin-left 0.25s ease-in-out;
+        }
+        .wf-sidebar.collapsed {
+            margin-left: -320px;
         }
         .wf-sidebar-header {
             padding: 20px;
@@ -327,7 +331,10 @@
         <!-- 2. Main Canvas Stage: แสดงโครงร่าง Wireframe ตามหน้าที่เลือก -->
         <div class="wf-stage">
             <div class="wf-stage-topbar no-print">
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-light btn-sm py-1 px-2" onclick="toggleWfSidebar()" id="wfToggleBtn" title="เปิด/ปิดเมนูข้าง (Toggle Sidebar)">
+                        <i class="bi bi-layout-sidebar-inset"></i>
+                    </button>
                     <h5 class="fw-bold m-0">
                         <i class="bi bi-bounding-box-circles text-warning me-2"></i> 
                         แบบร่างโครงสร้าง UI Wireframe: <span class="text-warning text-uppercase">@active</span>
@@ -1314,5 +1321,13 @@
             </div>
         </div>
     </div>
+    <script>
+        function toggleWfSidebar() {
+            const sidebar = document.querySelector('.wf-sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('collapsed');
+            }
+        }
+    </script>
 </body>
 </html>
