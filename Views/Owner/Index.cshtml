@@ -5,8 +5,10 @@
     var fin = ViewBag.Financial as FinancialSummary ?? new();
     var topProducts = ViewBag.TopProducts as List<Product> ?? new();
     var topPromotions = ViewBag.TopPromotions as List<Promotion> ?? new();
+    var recentOrders = ViewBag.RecentOrders as List<Order> ?? new();
     int dogOrders = ViewBag.DogOrderCount ?? 0;
     int catOrders = ViewBag.CatOrderCount ?? 0;
+    int otherOrders = ViewBag.OtherOrderCount ?? 0;
     int totalOrders = ViewBag.TotalOrderCount ?? 0;
 }
 
@@ -21,51 +23,65 @@
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #059669, #047857);">
-            <div class="text-white-50 small fw-bold text-uppercase">กำไรสุทธิประมาณการ (Net Profit)</div>
+            <div class="text-white-50 small fw-bold text-uppercase">กำไรสุทธิจริง (Net Profit)</div>
             <div class="fs-2 fw-bold mt-1">฿@fin.NetProfit.ToString("N0")</div>
-            <small class="text-white-50"><i class="bi bi-cash-stack"></i> อัตรากำไรดีเยี่ยม</small>
+            <small class="text-white-50"><i class="bi bi-cash-stack"></i> หักรายจ่าย &amp; คืนเงินจริงแล้ว</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #d97706, #b45309);">
-            <div class="text-white-50 small fw-bold text-uppercase">ต้นทุนและค่าใช้จ่ายดำเนินการ</div>
+            <div class="text-white-50 small fw-bold text-uppercase">รายจ่ายดำเนินการที่บันทึก</div>
             <div class="fs-2 fw-bold mt-1">฿@fin.TotalExpenses.ToString("N0")</div>
-            <small class="text-white-50">ต้นทุนสินค้า & ค่าขนส่ง</small>
+            <small class="text-white-50">ข้อมูลจากฝ่ายบัญชี (Monthly)</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
             <div class="text-white-50 small fw-bold text-uppercase">ยอดขอคืนเงิน (Refunded)</div>
             <div class="fs-2 fw-bold mt-1">฿@fin.TotalRefunds.ToString("N0")</div>
-            <small class="text-white-50">ควบคุมความเสี่ยงได้ดี</small>
+            <small class="text-white-50">จำนวน @fin.RefundedOrdersCount รายการ</small>
         </div>
     </div>
 </div>
 
 <div class="row g-4 mb-4">
-    <!-- Demographics: สัดส่วนยอดขายตามประเภทสัตว์เลี้ยง (Req 1, 9) -->
+    <!-- Demographics: สัดส่วนยอดขายตามประเภทสัตว์เลี้ยงจริง (Req 1, 9) -->
+    @{
+        int totalPetOrders = dogOrders + catOrders + otherOrders;
+        int dogPct = totalPetOrders > 0 ? (int)Math.Round((dogOrders * 100.0) / totalPetOrders) : 0;
+        int catPct = totalPetOrders > 0 ? (int)Math.Round((catOrders * 100.0) / totalPetOrders) : 0;
+        int otherPct = totalPetOrders > 0 ? Math.Max(0, 100 - dogPct - catPct) : 0;
+    }
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
             <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-pie-chart-fill text-primary"></i> สัดส่วนยอดขายตามประเภทสัตว์เลี้ยง</h5>
             <div class="p-3 bg-light rounded-4 mb-3">
-                <div class="d-flex justify-content-between mb-2">
-                    <span>🐶 สุนัข (@dogOrders ออเดอร์)</span>
-                    <strong class="text-primary">65%</strong>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>🐶 สุนัข (@dogOrders รายการ)</span>
+                    <strong class="text-primary">@dogPct%</strong>
                 </div>
-                <div class="progress mb-3" style="height: 14px;">
-                    <div class="progress-bar bg-primary" style="width: 65%;"></div>
+                <div class="progress mb-3" style="height: 12px;">
+                    <div class="progress-bar bg-primary" style="width: @(dogPct)%;"></div>
                 </div>
 
-                <div class="d-flex justify-content-between mb-2">
-                    <span>🐱 แมว (@catOrders ออเดอร์)</span>
-                    <strong class="text-warning">35%</strong>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>🐱 แมว (@catOrders รายการ)</span>
+                    <strong class="text-warning">@catPct%</strong>
                 </div>
-                <div class="progress" style="height: 14px;">
-                    <div class="progress-bar bg-warning" style="width: 35%;"></div>
+                <div class="progress mb-3" style="height: 12px;">
+                    <div class="progress-bar bg-warning" style="width: @(catPct)%;"></div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-1">
+                    <span>🐾 สัตว์เลี้ยงอื่นๆ (@otherOrders รายการ)</span>
+                    <strong class="text-success">@otherPct%</strong>
+                </div>
+                <div class="progress" style="height: 12px;">
+                    <div class="progress-bar bg-success" style="width: @(otherPct)%;"></div>
                 </div>
             </div>
             <small class="text-muted">
-                * ข้อมูลวิเคราะห์จากยอดการสั่งซื้อแยกตามอาหารและของใช้ของแต่ละสายพันธุ์
+                * คำนวณสัดส่วนจริงจากจำนวนรายการสินค้าที่ถูกสั่งซื้อในตาราง OrderItem
             </small>
         </div>
     </div>
@@ -92,11 +108,11 @@
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4 mb-4">
     <!-- Top 5 Best Sellers -->
     <div class="col-lg-7">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-star-fill text-warning"></i> 5 อันดับสินค้าขายดี & คนใส่ตะกร้ามากที่สุด (Req 8)</h5>
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-star-fill text-warning"></i> 5 อันดับสินค้าขายดี &amp; คนใส่ตะกร้ามากที่สุด (Req 8)</h5>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
@@ -132,7 +148,7 @@
 
     <!-- ทางลัดสิทธิ์ Owner เข้าถึงทุกโมดูล -->
     <div class="col-lg-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
             <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-universal-access text-success"></i> สิทธิ์ผู้บริหารสูงสุด (Super-Access)</h5>
             <p class="small text-muted mb-3">Owner สามารถเข้าถึงและตรวจสอบการทำงานของทุกแผนกงานได้โดยตรงตามสิทธิ์:</p>
             <div class="d-grid gap-2">
@@ -160,4 +176,41 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Recent Orders Summary -->
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-clock-history text-primary"></i> คำสั่งซื้อล่าสุดในระบบ (@recentOrders.Count รายการ)</h5>
+    @if (!recentOrders.Any())
+    {
+        <div class="text-center text-muted py-3">ยังไม่มีคำสั่งซื้อในระบบ</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>เลขออเดอร์</th>
+                        <th>ลูกค้า</th>
+                        <th>วันที่สั่งซื้อ</th>
+                        <th>ยอดสุทธิ</th>
+                        <th>สถานะ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ord in recentOrders)
+                    {
+                        <tr>
+                            <td class="fw-bold text-primary">#@ord.OrderId</td>
+                            <td>@ord.CustomerName</td>
+                            <td><small class="text-muted">@ord.OrderDate.ToString("dd/MM/yyyy HH:mm")</small></td>
+                            <td class="fw-bold">฿@ord.GrandTotal.ToString("N2")</td>
+                            <td><span class="badge bg-light text-dark border">@ord.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CSI402_Project_final.Models;
-using System;
 using System.Linq;
 
 namespace CSI402_Project_final.Controllers
@@ -19,36 +18,27 @@ namespace CSI402_Project_final.Controllers
         // หน้า Helpdesk Board ของ IT Support (Req 23)
         public IActionResult Index(TicketStatus? status = null)
         {
+            var allTickets = _repo.GetSupportTickets();
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            var query = _repo.SupportTickets.AsQueryable();
-
-            if (status.HasValue)
-            {
-                query = query.Where(t => t.Status == status.Value);
-            }
-
             ViewBag.SelectedStatus = status;
-            ViewBag.NewCount = _repo.SupportTickets.Count(t => t.Status == TicketStatus.New);
-            ViewBag.InvestigatingCount = _repo.SupportTickets.Count(t => t.Status == TicketStatus.Investigating);
-            ViewBag.ResolvedCount = _repo.SupportTickets.Count(t => t.Status == TicketStatus.Resolved);
+            ViewBag.NewCount = allTickets.Count(t => t.Status == TicketStatus.New);
+            ViewBag.InvestigatingCount = allTickets.Count(t => t.Status == TicketStatus.Investigating);
+            ViewBag.ResolvedCount = allTickets.Count(t => t.Status == TicketStatus.Resolved);
 
-            return View(query.OrderByDescending(t => t.CreatedAt).ToList());
+            var filtered = status.HasValue
+                ? allTickets.Where(t => t.Status == status.Value).ToList()
+                : allTickets;
+
+            return View(filtered);
         }
 
         // บันทึกรายละเอียดการแก้ไขปัญหาและปิดงาน (Req 24)
         [HttpPost]
         public IActionResult ResolveTicket(int ticketId, string technician, string resolutionNote, TicketStatus newStatus)
         {
-            var ticket = _repo.SupportTickets.FirstOrDefault(t => t.Id == ticketId);
+            var ticket = _repo.ResolveSupportTicket(ticketId, technician, resolutionNote, newStatus);
             if (ticket != null)
             {
-                ticket.AssignedTechnician = technician;
-                ticket.ResolutionDetails = resolutionNote;
-                ticket.Status = newStatus;
-                if (newStatus == TicketStatus.Resolved || newStatus == TicketStatus.Closed)
-                {
-                    ticket.ResolvedAt = DateTime.Now;
-                }
                 TempData["SuccessMessage"] = $"บันทึกประวัติการแก้ไขและอัปเดตสถานะ Ticket #{ticket.TicketCode} เรียบร้อยแล้ว";
             }
             return RedirectToAction(nameof(Index));

@@ -1,21 +1,31 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
 namespace CSI402_Project_final.Models
 {
     public class CartItem
     {
-        public Product Product { get; set; } = new();
+        public int Id { get; set; }
+        public int CartId { get; set; }
+        public int ProductId { get; set; }
+        public Product Product { get; set; } = null!;
         public int Quantity { get; set; } = 1;
 
-        public decimal OriginalSubtotal => Product.Price * Quantity;
-        public decimal Subtotal => Product.EffectivePrice * Quantity;
-        public double TotalWeightKg => Math.Round(Product.WeightKg * Quantity, 2);
+        [NotMapped]
+        public decimal OriginalSubtotal => (Product?.Price ?? 0m) * Quantity;
+        [NotMapped]
+        public decimal Subtotal => (Product?.EffectivePrice ?? 0m) * Quantity;
+        [NotMapped]
+        public double TotalWeightKg => Math.Round((Product?.WeightKg ?? 0d) * Quantity, 2);
     }
 
     public class AppliedPromotionSummary
     {
+        public int Id { get; set; }
+        public int? CartId { get; set; }
+        public string? OrderId { get; set; }
         public string PromotionTitle { get; set; } = string.Empty;
         public decimal DiscountAmount { get; set; }
         public string Note { get; set; } = string.Empty;
@@ -23,15 +33,22 @@ namespace CSI402_Project_final.Models
 
     public class Cart
     {
+        public int Id { get; set; }
+        public int UserId { get; set; }
         public List<CartItem> Items { get; set; } = new();
 
         // ผลการคำนวณ
+        [NotMapped]
         public decimal OriginalTotalPrice => Items.Sum(i => i.OriginalSubtotal);
+        [NotMapped]
         public decimal ProductPriceBeforePromo => Items.Sum(i => i.Subtotal);
+        [NotMapped]
         public double TotalWeightKg => Math.Round(Items.Sum(i => i.TotalWeightKg), 2);
+        [NotMapped]
         public int TotalItemCount => Items.Sum(i => i.Quantity);
 
         public List<AppliedPromotionSummary> AppliedPromotions { get; set; } = new();
+        [NotMapped]
         public decimal TotalPromotionDiscount => AppliedPromotions.Sum(p => p.DiscountAmount);
 
         // ของแถม (Req โปรโมชั่น 4)
@@ -43,7 +60,9 @@ namespace CSI402_Project_final.Models
         public bool IsFreeShippingQualified { get; set; }
 
         // ยอดสุทธิหลังหักส่วนลดรวมค่าจัดส่ง (Req 3, 12, 13)
+        [NotMapped]
         public decimal NetProductPrice => Math.Max(0, ProductPriceBeforePromo - TotalPromotionDiscount);
+        [NotMapped]
         public decimal GrandTotal => NetProductPrice + ShippingFee;
 
         // -------------------------------------------------------------
@@ -64,77 +83,101 @@ namespace CSI402_Project_final.Models
 
             var promoList = activePromotions.Where(p => p.IsValidNow).ToList();
 
-            // 1. โปรโมชั่นที่ 1: ลูกค้าซื้อครบสามชิ้นจะได้ส่วนลด (เช่น ลด 50 บาท)
-            var buy3Promo = promoList.FirstOrDefault(p => p.Type == PromotionType.Buy3ItemsDiscount);
-            if (buy3Promo != null && TotalItemCount >= 3)
+            // 1. โปรโมชั่นที่ 1: ซื้อครบ X ชิ้นจะได้ส่วนลด (รองรับหลายแคมเปญและ MinSpend/Percent ที่ฝ่ายการตลาดกำหนด)
+            foreach (var buyPromo in promoList.Where(p => p.Type == PromotionType.Buy3ItemsDiscount))
             {
-                decimal discount = buy3Promo.DiscountAmount > 0 ? buy3Promo.DiscountAmount : 50m;
-                AppliedPromotions.Add(new AppliedPromotionSummary
+                int minQty = buyPromo.MinQuantity > 0 ? buyPromo.MinQuantity : 3;
+                if (TotalItemCount >= minQty && (buyPromo.MinSpend <= 0 || ProductPriceBeforePromo >= buyPromo.MinSpend))
                 {
-                    PromotionTitle = buy3Promo.Title,
-                    DiscountAmount = discount,
-                    Note = $"ซื้อครบ {TotalItemCount} ชิ้น (เกณฑ์ขั้นต่ำ 3 ชิ้น)"
-                });
+                    decimal discount = buyPromo.DiscountAmount > 0
+                        ? buyPromo.DiscountAmount
+                        : (buyPromo.DiscountPercent > 0 ? Math.Round(ProductPriceBeforePromo * (buyPromo.DiscountPercent / 100m), 2) : 50m);
+
+                    AppliedPromotions.Add(new AppliedPromotionSummary
+                    {
+                        PromotionTitle = buyPromo.Title,
+                        DiscountAmount = discount,
+                        Note = $"ซื้อครบ {TotalItemCount} ชิ้น (เกณฑ์ขั้นต่ำ {minQty} ชิ้น)"
+                    });
+                }
             }
 
-            // 2. โปรโมชั่นที่ 2: รับส่วนลดพิเศษเมื่อซื้ออาหารตามหมวดหมู่อย่างน้อยสองรายการ
-            var foodItemsCount = Items.Where(i => i.Product.Category == ProductCategory.Food).Sum(i => i.Quantity);
-            var foodVarietyPromo = promoList.FirstOrDefault(p => p.Type == PromotionType.FoodCategoryDiscount);
-            if (foodVarietyPromo != null && foodItemsCount >= 2)
+            // 2. โปรโมชั่นที่ 2: ซื้อสินค้าตามหมวดหมู่อย่างน้อย X รายการ
+            foreach (var catPromo in promoList.Where(p => p.Type == PromotionType.FoodCategoryDiscount))
             {
-                decimal foodTotal = Items.Where(i => i.Product.Category == ProductCategory.Food).Sum(i => i.Subtotal);
-                decimal discount = foodVarietyPromo.DiscountPercent > 0 
-                    ? Math.Round(foodTotal * (foodVarietyPromo.DiscountPercent / 100m), 2)
-                    : 60m;
+                var targetCat = catPromo.TargetCategory ?? ProductCategory.Food;
+                int minQty = catPromo.MinQuantity > 0 ? catPromo.MinQuantity : 2;
+                var matchingItems = Items.Where(i => i.Product != null && i.Product.Category == targetCat).ToList();
+                var catItemsCount = matchingItems.Sum(i => i.Quantity);
+                decimal catTotal = matchingItems.Sum(i => i.Subtotal);
 
-                AppliedPromotions.Add(new AppliedPromotionSummary
+                if (catItemsCount >= minQty && (catPromo.MinSpend <= 0 || catTotal >= catPromo.MinSpend))
                 {
-                    PromotionTitle = foodVarietyPromo.Title,
-                    DiscountAmount = discount,
-                    Note = $"ซื้ออาหารสัตว์เลี้ยง {foodItemsCount} รายการ (เกณฑ์ขั้นต่ำ 2 รายการ)"
-                });
+                    decimal discount = catPromo.DiscountPercent > 0
+                        ? Math.Round(catTotal * (catPromo.DiscountPercent / 100m), 2)
+                        : (catPromo.DiscountAmount > 0 ? catPromo.DiscountAmount : 60m);
+
+                    AppliedPromotions.Add(new AppliedPromotionSummary
+                    {
+                        PromotionTitle = catPromo.Title,
+                        DiscountAmount = discount,
+                        Note = $"ซื้อสินค้าหมวด {targetCat} {catItemsCount} รายการ (เกณฑ์ขั้นต่ำ {minQty} รายการ)"
+                    });
+                }
             }
 
-            // 3. โปรโมชั่นที่ 5: รับส่วนลดพิเศษเมื่อซื้ออาหารจากแบรนด์เดียวกัน (ตั้งแต่ 2 ชิ้นขึ้นไป)
-            var brandFoodPromo = promoList.FirstOrDefault(p => p.Type == PromotionType.SameBrandFoodDiscount);
-            if (brandFoodPromo != null)
+            // 3. โปรโมชั่นที่ 5: ซื้ออาหารจากแบรนด์เดียวกัน (รองรับ ParticipatingBrand และหลายแคมเปญ)
+            foreach (var brandFoodPromo in promoList.Where(p => p.Type == PromotionType.SameBrandFoodDiscount))
             {
-                var foodByBrand = Items
-                    .Where(i => i.Product.Category == ProductCategory.Food)
+                int minQty = brandFoodPromo.MinQuantity > 0 ? brandFoodPromo.MinQuantity : 2;
+                var targetCat = brandFoodPromo.TargetCategory ?? ProductCategory.Food;
+                var foodItems = Items.Where(i => i.Product != null && i.Product.Category == targetCat);
+
+                if (!string.IsNullOrWhiteSpace(brandFoodPromo.ParticipatingBrand))
+                {
+                    var allowedBrands = brandFoodPromo.ParticipatingBrand
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    foodItems = foodItems.Where(i => allowedBrands.Any(b => i.Product.Brand.Equals(b, StringComparison.OrdinalIgnoreCase)));
+                }
+
+                var foodByBrand = foodItems
                     .GroupBy(i => i.Product.Brand)
-                    .Where(g => g.Sum(x => x.Quantity) >= 2);
+                    .Where(g => g.Sum(x => x.Quantity) >= minQty &&
+                                (brandFoodPromo.MinSpend <= 0 || g.Sum(x => x.Subtotal) >= brandFoodPromo.MinSpend));
 
                 foreach (var brandGroup in foodByBrand)
                 {
                     decimal brandTotal = brandGroup.Sum(x => x.Subtotal);
                     decimal discount = brandFoodPromo.DiscountPercent > 0
                         ? Math.Round(brandTotal * (brandFoodPromo.DiscountPercent / 100m), 2)
-                        : 80m;
+                        : (brandFoodPromo.DiscountAmount > 0 ? brandFoodPromo.DiscountAmount : 80m);
 
                     AppliedPromotions.Add(new AppliedPromotionSummary
                     {
                         PromotionTitle = $"{brandFoodPromo.Title} (แบรนด์ {brandGroup.Key})",
                         DiscountAmount = discount,
-                        Note = $"ซื้ออาหารแบรนด์ {brandGroup.Key} รวม {brandGroup.Sum(x => x.Quantity)} ชิ้น"
+                        Note = $"ซื้อสินค้าแบรนด์ {brandGroup.Key} รวม {brandGroup.Sum(x => x.Quantity)} ชิ้น"
                     });
                 }
             }
 
-            // 4. โปรโมชั่นที่ 4: รับของใช้ฟรีเล็กน้อยเมื่อยอดถึงกำหนด (เช่น เสื้อสัตว์เลี้ยง เมื่อยอดครบ 1,000 บาท)
-            var giftPromo = promoList.FirstOrDefault(p => p.Type == PromotionType.FreeGiftMilestone);
-            if (giftPromo != null && ProductPriceBeforePromo >= (giftPromo.MinSpend > 0 ? giftPromo.MinSpend : 1000m))
+            // 4. โปรโมชั่นที่ 4: รับของใช้ฟรีเมื่อยอดถึงกำหนด (เลือกของแถมจากแคมเปญที่ยอดขั้นต่ำสูงสุดที่เข้าเกณฑ์)
+            var matchedGifts = promoList
+                .Where(p => p.Type == PromotionType.FreeGiftMilestone && ProductPriceBeforePromo >= (p.MinSpend > 0 ? p.MinSpend : 1000m))
+                .OrderByDescending(p => p.MinSpend)
+                .ToList();
+            if (matchedGifts.Any())
             {
-                FreeGiftItem = !string.IsNullOrEmpty(giftPromo.GiftItemName) 
-                    ? giftPromo.GiftItemName 
+                var giftPromo = matchedGifts.First();
+                FreeGiftItem = !string.IsNullOrEmpty(giftPromo.GiftItemName)
+                    ? giftPromo.GiftItemName
                     : "เสื้อยืดสัตว์เลี้ยง Pet Lover ลิมิเต็ด 🎽";
             }
 
             // 5. โปรโมชั่นที่ 3 & การคำนวณค่าจัดส่งตามเกณฑ์น้ำหนัก (Req 4, 14, 15, 16)
-            // เกณฑ์: จัดส่งฟรีเมื่อยอดซื้อถึงกำหนด (เช่น 800 บาท) แต่น้ำหนักต้องไม่เกินเกณฑ์ 10 kg
-            // หากน้ำหนักเกิน 10 kg คิดค่าบริการเพิ่มตามน้ำหนักส่วนเกิน (กิโลกรัมละ 20 บาท)
             var shippingPromo = promoList.FirstOrDefault(p => p.Type == PromotionType.FreeShippingWeightCap);
-            decimal minSpendForFreeShip = shippingPromo?.MinSpend ?? 800m;
-            bool reachedSpendThreshold = ProductPriceBeforePromo >= minSpendForFreeShip;
+            decimal minSpendForFreeShip = shippingPromo != null && shippingPromo.MinSpend > 0 ? shippingPromo.MinSpend : 800m;
+            bool reachedSpendThreshold = shippingPromo != null && ProductPriceBeforePromo >= minSpendForFreeShip;
 
             if (TotalWeightKg <= 10.0)
             {
@@ -147,18 +190,19 @@ namespace CSI402_Project_final.Models
                 else
                 {
                     ShippingFee = 50m;
-                    ShippingCalculationDetail = $"ค่าจัดส่งมาตรฐาน ฿50 (น้ำหนัก {TotalWeightKg} kg, ซื้อเพิ่มอีก ฿{minSpendForFreeShip - ProductPriceBeforePromo:N0} เพื่อส่งฟรี)";
+                    ShippingCalculationDetail = shippingPromo != null
+                        ? $"ค่าจัดส่งมาตรฐาน ฿50 (น้ำหนัก {TotalWeightKg} kg, ซื้อเพิ่มอีก ฿{Math.Max(0, minSpendForFreeShip - ProductPriceBeforePromo):N0} เพื่อส่งฟรี)"
+                        : $"ค่าจัดส่งมาตรฐาน ฿50 (น้ำหนัก {TotalWeightKg} kg)";
                 }
             }
             else
             {
-                // น้ำหนักเกิน 10 kg (Req 4, 16)
                 double excessWeight = Math.Ceiling(TotalWeightKg - 10.0);
-                decimal excessFee = (decimal)excessWeight * 20m; // กก. ละ 20 บาท
+                decimal excessFee = (decimal)excessWeight * 20m;
 
                 if (reachedSpendThreshold)
                 {
-                    IsFreeShippingQualified = false; // ยกเว้นเฉพาะฐาน แต่มีค่าบริการส่วนเกิน
+                    IsFreeShippingQualified = false;
                     ShippingFee = excessFee;
                     ShippingCalculationDetail = $"ฟรีค่าส่งฐาน แต่มีน้ำหนักเกินเกณฑ์ 10 kg (+{excessWeight} kg x ฿20 = +฿{excessFee:N0})";
                 }

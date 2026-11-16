@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using CSI402_Project_final.Helpers;
 using CSI402_Project_final.Models;
-using System;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace CSI402_Project_final.Controllers
 {
@@ -10,10 +12,12 @@ namespace CSI402_Project_final.Controllers
     public class AccountController : Controller
     {
         private readonly PetShopRepository _repo;
+        private readonly IWebHostEnvironment _env;
 
-        public AccountController(PetShopRepository repo)
+        public AccountController(PetShopRepository repo, IWebHostEnvironment env)
         {
             _repo = repo;
+            _env = env;
         }
 
         // หน้าโปรไฟล์และจัดการที่อยู่จัดส่ง
@@ -87,27 +91,58 @@ namespace CSI402_Project_final.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
-        // หน้าประวัติคำสั่งซื้อของลูกค้า
+        // หน้าประวัติคำสั่งซื้อของลูกค้า (กรองเฉพาะของบัญชีผู้ใช้นี้)
         public IActionResult Orders(string? successOrderId = null)
         {
+            var username = User.Identity?.Name ?? "";
             ViewBag.SuccessOrderId = successOrderId;
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            var orders = _repo.Orders.OrderByDescending(o => o.OrderDate).ToList();
+            var orders = _repo.GetOrdersForUser(username);
             return View(orders);
+        }
+
+        // อัปโหลดหรืออัปเดตหลักฐานสลิปโอนเงินภายหลัง (Req 19)
+        [HttpPost]
+        public async Task<IActionResult> UploadSlip(string orderId, IFormFile? paymentSlip)
+        {
+            if (paymentSlip == null || paymentSlip.Length == 0)
+            {
+                TempData["ErrorMessage"] = "กรุณาเลือกไฟล์รูปภาพสลิปการโอนเงิน";
+                return RedirectToAction(nameof(Orders));
+            }
+
+            var (uploadedUrl, uploadErr) = await FileUploadHelper.SaveImageAsync(paymentSlip, _env.WebRootPath, "slips");
+            if (uploadErr != null || string.IsNullOrEmpty(uploadedUrl))
+            {
+                TempData["ErrorMessage"] = uploadErr ?? "ไม่สามารถอัปโหลดสลิปได้";
+                return RedirectToAction(nameof(Orders));
+            }
+
+            var username = User.Identity?.Name ?? "";
+            if (_repo.AttachPaymentSlip(username, orderId, uploadedUrl))
+            {
+                TempData["SuccessMessage"] = $"แนบหลักฐานสลิปสำหรับคำสั่งซื้อ #{orderId} เรียบร้อยแล้ว ฝ่ายบัญชีจะตรวจสอบในลำดับถัดไป";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "ไม่สามารถแนบสลิปสำหรับคำสั่งซื้อนี้ได้";
+            }
+
+            return RedirectToAction(nameof(Orders));
         }
 
         // ลูกค้าขอยกเลิกคำสั่งซื้อ / ขอคืนเงิน (Req 20)
         [HttpPost]
         public IActionResult CancelOrder(string orderId, string reason)
         {
-            var order = _repo.Orders.FirstOrDefault(o => o.OrderId == orderId);
-            if (order != null && (order.Status == OrderStatus.PaymentVerified || order.Status == OrderStatus.Preparing))
+            var username = User.Identity?.Name ?? "";
+            if (_repo.CancelOrder(username, orderId, reason))
             {
-                order.Status = OrderStatus.RefundRequested;
-                order.RefundReason = reason;
-                order.RefundAmount = order.GrandTotal;
-                _repo.SaveDatabase();
-                TempData["SuccessMessage"] = $"ส่งคำขอยกเลิกคำสั่งซื้อ {orderId} และขอคืนเงินเรียบร้อยแล้ว แผนกบัญชีจะดำเนินการตรวจสอบ";
+                TempData["SuccessMessage"] = $"ดำเนินการยกเลิกคำสั่งซื้อ {orderId} เรียบร้อยแล้ว";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "ไม่สามารถขอยกเลิกคำสั่งซื้อนี้ได้";
             }
             return RedirectToAction(nameof(Orders));
         }
@@ -115,32 +150,31 @@ namespace CSI402_Project_final.Controllers
         // หน้าแจ้งปัญหาการใช้งานระบบ (Helpdesk สำหรับลูกค้า Req 22)
         public IActionResult Support()
         {
+            var username = User.Identity?.Name ?? "";
+            var user = _repo.GetUserByUsername(username);
+
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            ViewBag.MyTickets = _repo.SupportTickets.OrderByDescending(t => t.CreatedAt).ToList();
+            ViewBag.CurrentUser = user;
+            ViewBag.MyTickets = _repo.GetSupportTickets(customerEmail: user?.Email);
             return View();
         }
 
         [HttpPost]
-        public IActionResult SubmitTicket(string customerName, string email, string category, string subject, string description, TicketPriority priority)
+        public IActionResult SubmitTicket(string customerName, string email, string? phone, string category, string subject, string description, TicketPriority priority)
         {
-            var ticket = new SupportTicket
-            {
-                Id = _repo.SupportTickets.Count + 1,
-                TicketCode = $"TCK-{DateTime.Now:yyyyMMdd}-{_repo.SupportTickets.Count + 1:D3}",
-                CustomerName = string.IsNullOrWhiteSpace(customerName) ? "ลูกค้าทั่วไป" : customerName,
-                ContactEmail = email,
-                Category = category,
-                Subject = subject,
-                Description = description,
-                Priority = priority,
-                Status = TicketStatus.New,
-                CreatedAt = DateTime.Now
-            };
+            var username = User.Identity?.Name ?? "";
+            var user = _repo.GetUserByUsername(username);
 
-            _repo.SupportTickets.Insert(0, ticket);
-            _repo.SaveDatabase();
+            var ticket = _repo.CreateSupportTicket(
+                customerName,
+                email,
+                phone ?? user?.Phone ?? "",
+                category,
+                subject,
+                description,
+                priority);
+
             TempData["SuccessMessage"] = $"บันทึกการแจ้งปัญหาเรียบร้อยแล้ว (รหัสอ้างอิง: {ticket.TicketCode}) ทางทีม IT Support จะรีบตรวจสอบ";
-
             return RedirectToAction(nameof(Support));
         }
     }

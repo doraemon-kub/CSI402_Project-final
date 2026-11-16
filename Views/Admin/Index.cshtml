@@ -94,7 +94,10 @@
                                     <option value="@UserRole.Owner" selected="@(user.Role == UserRole.Owner)">Owner</option>
                                     <option value="@UserRole.Customer" selected="@(user.Role == UserRole.Customer)">Customer</option>
                                 </select>
-                                <input type="hidden" name="isActive" value="true" />
+                                <select name="isActive" class="form-select form-select-sm" style="width: 110px;">
+                                    <option value="true" selected="@user.IsActive">ใช้งาน</option>
+                                    <option value="false" selected="@(!user.IsActive)">ระงับ</option>
+                                </select>
                                 <button type="submit" class="btn btn-sm btn-outline-dark">บันทึก</button>
                             </form>
                         </td>
@@ -126,6 +129,16 @@
                     <div class="mb-3">
                         <label class="form-label small fw-bold">อีเมล</label>
                         <input type="email" name="Email" class="form-control" placeholder="เช่น somchai@petshop.com" required />
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">เบอร์โทรศัพท์</label>
+                            <input type="tel" name="Phone" class="form-control" placeholder="081-xxx-xxxx" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">รหัสผ่านเริ่มต้น</label>
+                            <input type="password" name="Password" class="form-control" value="123456" required />
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">บทบาทหน้าที่ (Role)</label>

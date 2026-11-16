@@ -6,10 +6,14 @@
     var username = User.Identity?.Name ?? "พนักงาน";
     var fullName = User.FindFirst("FullName")?.Value ?? username;
     string activeCtrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
-    bool isOwner = currentRole == "Owner";
+
+    bool HasRole(string role) => string.Equals(currentRole, role, StringComparison.OrdinalIgnoreCase);
+    bool IsActive(string ctrl) => string.Equals(activeCtrl, ctrl, StringComparison.OrdinalIgnoreCase);
+    bool isOwner = HasRole("Owner");
 }
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -29,10 +33,12 @@
             color: #1e293b;
             overflow-x: hidden;
         }
+
         .wrapper {
             display: flex;
             min-height: 100vh;
         }
+
         /* Desktop Sidebar */
         .sidebar {
             width: 260px;
@@ -43,10 +49,12 @@
             flex-direction: column;
             transition: margin-left 0.25s ease-in-out;
         }
+
         /* Collapsed Sidebar on Desktop */
         body.sidebar-collapsed .sidebar-desktop {
             margin-left: -260px;
         }
+
         .sidebar-brand {
             padding: 18px 20px;
             font-size: 1.15rem;
@@ -57,10 +65,12 @@
             align-items: center;
             gap: 10px;
         }
+
         .sidebar-menu {
             padding: 12px 0;
             flex: 1;
         }
+
         .sidebar-link {
             display: flex;
             align-items: center;
@@ -71,17 +81,22 @@
             font-size: 0.9rem;
             transition: all 0.2s;
         }
-        .sidebar-link:hover, .sidebar-link.active {
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
             background-color: #1e293b;
             color: #38bdf8;
             border-left: 4px solid #38bdf8;
         }
+
         .content-area {
             flex: 1;
             display: flex;
             flex-direction: column;
-            min-width: 0; /* ป้องกัน flex child ล้น */
+            min-width: 0;
+            /* ป้องกัน flex child ล้น */
         }
+
         .topbar {
             background-color: #ffffff;
             border-bottom: 1px solid #e2e8f0;
@@ -91,15 +106,18 @@
             align-items: center;
             gap: 10px;
         }
+
         .main-body {
             padding: 16px;
             flex: 1;
         }
+
         @@media (min-width: 768px) {
             .main-body {
                 padding: 24px;
             }
         }
+
         /* Mobile/Tablet Offcanvas Menu */
         @@media (max-width: 991.98px) {
             .sidebar-desktop {
@@ -108,6 +126,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="wrapper">
         <!-- 1. Desktop Sidebar (แสดงเฉพาะจอใหญ่) -->
@@ -120,60 +139,65 @@
                     @(isOwner ? "สิทธิ์เข้าถึงทั้งหมด (Owner)" : $"สิทธิ์: {currentRole}")
                 </div>
                 
-                @if (isOwner || currentRole == "InventoryStaff")
+                @if (isOwner || HasRole("InventoryStaff"))
                 {
-                    <a asp-controller="Inventory" asp-action="Index" class="sidebar-link @(activeCtrl == "Inventory" ? "active" : "")">
+                    <a asp-controller="Inventory" asp-action="Index"
+                       class="sidebar-link @(IsActive("Inventory") ? "active" : "")">
                         <i class="bi bi-boxes"></i> คลังสินค้า (Inventory)
                     </a>
                 }
-                @if (isOwner || currentRole == "OrderStaff")
+                @if (isOwner || HasRole("OrderStaff"))
                 {
-                    <a asp-controller="Order" asp-action="Index" class="sidebar-link @(activeCtrl == "Order" ? "active" : "")">
+                    <a asp-controller="Order" asp-action="Index"
+                       class="sidebar-link @(IsActive("Order") ? "active" : "")">
                         <i class="bi bi-card-checklist"></i> คำสั่งซื้อ (Order)
                     </a>
                 }
-                @if (isOwner || currentRole == "ShippingStaff")
+                @if (isOwner || HasRole("ShippingStaff"))
                 {
-                    <a asp-controller="Shipping" asp-action="Index" class="sidebar-link @(activeCtrl == "Shipping" ? "active" : "")">
+                    <a asp-controller="Shipping" asp-action="Index"
+                       class="sidebar-link @(IsActive("Shipping") ? "active" : "")">
                         <i class="bi bi-truck"></i> จัดการจัดส่ง (Shipping)
                     </a>
                 }
-                @if (isOwner || currentRole == "MarketingStaff")
+                @if (isOwner || HasRole("MarketingStaff"))
                 {
-                    <a asp-controller="Marketing" asp-action="Index" class="sidebar-link @(activeCtrl == "Marketing" ? "active" : "")">
+                    <a asp-controller="Marketing" asp-action="Index"
+                       class="sidebar-link @(IsActive("Marketing") ? "active" : "")">
                         <i class="bi bi-tags"></i> แคมเปญโปรโมชั่น (MKT)
                     </a>
                 }
-                @if (isOwner || currentRole == "AccountingStaff")
+                @if (isOwner || HasRole("AccountingStaff"))
                 {
-                    <a asp-controller="Accounting" asp-action="Index" class="sidebar-link @(activeCtrl == "Accounting" ? "active" : "")">
+                    <a asp-controller="Accounting" asp-action="Index"
+                       class="sidebar-link @(IsActive("Accounting") ? "active" : "")">
                         <i class="bi bi-cash-coin"></i> การเงินและบัญชี (ACC)
                     </a>
                 }
-                @if (isOwner || currentRole == "ITSupport")
+                @if (isOwner || HasRole("ITSupport"))
                 {
-                    <a asp-controller="Support" asp-action="Index" class="sidebar-link @(activeCtrl == "Support" ? "active" : "")">
+                    <a asp-controller="Support" asp-action="Index"
+                       class="sidebar-link @(IsActive("Support") ? "active" : "")">
                         <i class="bi bi-headset"></i> IT Support Helpdesk
                     </a>
                 }
-                @if (isOwner || currentRole == "Admin")
+                @if (isOwner || HasRole("Admin"))
                 {
-                    <a asp-controller="Admin" asp-action="Index" class="sidebar-link @(activeCtrl == "Admin" ? "active" : "")">
+                    <a asp-controller="Admin" asp-action="Index"
+                       class="sidebar-link @(IsActive("Admin") ? "active" : "")">
                         <i class="bi bi-person-gear"></i> สิทธิ์และผู้ใช้ (Admin)
                     </a>
                 }
                 @if (isOwner)
                 {
-                    <a asp-controller="Owner" asp-action="Index" class="sidebar-link @(activeCtrl == "Owner" ? "active" : "")">
+                    <a asp-controller="Owner" asp-action="Index"
+                       class="sidebar-link @(IsActive("Owner") ? "active" : "")">
                         <i class="bi bi-graph-up-arrow"></i> ภาพรวมธุรกิจ (Owner)
                     </a>
                 }
             </div>
             
             <div class="p-3 border-top border-secondary">
-                <a href="/wireframe.html" class="btn btn-outline-warning w-100 btn-sm mb-2" target="_blank">
-                    <i class="bi bi-grid-1x2-fill me-1"></i> Wireframe Studio
-                </a>
                 <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light w-100 btn-sm mb-2">
                     <i class="bi bi-shop me-1"></i> ไปหน้าร้านค้า
                 </a>
@@ -187,9 +211,11 @@
         </aside>
 
         <!-- 2. Mobile/Tablet Offcanvas Drawer (สำหรับ iPad, Tablet, Phone) -->
-        <div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="sidebarOffcanvas" style="width: 280px;">
+        <div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="sidebarOffcanvas"
+             style="width: 280px;">
             <div class="offcanvas-header border-bottom border-secondary">
-                <h5 class="offcanvas-title fw-bold text-warning"><i class="bi bi-gear-wide-connected"></i> Back-Office</h5>
+                <h5 class="offcanvas-title fw-bold text-warning"><i class="bi bi-gear-wide-connected"></i> Back-Office
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
             </div>
             <div class="offcanvas-body p-0 d-flex flex-column">
@@ -199,43 +225,47 @@
                     <span class="badge bg-primary mt-1">@currentRole</span>
                 </div>
                 <div class="py-2 flex-grow-1">
-                    @if (isOwner || currentRole == "InventoryStaff")
+                    @if (isOwner || HasRole("InventoryStaff"))
                     {
-                        <a asp-controller="Inventory" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                        <a asp-controller="Inventory" asp-action="Index"
+                           class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-boxes me-2 text-warning"></i> คลังสินค้า (Inventory)
                         </a>
                     }
-                    @if (isOwner || currentRole == "OrderStaff")
+                    @if (isOwner || HasRole("OrderStaff"))
                     {
                         <a asp-controller="Order" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-card-checklist me-2 text-warning"></i> คำสั่งซื้อ (Order)
                         </a>
                     }
-                    @if (isOwner || currentRole == "ShippingStaff")
+                    @if (isOwner || HasRole("ShippingStaff"))
                     {
-                        <a asp-controller="Shipping" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                        <a asp-controller="Shipping" asp-action="Index"
+                           class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-truck me-2 text-warning"></i> จัดการจัดส่ง (Shipping)
                         </a>
                     }
-                    @if (isOwner || currentRole == "MarketingStaff")
+                    @if (isOwner || HasRole("MarketingStaff"))
                     {
-                        <a asp-controller="Marketing" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                        <a asp-controller="Marketing" asp-action="Index"
+                           class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-tags me-2 text-warning"></i> แคมเปญโปรโมชั่น (MKT)
                         </a>
                     }
-                    @if (isOwner || currentRole == "AccountingStaff")
+                    @if (isOwner || HasRole("AccountingStaff"))
                     {
-                        <a asp-controller="Accounting" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                        <a asp-controller="Accounting" asp-action="Index"
+                           class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-cash-coin me-2 text-warning"></i> การเงินและบัญชี (ACC)
                         </a>
                     }
-                    @if (isOwner || currentRole == "ITSupport")
+                    @if (isOwner || HasRole("ITSupport"))
                     {
                         <a asp-controller="Support" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-headset me-2 text-warning"></i> IT Support Helpdesk
                         </a>
                     }
-                    @if (isOwner || currentRole == "Admin")
+                    @if (isOwner || HasRole("Admin"))
                     {
                         <a asp-controller="Admin" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-person-gear me-2 text-warning"></i> สิทธิ์และผู้ใช้ (Admin)
@@ -249,9 +279,6 @@
                     }
                 </div>
                 <div class="p-3 border-top border-secondary">
-                    <a href="/wireframe.html" class="btn btn-outline-warning w-100 btn-sm mb-2" target="_blank">
-                        <i class="bi bi-grid-1x2-fill me-1"></i> Wireframe Studio
-                    </a>
                     <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light w-100 btn-sm mb-2">
                         <i class="bi bi-shop me-1"></i> หน้าร้านค้า
                     </a>
@@ -270,7 +297,8 @@
             <!-- Topbar with Offcanvas Toggle Button on Mobile/Tablet -->
             <header class="topbar">
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-outline-secondary py-1 px-2" type="button" id="sidebarToggleBtn" title="เปิด/ปิดเมนูข้าง (Toggle Sidebar)">
+                    <button class="btn btn-outline-secondary py-1 px-2" type="button" id="sidebarToggleBtn"
+                            title="เปิด/ปิดเมนูข้าง (Toggle Sidebar)">
                         <i class="bi bi-list fs-5"></i>
                     </button>
                     <h6 class="m-0 fw-bold text-truncate" style="max-width: 250px;">@ViewData["Title"]</h6>
@@ -293,8 +321,19 @@
             @if (TempData["SuccessMessage"] != null)
             {
                 <div class="px-3 pt-3">
-                    <div class="alert alert-success alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 small" role="alert">
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 small"
+                         role="alert">
                         <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="px-3 pt-3">
+                    <div class="alert alert-danger alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 small"
+                         role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 </div>
@@ -309,7 +348,8 @@
 
     <!-- Real-time Live Toast Container สำหรับพนักงาน -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
-        <div id="staffRealtimeToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+        <div id="staffRealtimeToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert"
+             aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body d-flex align-items-center gap-2" id="staffRealtimeToastBody">
                     <i class="bi bi-broadcast text-warning fs-5"></i>
@@ -355,7 +395,7 @@
         }
 
         // Universal Sidebar Toggle (Desktop & Mobile)
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             const toggleBtn = document.getElementById("sidebarToggleBtn");
             const offcanvasEl = document.getElementById("sidebarOffcanvas");
             let bsOffcanvas = null;
@@ -372,7 +412,7 @@
             }
 
             if (toggleBtn) {
-                toggleBtn.addEventListener("click", function() {
+                toggleBtn.addEventListener("click", function () {
                     if (window.innerWidth < 992) {
                         // Mobile / Tablet: Open Offcanvas drawer
                         if (bsOffcanvas) {
@@ -393,4 +433,5 @@
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>

@@ -18,38 +18,53 @@ namespace CSI402_Project_final.Controllers
         // หน้าแดชบอร์ดโปรโมชั่น & สถิติ (Req 5, 27)
         public IActionResult Index()
         {
+            var promotions = _repo.Promotions;
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            ViewBag.TotalPromotions = _repo.Promotions.Count;
-            ViewBag.ActivePromotionsCount = _repo.Promotions.Count(p => p.IsValidNow);
-            ViewBag.TotalUsageAllPromos = _repo.Promotions.Sum(p => p.UsageCount);
+            ViewBag.TotalPromotions = promotions.Count;
+            ViewBag.ActivePromotionsCount = promotions.Count(p => p.IsValidNow);
+            ViewBag.TotalUsageAllPromos = promotions.Sum(p => p.UsageCount);
 
-            return View(_repo.Promotions);
+            return View(promotions);
         }
 
         // สวิตช์เปิด/ปิดโปรโมชั่น (Req 5)
         [HttpPost]
         public IActionResult ToggleStatus(int id)
         {
-            var promo = _repo.Promotions.FirstOrDefault(p => p.Id == id);
+            var promo = _repo.TogglePromotionStatus(id);
             if (promo != null)
             {
-                promo.IsActive = !promo.IsActive;
-                _repo.SaveDatabase();
                 TempData["SuccessMessage"] = $"ปรับสถานะโปรโมชั่น '{promo.Title}' เป็น {(promo.IsActive ? "เปิดใช้งาน (Active)" : "ปิดชั่วคราว (Inactive)")} เรียบร้อยแล้ว";
             }
             return RedirectToAction(nameof(Index));
         }
 
-        // สร้างโปรโมชั่นใหม่ (Req 25, 26)
+        // สร้างหรือแก้ไขแคมเปญโปรโมชั่น (Req 5, 25, 26)
         [HttpPost]
-        public IActionResult Create(Promotion model)
+        public IActionResult Save(Promotion model)
         {
-            model.Id = _repo.Promotions.Any() ? _repo.Promotions.Max(p => p.Id) + 1 : 1;
-            model.UsageCount = 0;
-            _repo.Promotions.Add(model);
-            _repo.SaveDatabase();
+            var (success, message) = _repo.SavePromotion(model);
+            if (success)
+                TempData["SuccessMessage"] = message;
+            else
+                TempData["ErrorMessage"] = message;
 
-            TempData["SuccessMessage"] = $"สร้างแคมเปญโปรโมชั่น '{model.Title}' สำเร็จแล้ว";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public IActionResult Create(Promotion model) => Save(model);
+
+        // ลบโปรโมชั่น (Req 5)
+        [HttpPost]
+        public IActionResult Delete(int id)
+        {
+            var (success, message) = _repo.DeletePromotion(id);
+            if (success)
+                TempData["SuccessMessage"] = message;
+            else
+                TempData["ErrorMessage"] = message;
+
             return RedirectToAction(nameof(Index));
         }
     }

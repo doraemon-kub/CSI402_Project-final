@@ -1,8 +1,20 @@
+using CSI402_Project_final.Data;
+using CSI402_Project_final.Models;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<CSI402_Project_final.Models.PetShopRepository>();
+builder.Services.AddHttpContextAccessor();
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<PetShopDbContext>(options =>
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0))));
+
+builder.Services.AddScoped<PetShopRepository>();
 builder.Services.AddSession();
 builder.Services.AddSignalR();
 
@@ -17,6 +29,13 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.C
     });
 
 var app = builder.Build();
+
+// เชื่อมต่อและตรวจสอบ/Seed ข้อมูลเริ่มต้นลง MySQL (csi402db)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<PetShopDbContext>();
+    PetShopDbInitializer.Initialize(db);
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

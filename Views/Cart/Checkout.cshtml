@@ -1,9 +1,18 @@
 @model CSI402_Project_final.Models.Cart
+@using System.Security.Claims
+@inject CSI402_Project_final.Models.PetShopRepository Repo
 @{
     ViewData["Title"] = "ชำระเงินและระบุที่อยู่จัดส่ง";
+    var username = User.Identity?.Name ?? "";
+    var user = Repo.GetUserByUsername(username);
+    var defaultName = user?.FullName ?? "คุณลูกค้าสมาชิก";
+    var defaultPhone = user?.Phone ?? "081-234-5678";
+    var defaultAddress = user?.DefaultAddress?.DisplayAddress ?? "กรุงเทพมหานคร 10100";
+    var promptPayPayload = ViewBag.PromptPayPayload as string ?? "PETSTOREPRO";
+    var qrImageUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={Uri.EscapeDataString(promptPayPayload)}";
 }
 
-<div class="container py-4" style="max-width: 900px;">
+<div class="container py-4" style="max-width: 920px;">
     <h3 class="fw-bold mb-4 text-dark"><i class="bi bi-credit-card-2-front text-warning"></i> ยืนยันการสั่งซื้อและชำระเงิน</h3>
 
     <div class="row g-4">
@@ -11,16 +20,7 @@
         <div class="col-md-7">
             <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
                 <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill text-danger"></i> ข้อมูลผู้รับและที่อยู่จัดส่ง</h5>
-                <form asp-action="SubmitOrder" method="post">
-@using System.Security.Claims
-@inject CSI402_Project_final.Models.PetShopRepository Repo
-@{
-    var username = User.Identity?.Name ?? "";
-    var user = Repo.GetUserByUsername(username);
-    var defaultName = user?.FullName ?? "คุณลูกค้าสมาชิก";
-    var defaultPhone = user?.Phone ?? "081-234-5678";
-    var defaultAddress = user?.DefaultAddress?.DisplayAddress ?? "กรุงเทพมหานคร 10100";
-}
+                <form asp-action="SubmitOrder" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label class="form-label small fw-bold">ชื่อ-นามสกุล ผู้รับ</label>
                         <input type="text" name="customerName" class="form-control" value="@defaultName" required />
@@ -40,17 +40,33 @@
                     </div>
 
                     <h5 class="fw-bold mb-3"><i class="bi bi-qr-code text-primary"></i> ช่องทางการชำระเงิน (Req 19)</h5>
-                    <div class="p-3 border rounded-3 bg-light mb-3 text-center">
-                        <div class="small fw-bold text-muted mb-2">สแกนชำระผ่าน PromptPay / ธนาคาร</div>
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=PETSTOREPRO-PAYMENT-MOCK" class="img-thumbnail mb-2" style="width: 140px;" />
-                        <div class="small text-muted">พร้อมเพย์: 081-234-5678 (บจก. เพ็ทสโตร์ โปร)</div>
-                        <div class="fw-bold text-danger fs-5 mt-1">ยอดชำระ: ฿@Model.GrandTotal.ToString("N2")</div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">เลือกวิธีการชำระเงิน</label>
+                        <select name="paymentMethod" id="paymentMethodSelect" class="form-select" onchange="togglePaymentSection()">
+                            <option value="โอนผ่านธนาคาร / PromptPay" selected>🏦 โอนผ่านธนาคาร / สแกน PromptPay (แนบสลิป)</option>
+                            <option value="เก็บเงินปลายทาง (COD)">🚚 เก็บเงินปลายทาง (COD)</option>
+                        </select>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold">แนบหลักฐานสลิปการโอนเงิน (จำลอง)</label>
-                        <input type="file" class="form-control" accept="image/*" />
-                        <div class="small text-muted mt-1">* ระบบจำลองจะบันทึกสถานะชำระเงินเรียบร้อยอัตโนมัติ</div>
+                    <div id="bankTransferBox">
+                        <div class="p-3 border rounded-3 bg-light mb-3 text-center">
+                            <div class="small fw-bold text-muted mb-2">สแกน PromptPay QR Code (ระบุยอดชำระอัตโนมัติ)</div>
+                            <img src="@qrImageUrl" class="img-thumbnail mb-2" style="width: 160px; height: 160px;" alt="PromptPay QR" />
+                            <div class="small text-muted">พร้อมเพย์: 081-234-5678 (บจก. เพ็ทสโตร์ โปร)</div>
+                            <div class="fw-bold text-danger fs-5 mt-1">ยอดชำระ: ฿@Model.GrandTotal.ToString("N2")</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold">แนบหลักฐานสลิปการโอนเงิน (JPG, PNG, WEBP ไม่เกิน 5MB)</label>
+                            <input type="file" name="paymentSlip" id="paymentSlipInput" class="form-control" accept="image/*" />
+                            <div class="small text-muted mt-1">
+                                <i class="bi bi-shield-check text-primary"></i> คำสั่งซื้อจะเข้าสู่สถานะ <strong>รอฝ่ายบัญชีตรวจสอบสลิป</strong> (สามารถแนบหรืออัปเดตสลิปภายหลังในหน้าประวัติคำสั่งซื้อได้)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="codNoticeBox" class="alert alert-info small d-none mb-4">
+                        <i class="bi bi-truck"></i> เลือกชำระเงินปลายทาง (COD): คำสั่งซื้อจะถูกส่งเข้าคิวจัดเตรียมสินค้าทันที กรุณาเตรียมชำระเงินจำนวน <strong>฿@Model.GrandTotal.ToString("N2")</strong> กับพนักงานขนส่ง
                     </div>
 
                     <button type="submit" class="btn btn-pet-primary btn-lg w-100 fw-bold py-3 shadow-sm">
@@ -87,7 +103,7 @@
                     <span class="text-muted">ค่าจัดส่ง:</span>
                     <span class="fw-bold">฿@Model.ShippingFee.ToString("N2")</span>
                 </div>
-                
+
                 @if (!string.IsNullOrEmpty(Model.FreeGiftItem))
                 {
                     <div class="d-flex justify-content-between small mb-1 text-warning">
@@ -105,3 +121,14 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function togglePaymentSection() {
+            const method = document.getElementById('paymentMethodSelect').value;
+            const isCod = method.indexOf('COD') !== -1;
+            document.getElementById('bankTransferBox').classList.toggle('d-none', isCod);
+            document.getElementById('codNoticeBox').classList.toggle('d-none', !isCod);
+        }
+    </script>
+}

@@ -8,7 +8,7 @@
     int totalUsage = ViewBag.TotalUsageAllPromos ?? 0;
 }
 
-<!-- Summary Statistics Cards (Req 27: แสดงสถิติและจำนวนครั้งที่มีการใช้โปรโมชั่น) -->
+<!-- Summary Statistics Cards (Req 27) -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
@@ -48,7 +48,7 @@
 <div class="card border-0 shadow-sm rounded-4 p-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold m-0 text-dark">รายการแคมเปญโปรโมชั่นและเงื่อนไข (Req 5, 25, 26, 27)</h5>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPromoModal">
+        <button type="button" class="btn btn-primary" onclick="openCreatePromoModal()">
             <i class="bi bi-plus-circle me-1"></i> สร้างแคมเปญโปรโมชั่นใหม่
         </button>
     </div>
@@ -58,11 +58,11 @@
             <thead class="table-light">
                 <tr>
                     <th>รหัส</th>
-                    <th>ชื่อโปรโมชั่น</th>
-                    <th>ประเภทเงื่อนไข (Req 25)</th>
+                    <th>ชื่อโปรโมชั่น &amp; เงื่อนไข</th>
+                    <th>ประเภท (Req 25)</th>
                     <th>ระยะเวลา (Req 26)</th>
-                    <th>สถิติใช้งาน (Req 27)</th>
-                    <th>สถานะเปิด/ปิด (Req 5)</th>
+                    <th>สถิติใช้ (Req 27)</th>
+                    <th>สถานะ (Req 5)</th>
                     <th>การดำเนินการ</th>
                 </tr>
             </thead>
@@ -73,19 +73,45 @@
                         <td><code>@promo.Code</code></td>
                         <td>
                             <div class="fw-bold text-dark">@promo.Title</div>
-                            <small class="text-muted">@promo.Description</small>
+                            <small class="text-muted d-block">@promo.Description</small>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                @if (promo.DiscountAmount > 0)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border">ลด ฿@promo.DiscountAmount.ToString("N0")</span>
+                                }
+                                @if (promo.DiscountPercent > 0)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border">ลด @promo.DiscountPercent.ToString("N0")%</span>
+                                }
+                                @if (promo.MinQuantity > 0)
+                                {
+                                    <span class="badge bg-light text-dark border">ขั้นต่ำ @promo.MinQuantity ชิ้น</span>
+                                }
+                                @if (promo.MinSpend > 0)
+                                {
+                                    <span class="badge bg-light text-dark border">ยอดขั้นต่ำ ฿@promo.MinSpend.ToString("N0")</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(promo.ParticipatingBrand))
+                                {
+                                    <span class="badge bg-info-subtle text-dark border">แบรนด์: @promo.ParticipatingBrand</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(promo.GiftItemName))
+                                {
+                                    <span class="badge bg-warning-subtle text-dark border">🎁 @promo.GiftItemName</span>
+                                }
+                            </div>
                         </td>
                         <td>
                             <span class="badge bg-light text-dark border">
-                                @(promo.Type == PromotionType.Buy3ItemsDiscount ? "ซื้อครบ 3 ชิ้นลดทันที" :
-                                  promo.Type == PromotionType.FoodCategoryDiscount ? "ซื้ออาหาร 2 รายการขึ้นไป" :
+                                @(promo.Type == PromotionType.Buy3ItemsDiscount ? "ซื้อครบ X ชิ้นลดทันที" :
+                                  promo.Type == PromotionType.FoodCategoryDiscount ? "ซื้อตามหมวดหมู่" :
                                   promo.Type == PromotionType.FreeShippingWeightCap ? "ส่งฟรี (นน. <= 10kg)" :
-                                  promo.Type == PromotionType.FreeGiftMilestone ? "แจกของแถมฟรี" : "อาหารแบรนด์เดียวกัน")
+                                  promo.Type == PromotionType.FreeGiftMilestone ? "แจกของแถมฟรี" : "แบรนด์เดียวกัน")
                             </span>
                         </td>
                         <td>
-                            <small class="d-block text-muted">เริ่ม: @promo.StartDate.ToString("dd/MM/yyyy")</small>
-                            <small class="d-block text-muted">สิ้นสุด: @promo.EndDate.ToString("dd/MM/yyyy")</small>
+                            <small class="d-block text-muted">เริ่ม: @promo.StartDate.ToString("dd/MM/yyyy HH:mm")</small>
+                            <small class="d-block text-muted">สิ้นสุด: @promo.EndDate.ToString("dd/MM/yyyy HH:mm")</small>
                         </td>
                         <td>
                             <span class="fs-6 fw-bold text-danger">@promo.UsageCount ครั้ง</span>
@@ -101,13 +127,40 @@
                             }
                         </td>
                         <td>
-                            <!-- สวิตช์เปิด/ปิดโปรโมชั่น (Req 5) -->
-                            <form asp-action="ToggleStatus" method="post">
-                                <input type="hidden" name="id" value="@promo.Id" />
-                                <button type="submit" class="btn btn-sm @(promo.IsActive ? "btn-outline-danger" : "btn-outline-success")">
-                                    @(promo.IsActive ? "ปิดโปรโมชั่น" : "เปิดโปรโมชั่น")
+                            <div class="d-flex flex-wrap gap-1">
+                                <form asp-action="ToggleStatus" method="post" class="m-0">
+                                    <input type="hidden" name="id" value="@promo.Id" />
+                                    <button type="submit" class="btn btn-sm @(promo.IsActive ? "btn-outline-warning text-dark" : "btn-outline-success")">
+                                        @(promo.IsActive ? "ปิดชั่วคราว" : "เปิดใช้งาน")
+                                    </button>
+                                </form>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        onclick="openEditPromoModal(this)"
+                                        data-id="@promo.Id"
+                                        data-code="@promo.Code"
+                                        data-title="@promo.Title"
+                                        data-description="@promo.Description"
+                                        data-type="@promo.Type"
+                                        data-targetcategory="@(promo.TargetCategory?.ToString() ?? "")"
+                                        data-discountamount="@promo.DiscountAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                        data-discountpercent="@promo.DiscountPercent.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                        data-minqty="@promo.MinQuantity"
+                                        data-minspend="@promo.MinSpend.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                        data-brand="@(promo.ParticipatingBrand ?? "")"
+                                        data-gift="@(promo.GiftItemName ?? "")"
+                                        data-start="@promo.StartDate.ToString("yyyy-MM-ddTHH:mm", System.Globalization.CultureInfo.InvariantCulture)"
+                                        data-end="@promo.EndDate.ToString("yyyy-MM-ddTHH:mm", System.Globalization.CultureInfo.InvariantCulture)"
+                                        data-active="@promo.IsActive.ToString().ToLowerInvariant()">
+                                    <i class="bi bi-pencil-square"></i> แก้ไข
                                 </button>
-                            </form>
+                                <form asp-action="Delete" method="post" class="m-0" onsubmit="return confirm('ยืนยันลบแคมเปญโปรโมชั่นนี้?');">
+                                    <input type="hidden" name="id" value="@promo.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="ลบโปรโมชั่น">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 }
@@ -116,72 +169,148 @@
     </div>
 </div>
 
-<!-- Modal สร้างโปรโมชั่นใหม่ (Req 25, 26) -->
-<div class="modal fade" id="createPromoModal" tabindex="-1">
+<!-- Modal สร้าง / แก้ไขโปรโมชั่น (Req 5, 25, 26) -->
+<div class="modal fade" id="promoModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form asp-action="Create" method="post">
+            <form asp-action="Save" method="post">
+                <input type="hidden" name="Id" id="promoId" value="0" />
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">สร้างแคมเปญโปรโมชั่นใหม่</h5>
+                    <h5 class="modal-title fw-bold" id="promoModalTitle">สร้างแคมเปญโปรโมชั่นใหม่</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body row g-3">
                     <div class="col-md-4">
                         <label class="form-label small fw-bold">รหัสโปรโมชั่น</label>
-                        <input type="text" name="Code" class="form-control" placeholder="เช่น SUPERDOG20" required />
+                        <input type="text" name="Code" id="promoCode" class="form-control" placeholder="เช่น SUPERDOG20" required />
                     </div>
                     <div class="col-md-8">
                         <label class="form-label small fw-bold">ชื่อโปรโมชั่น</label>
-                        <input type="text" name="Title" class="form-control" placeholder="เช่น ซื้ออาหารสุนัขแบรนด์ Royal Canin ลด 15%" required />
+                        <input type="text" name="Title" id="promoTitle" class="form-control" placeholder="เช่น ซื้ออาหารสุนัขแบรนด์ Royal Canin ลด 15%" required />
                     </div>
                     <div class="col-md-12">
                         <label class="form-label small fw-bold">คำอธิบายรายละเอียดโปรโมชั่น</label>
-                        <input type="text" name="Description" class="form-control" placeholder="ข้อความสำหรับแสดงให้ลูกค้าเห็นในหน้าร้าน" required />
+                        <input type="text" name="Description" id="promoDescription" class="form-control" placeholder="ข้อความสำหรับแสดงให้ลูกค้าเห็นในหน้าร้าน" required />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-bold">ประเภทเงื่อนไขโปรโมชั่น (Req 25)</label>
-                        <select name="Type" class="form-select">
+                        <select name="Type" id="promoType" class="form-select">
                             <option value="@PromotionType.Buy3ItemsDiscount">ซื้อครบ X ชิ้นได้ส่วนลด</option>
-                            <option value="@PromotionType.FoodCategoryDiscount">ซื้อหมวดหมู่อาหาร X รายการขึ้นไป</option>
+                            <option value="@PromotionType.FoodCategoryDiscount">ซื้อตามหมวดหมู่ X รายการขึ้นไป</option>
                             <option value="@PromotionType.SameBrandFoodDiscount">ซื้ออาหารจากแบรนด์เดียวกัน</option>
                             <option value="@PromotionType.FreeShippingWeightCap">ส่งฟรีเมื่อยอดถึงกำหนด (นน. ไม่เกิน 10kg)</option>
                             <option value="@PromotionType.FreeGiftMilestone">รับของแถมฟรีเมื่อยอดถึงกำหนด</option>
                         </select>
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">หมวดหมู่สินค้าเป้าหมาย (ถ้ามี)</label>
+                        <select name="TargetCategory" id="promoTargetCategory" class="form-select">
+                            <option value="">ไม่จำกัดหมวดหมู่</option>
+                            <option value="@ProductCategory.Food">🍲 อาหาร (Food)</option>
+                            <option value="@ProductCategory.Supply">🧸 ของใช้ (Supply)</option>
+                            <option value="@ProductCategory.Hygiene">🧼 สุขอนามัย (Hygiene)</option>
+                        </select>
+                    </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold">ส่วนลดเป็นบาท (฿)</label>
-                        <input type="number" name="DiscountAmount" class="form-control" value="0" />
+                        <input type="number" step="0.01" name="DiscountAmount" id="promoDiscountAmount" class="form-control" value="0" />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-bold">ส่วนลดเป็นเปอร์เซ็นต์ (%)</label>
-                        <input type="number" name="DiscountPercent" class="form-control" value="10" />
+                        <input type="number" step="0.01" name="DiscountPercent" id="promoDiscountPercent" class="form-control" value="10" />
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label small fw-bold">ขั้นต่ำจำนวนชิ้น</label>
-                        <input type="number" name="MinQuantity" class="form-control" value="2" />
+                        <input type="number" name="MinQuantity" id="promoMinQty" class="form-control" value="2" />
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label small fw-bold">ขั้นต่ำยอดเงิน (บาท)</label>
-                        <input type="number" name="MinSpend" class="form-control" value="500" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label small fw-bold">แบรนด์ที่เข้าร่วม (ถ้ามี)</label>
-                        <input type="text" name="ParticipatingBrand" class="form-control" placeholder="เช่น Royal Canin, Me-O" />
+                        <input type="number" step="0.01" name="MinSpend" id="promoMinSpend" class="form-control" value="0" />
                     </div>
                     <div class="col-md-6">
+                        <label class="form-label small fw-bold">แบรนด์ที่เข้าร่วม (Req 5, 25)</label>
+                        <input type="text" name="ParticipatingBrand" id="promoBrand" class="form-control" placeholder="เช่น Royal Canin, Me-O (คั่นด้วย ,)" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">ชื่อของแถมฟรี (สำหรับโปรแถมของ)</label>
+                        <input type="text" name="GiftItemName" id="promoGift" class="form-control" placeholder="เช่น เสื้อยืดสัตว์เลี้ยง Pet Lover 🎽" />
+                    </div>
+                    <div class="col-md-5">
                         <label class="form-label small fw-bold">วันที่เริ่มต้น (Req 26)</label>
-                        <input type="datetime-local" name="StartDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                        <input type="datetime-local" name="StartDate" id="promoStart" class="form-control" required />
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-5">
                         <label class="form-label small fw-bold">วันที่สิ้นสุด (Req 26)</label>
-                        <input type="datetime-local" name="EndDate" class="form-control" value="@DateTime.Now.AddMonths(1).ToString("yyyy-MM-ddTHH:mm")" required />
+                        <input type="datetime-local" name="EndDate" id="promoEnd" class="form-control" required />
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="IsActive" value="true" id="promoActive" class="form-check-input" checked />
+                            <input type="hidden" name="IsActive" value="false" />
+                            <label class="form-check-label small fw-bold" for="promoActive">เปิดใช้งาน</label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="submit" class="btn btn-primary">บันทึกแคมเปญ</button>
+                    <button type="submit" class="btn btn-primary" id="promoModalSubmit">บันทึกแคมเปญ</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function getPromoModal() {
+            return bootstrap.Modal.getOrCreateInstance(document.getElementById('promoModal'));
+        }
+
+        function openCreatePromoModal() {
+            const now = new Date();
+            const nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            const fmt = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+            document.getElementById('promoModalTitle').innerText = 'สร้างแคมเปญโปรโมชั่นใหม่';
+            document.getElementById('promoModalSubmit').innerText = 'บันทึกแคมเปญใหม่';
+            document.getElementById('promoId').value = '0';
+            document.getElementById('promoCode').value = '';
+            document.getElementById('promoTitle').value = '';
+            document.getElementById('promoDescription').value = '';
+            document.getElementById('promoType').value = 'Buy3ItemsDiscount';
+            document.getElementById('promoTargetCategory').value = '';
+            document.getElementById('promoDiscountAmount').value = '0';
+            document.getElementById('promoDiscountPercent').value = '10';
+            document.getElementById('promoMinQty').value = '2';
+            document.getElementById('promoMinSpend').value = '0';
+            document.getElementById('promoBrand').value = '';
+            document.getElementById('promoGift').value = '';
+            document.getElementById('promoStart').value = fmt(now);
+            document.getElementById('promoEnd').value = fmt(nextMonth);
+            document.getElementById('promoActive').checked = true;
+            getPromoModal().show();
+        }
+
+        function openEditPromoModal(btn) {
+            document.getElementById('promoModalTitle').innerText = 'แก้ไขแคมเปญ: ' + btn.dataset.code;
+            document.getElementById('promoModalSubmit').innerText = 'บันทึกการแก้ไข';
+            document.getElementById('promoId').value = btn.dataset.id;
+            document.getElementById('promoCode').value = btn.dataset.code;
+            document.getElementById('promoTitle').value = btn.dataset.title;
+            document.getElementById('promoDescription').value = btn.dataset.description;
+            document.getElementById('promoType').value = btn.dataset.type;
+            document.getElementById('promoTargetCategory').value = btn.dataset.targetcategory || '';
+            document.getElementById('promoDiscountAmount').value = btn.dataset.discountamount;
+            document.getElementById('promoDiscountPercent').value = btn.dataset.discountpercent;
+            document.getElementById('promoMinQty').value = btn.dataset.minqty;
+            document.getElementById('promoMinSpend').value = btn.dataset.minspend;
+            document.getElementById('promoBrand').value = btn.dataset.brand || '';
+            document.getElementById('promoGift').value = btn.dataset.gift || '';
+            document.getElementById('promoStart').value = btn.dataset.start;
+            document.getElementById('promoEnd').value = btn.dataset.end;
+            document.getElementById('promoActive').checked = (btn.dataset.active === 'true');
+            getPromoModal().show();
+        }
+    </script>
+}

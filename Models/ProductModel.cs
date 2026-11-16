@@ -1,25 +1,28 @@
+using System;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace CSI402_Project_final.Models
 {
     public enum PetCategory
     {
-        Dog,
-        Cat,
-        Other
+        Dog = 0,
+        Cat = 1,
+        Other = 2
     }
 
     public enum ProductCategory
     {
-        Food,
-        Supply,
-        Hygiene
+        Food = 0,
+        Supply = 1,
+        Hygiene = 2
     }
 
     public enum AgeStage
     {
-        AllAges,
-        PuppyOrKitten,
-        Adult,
-        Senior
+        AllAges = 0,
+        PuppyOrKitten = 1,
+        Adult = 2,
+        Senior = 3
     }
 
     public class Product
@@ -39,12 +42,17 @@ namespace CSI402_Project_final.Models
         public int CartAddCount { get; set; } // Req 8: จำนวนคนที่ใส่สินค้านี้ในตะกร้า
         public string ImageUrl { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
         // ฟังก์ชันช่วยตรวจสอบสถานะสต็อก (Req 18)
+        [NotMapped]
         public bool IsLowStock => StockQuantity <= LowStockThreshold && StockQuantity > 0;
+        [NotMapped]
         public bool IsOutOfStock => StockQuantity <= 0;
 
         // ราคาปัจจุบันที่แสดง
+        [NotMapped]
         public decimal EffectivePrice => SpecialDiscountPrice ?? Price;
     }
 }

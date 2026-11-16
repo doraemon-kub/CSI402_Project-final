@@ -1,34 +1,43 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CSI402_Project_final.Models
 {
     public enum OrderStatus
     {
-        PendingPayment,     // รอชำระเงิน
-        PaymentVerified,    // ชำระเงินเรียบร้อย รอจัดของ (Order Staff)
-        Preparing,          // กำลังจัดเตรียมและแพ็กสินค้า
-        Shipped,            // จัดส่งแล้ว มีเลขพัสดุ (Shipping Staff)
-        Completed,          // ลูกค้าได้รับสินค้าแล้ว
-        Cancelled,          // ยกเลิกคำสั่งซื้อ
-        RefundRequested,    // ลูกค้าขอคืนเงิน
-        Refunded            // คืนเงินเรียบร้อยแล้ว (Accounting Staff)
+        PendingPayment = 0,     // รอชำระเงิน
+        PaymentVerified = 1,    // ชำระเงินเรียบร้อย รอจัดของ (Order Staff)
+        Preparing = 2,          // กำลังจัดเตรียมและแพ็กสินค้า
+        Shipped = 3,            // จัดส่งแล้ว มีเลขพัสดุ (Shipping Staff)
+        Completed = 4,          // ลูกค้าได้รับสินค้าแล้ว
+        Cancelled = 5,          // ยกเลิกคำสั่งซื้อ
+        RefundRequested = 6,    // ลูกค้าขอคืนเงิน
+        Refunded = 7            // คืนเงินเรียบร้อยแล้ว (Accounting Staff)
     }
 
     public class OrderItem
     {
+        public int Id { get; set; }
+        public string OrderId { get; set; } = string.Empty;
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public decimal UnitPrice { get; set; }
         public int Quantity { get; set; }
         public double UnitWeightKg { get; set; }
+
+        [NotMapped]
         public decimal Subtotal => UnitPrice * Quantity;
+        [NotMapped]
         public double TotalWeightKg => UnitWeightKg * Quantity;
     }
 
     public class Order
     {
+        [Key]
         public string OrderId { get; set; } = string.Empty;
+        public int UserId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerPhone { get; set; } = string.Empty;
         public string ShippingAddress { get; set; } = string.Empty;
@@ -58,5 +67,11 @@ namespace CSI402_Project_final.Models
         public decimal? RefundAmount { get; set; }
         public string? RefundReason { get; set; }
         public DateTime? RefundedDate { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+
+        [NotMapped]
+        public List<AppliedPromotionSummary> AppliedPromotions { get; set; } = new();
     }
 }

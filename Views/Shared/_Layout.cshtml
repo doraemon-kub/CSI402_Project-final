@@ -114,6 +114,18 @@
             padding: 2px 6px;
             font-weight: 700;
             border: 2px solid #ffffff;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        @@keyframes badgeBump {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.45); background-color: #10b981; }
+            100% { transform: scale(1); }
+        }
+        .badge-bump {
+            animation: badgeBump 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-pet-primary:active {
+            transform: scale(0.96);
         }
         .main-container {
             flex: 1;
@@ -342,6 +354,15 @@
             </div>
         </div>
     }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="container mt-3">
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 py-2 small" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    }
 
     <!-- 4. Content Area -->
     <main class="main-container">
@@ -417,10 +438,6 @@
             <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 text-white-50 small text-center text-sm-start">
                 <div>© 2026 PetStore Pro. All rights reserved. (Activity 2 CSI402)</div>
                 <div class="d-flex flex-wrap justify-content-center gap-3">
-                    <a href="/wireframe.html" class="text-warning text-decoration-none fw-bold" target="_blank">
-                        <i class="bi bi-grid-1x2-fill me-1"></i> Wireframe Studio (ส่งงานอาจารย์)
-                    </a>
-                    <span>•</span>
                     <a href="#" class="text-white-50 text-decoration-none">นโยบายความเป็นส่วนตัว</a>
                     <span>•</span>
                     <a href="#" class="text-white-50 text-decoration-none">ข้อกำหนดการใช้งาน</a>
@@ -469,6 +486,57 @@
             }
         });
 
+        // รับการอัปเดตจำนวนสต็อกคงเหลือแบบ Real-time (ลดเมื่อใส่ตะกร้า และคืนเมื่อเอาออก)
+        petShopConnection.on("ReceiveStockUpdate", function (productId, remainingStock) {
+            updateProductStockUI(productId, remainingStock);
+        });
+
+        function updateProductStockUI(productId, remainingStock) {
+            const stockValEl = document.getElementById(`stock-val-${productId}`);
+            if (stockValEl) {
+                stockValEl.textContent = remainingStock;
+            }
+            const container = document.getElementById(`stock-badge-container-${productId}`);
+            const addBtn = document.getElementById(`add-cart-btn-${productId}`);
+            const qtyInput = document.getElementById(`qty-input-${productId}`);
+
+            if (qtyInput) {
+                qtyInput.max = remainingStock;
+                if (parseInt(qtyInput.value) > remainingStock) {
+                    qtyInput.value = Math.max(1, remainingStock);
+                }
+            }
+
+            if (remainingStock <= 0) {
+                if (container) {
+                    container.innerHTML = '<span class="badge bg-danger-subtle text-danger border border-danger" style="font-size: 0.68rem;"><i class="bi bi-x-circle me-1"></i> สินค้าหมด</span>';
+                }
+                if (addBtn) {
+                    addBtn.disabled = true;
+                    addBtn.className = 'btn btn-secondary w-100 btn-sm';
+                    addBtn.innerHTML = '<i class="bi bi-x-circle me-1"></i> หมดสต็อก';
+                }
+            } else if (remainingStock <= 5) {
+                if (container) {
+                    container.innerHTML = `<span class="badge bg-warning-subtle text-dark border border-warning" style="font-size: 0.68rem;"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> เหลือ <strong id="stock-val-${productId}">${remainingStock}</strong> ชิ้น</span>`;
+                }
+                if (addBtn && addBtn.disabled) {
+                    addBtn.disabled = false;
+                    addBtn.className = 'btn btn-pet-primary w-100 btn-sm d-flex align-items-center justify-content-center gap-1';
+                    addBtn.innerHTML = '<i class="bi bi-cart-plus"></i> <span>เพิ่มลงตะกร้า</span>';
+                }
+            } else {
+                if (container) {
+                    container.innerHTML = `<span class="badge bg-success-subtle text-success border border-success" style="font-size: 0.68rem;"><i class="bi bi-box-seam me-1"></i> เหลือ <strong id="stock-val-${productId}">${remainingStock}</strong> ชิ้น</span>`;
+                }
+                if (addBtn && addBtn.disabled) {
+                    addBtn.disabled = false;
+                    addBtn.className = 'btn btn-pet-primary w-100 btn-sm d-flex align-items-center justify-content-center gap-1';
+                    addBtn.innerHTML = '<i class="bi bi-cart-plus"></i> <span>เพิ่มลงตะกร้า</span>';
+                }
+            }
+        }
+
         // 2. รับแจ้งเตือนเมื่อพัสดุจัดส่งแล้ว
         petShopConnection.on("ReceiveOrderShippedAlert", function (orderId, trackingNumber, courier) {
             showRealtimeToast(`🚚 ออเดอร์ #${orderId} ถูกจัดส่งแล้ว! (${courier}: ${trackingNumber})`);
@@ -487,6 +555,139 @@
             if (toastEl && toastBody) {
                 toastBody.innerHTML = `<i class="bi bi-bell-fill text-warning fs-5"></i> <span>${message}</span>`;
                 const bsToast = new bootstrap.Toast(toastEl, { delay: 5000 });
+                bsToast.show();
+            }
+        }
+        // 4. ระบบเพิ่มสินค้าลงตะกร้าแบบ AJAX ลื่นไหลโดยไม่ต้องโหลดหน้าเว็บใหม่ (Smooth Add to Cart)
+        document.addEventListener('submit', async function (e) {
+            const form = e.target.closest('form.ajax-add-to-cart, form[action*="/Cart/Add"]');
+            if (!form) return;
+
+            e.preventDefault();
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalHtml = submitBtn ? submitBtn.innerHTML : '';
+
+            // แสดงสถานะปุ่มกำลังประมวลผล
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> เพิ่ม...';
+            }
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // กรณีที่ผู้ใช้ยังไม่ได้ล็อกอิน (Guest) นำทางไปหน้าเข้าสู่ระบบทันที
+                    if (data.requireLogin) {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalHtml;
+                        }
+                        showWarningToast(data.message || 'กรุณาเข้าสู่ระบบก่อนหยิบสินค้าลงในตะกร้า');
+                        setTimeout(() => {
+                            window.location.href = data.redirectUrl || '/Auth/Login';
+                        }, 1000);
+                        return;
+                    }
+
+                    if (!data.success) {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalHtml;
+                        }
+                        showWarningToast(data.message || 'ไม่สามารถเพิ่มสินค้าลงในตะกร้าได้');
+                        return;
+                    }
+
+                    // 1. อัปเดตตัวเลขตะกร้าสินค้าในแถบเมนูด้านบนทั้ง Mobile และ Desktop พร้อมเอฟเฟกต์เด้ง (Bounce)
+                    document.querySelectorAll('.badge-cart').forEach(badge => {
+                        badge.textContent = data.cartCount;
+                        badge.classList.remove('badge-bump');
+                        void badge.offsetWidth; // trigger reflow
+                        badge.classList.add('badge-bump');
+                    });
+
+                    // 2. อัปเดตจำนวนคนใส่ตะกร้าบนการ์ดสินค้าทันที (Req 8 Real-time count)
+                    const countValEl = document.getElementById(`cart-count-val-${data.productId}`);
+                    if (countValEl) {
+                        countValEl.textContent = data.productCartCount;
+                    }
+
+                    // 3. อัปเดตจำนวนสต็อกคงเหลือบนการ์ดสินค้าทันที (ลดลงเมื่อใส่ตะกร้า)
+                    if (typeof data.remainingStock !== 'undefined') {
+                        updateProductStockUI(data.productId, data.remainingStock);
+                    }
+
+                    // 4. เปลี่ยนสถานะปุ่มเป็นเครื่องหมายถูกสีเขียวชั่วขณะ
+                    if (submitBtn) {
+                        submitBtn.classList.remove('btn-pet-primary');
+                        submitBtn.classList.add('btn-success');
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> เพิ่มแล้ว!';
+
+                        setTimeout(() => {
+                            submitBtn.classList.remove('btn-success');
+                            submitBtn.classList.add('btn-pet-primary');
+                            submitBtn.innerHTML = originalHtml;
+                            submitBtn.disabled = false;
+                        }, 1200);
+                    }
+
+                    // 4. แสดง Toast แจ้งเตือนแบบลื่นไหลมุมขวาล่าง
+                    showCartToast(data.productName || 'สินค้า', data.cartCount);
+                } else {
+                    form.submit();
+                }
+            } catch (err) {
+                console.error('AJAX add to cart failed, fallback to submit:', err);
+                form.submit();
+            }
+        });
+
+        function showCartToast(productName, cartCount) {
+            const toastEl = document.getElementById('liveRealtimeToast');
+            const toastBody = document.getElementById('liveRealtimeToastBody');
+            if (toastEl && toastBody) {
+                toastBody.innerHTML = `
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 bg-success rounded-circle text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                            <i class="bi bi-cart-check-fill fs-6"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <div class="fw-bold text-white small">เพิ่มลงในตะกร้าแล้ว!</div>
+                            <div class="text-white-50 text-truncate" style="font-size: 0.75rem;">${productName} (ในตะกร้ามี ${cartCount} ชิ้น)</div>
+                        </div>
+                    </div>`;
+                const bsToast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3500 });
+                bsToast.show();
+            }
+        }
+
+        function showWarningToast(message) {
+            const toastEl = document.getElementById('liveRealtimeToast');
+            const toastBody = document.getElementById('liveRealtimeToastBody');
+            if (toastEl && toastBody) {
+                toastBody.innerHTML = `
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 bg-warning rounded-circle text-dark d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                            <i class="bi bi-shield-lock-fill fs-6"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <div class="fw-bold text-white small">แจ้งเตือนจากระบบ</div>
+                            <div class="text-white small text-truncate" style="font-size: 0.8rem;">${message}</div>
+                        </div>
+                    </div>`;
+                const bsToast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 4000 });
                 bsToast.show();
             }
         }

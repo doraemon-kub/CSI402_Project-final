@@ -1,45 +1,119 @@
 @model List<CSI402_Project_final.Models.Order>
 @using CSI402_Project_final.Models
+@using System.Globalization
 @{
     Layout = "_BackOfficeLayout";
     ViewData["Title"] = "7. การเงินและบัญชีร้านค้า (Accounting Staff)";
     var summary = ViewBag.FinancialSummary as FinancialSummary ?? new();
+    var pendingPayments = ViewBag.PendingPayments as List<Order> ?? new();
     var pendingRefunds = ViewBag.PendingRefunds as List<Order> ?? new();
+    string currentMonth = DateTime.Now.ToString("yyyy-MM", CultureInfo.InvariantCulture);
 }
 
-<!-- Financial Overview Cards (Req 21: จัดทำรายงานรายรับและรายจ่ายของร้าน) -->
+<!-- Financial Overview Cards (Req 21) -->
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-            <div class="text-muted small">รายรับรวมทั้งหมด (Revenue)</div>
+            <div class="text-muted small">รายรับที่ยืนยันชำระแล้ว (Revenue)</div>
             <div class="fs-4 fw-bold text-success mt-1">฿@summary.TotalRevenue.ToString("N2")</div>
-            <small class="text-success"><i class="bi bi-arrow-up"></i> จากคำสั่งซื้อทั้งหมด</small>
+            <small class="text-success"><i class="bi bi-check-circle"></i> จาก @summary.SuccessfulOrdersCount ออเดอร์</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-            <div class="text-muted small">รายจ่ายรวม (Expenses/Cost)</div>
+            <div class="text-muted small">รายจ่ายที่บันทึกจริง (Expenses)</div>
             <div class="fs-4 fw-bold text-secondary mt-1">฿@summary.TotalExpenses.ToString("N2")</div>
-            <small class="text-muted">ต้นทุนสินค้า & ค่าบริหาร</small>
+            <small class="text-muted">ต้นทุนสินค้า &amp; ค่าดำเนินการ</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
             <div class="text-muted small">ยอดคืนเงินลูกค้า (Refunded)</div>
             <div class="fs-4 fw-bold text-danger mt-1">฿@summary.TotalRefunds.ToString("N2")</div>
-            <small class="text-danger">อนุมัติคืนเงินแล้ว</small>
+            <small class="text-danger">อนุมัติคืนเงิน @summary.RefundedOrdersCount รายการ</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-            <div class="text-muted small">กำไรสุทธิโดยประมาณ (Net Profit)</div>
-            <div class="fs-4 fw-bold text-primary mt-1">฿@summary.NetProfit.ToString("N2")</div>
-            <small class="text-primary fw-bold">หักค่าใช้จ่ายและการคืนเงินแล้ว</small>
+            <div class="text-muted small">กำไรสุทธิจริง (Net Profit)</div>
+            <div class="fs-4 fw-bold @(summary.NetProfit >= 0 ? "text-primary" : "text-danger") mt-1">฿@summary.NetProfit.ToString("N2")</div>
+            <small class="text-primary fw-bold">รายรับ - รายจ่าย - คืนเงิน</small>
         </div>
     </div>
 </div>
 
-<!-- Pending Refund Requests (Req 20: บันทึกข้อมูลและสถานะการคืนเงิน) -->
+<!-- Pending Payment Verification & Slip Check (Req 19) -->
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold m-0 text-dark">
+            <i class="bi bi-receipt-cutoff text-primary"></i> รายการรอตรวจสอบการชำระเงินและสลิป (Req 19)
+            <span class="badge bg-warning text-dark ms-2">@pendingPayments.Count รายการ</span>
+        </h5>
+    </div>
+
+    @if (!pendingPayments.Any())
+    {
+        <div class="p-4 text-center text-muted">ไม่มีรายการรอตรวจสอบสลิปในขณะนี้</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>เลขออเดอร์</th>
+                        <th>ลูกค้า</th>
+                        <th>ยอดชำระ</th>
+                        <th>วิธีชำระเงิน</th>
+                        <th>หลักฐานสลิป</th>
+                        <th>การดำเนินการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var payOrder in pendingPayments)
+                    {
+                        <tr>
+                            <td class="fw-bold text-primary">#@payOrder.OrderId</td>
+                            <td>
+                                <div>@payOrder.CustomerName</div>
+                                <small class="text-muted">📞 @payOrder.CustomerPhone</small>
+                            </td>
+                            <td><strong class="text-danger fs-6">฿@payOrder.GrandTotal.ToString("N2")</strong></td>
+                            <td><span class="badge bg-light text-dark border">@payOrder.PaymentMethod</span></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(payOrder.PaymentSlipUrl))
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="showSlipModal('@payOrder.OrderId', '@payOrder.PaymentSlipUrl')">
+                                        <i class="bi bi-image"></i> ดูรูปสลิป
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">ยังไม่แนบสลิป</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <form asp-action="ApprovePayment" method="post" class="m-0">
+                                        <input type="hidden" name="orderId" value="@payOrder.OrderId" />
+                                        <button type="submit" class="btn btn-sm btn-success fw-bold">
+                                            <i class="bi bi-check-circle"></i> อนุมัติชำระเงิน
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="openRejectModal('@payOrder.OrderId')">
+                                        <i class="bi bi-x-circle"></i> ปฏิเสธสลิป
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Pending Refund Requests (Req 20) -->
 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold m-0 text-dark">
@@ -94,9 +168,62 @@
     }
 </div>
 
-<!-- Payment Status Check (Req 19: บันทึกและตรวจสอบสถานะการชำระเงิน) -->
+<!-- Monthly Revenue & Expense Management + Export (Req 21) -->
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold m-0 text-dark"><i class="bi bi-bar-chart-line text-primary"></i> รายงานรายรับ-รายจ่ายประจำเดือน (Req 21)</h5>
+            <small class="text-muted">รายรับคำนวณจากยอดคำสั่งซื้อที่ยืนยันชำระเงินจริง และบันทึกรายจ่ายจริงรายเดือนได้ด้านล่าง</small>
+        </div>
+        <a asp-action="ExportFinancialCsv" class="btn btn-outline-success btn-sm fw-bold">
+            <i class="bi bi-file-earmark-spreadsheet"></i> ส่งออกรายงาน CSV
+        </a>
+    </div>
+
+    <form asp-action="SaveMonthlyExpense" method="post" class="row g-2 align-items-end p-3 bg-light rounded-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">เดือน (ปี-เดือน)</label>
+            <input type="month" name="month" class="form-control form-control-sm" value="@currentMonth" required />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">รายจ่ายจริงประจำเดือน (บาท)</label>
+            <input type="number" step="0.01" min="0" name="expenses" class="form-control form-control-sm" placeholder="เช่น 15000" required />
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold">
+                <i class="bi bi-save"></i> บันทึก/อัปเดตรายจ่ายจริง
+            </button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>เดือน</th>
+                    <th>รายรับรวม (Revenue)</th>
+                    <th>รายจ่ายที่บันทึก (Expenses)</th>
+                    <th>กำไร/ขาดทุนขั้นต้น (Profit)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in summary.MonthlyBreakdown)
+                {
+                    <tr>
+                        <td class="fw-bold">@m.Month</td>
+                        <td class="text-success fw-semibold">฿@m.Revenue.ToString("N2")</td>
+                        <td class="text-secondary fw-semibold">฿@m.Expenses.ToString("N2")</td>
+                        <td class="fw-bold @(m.Profit >= 0 ? "text-primary" : "text-danger")">฿@m.Profit.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Payment Status Check Table (Req 19) -->
 <div class="card border-0 shadow-sm rounded-4 p-4">
-    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-credit-card text-success"></i> ตรวจสอบสถานะการชำระเงินของคำสั่งซื้อล่าสุด (Req 19)</h5>
+    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-credit-card text-success"></i> ประวัติและสถานะการชำระเงินของคำสั่งซื้อล่าสุด (Req 19)</h5>
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">
@@ -106,6 +233,7 @@
                     <th>ลูกค้า</th>
                     <th>ยอดชำระ</th>
                     <th>วิธีชำระ</th>
+                    <th>สลิป</th>
                     <th>สถานะการเงิน</th>
                     <th>สถานะคำสั่งซื้อ</th>
                 </tr>
@@ -120,13 +248,29 @@
                         <td class="fw-bold text-dark">฿@order.GrandTotal.ToString("N2")</td>
                         <td><span class="badge bg-light text-dark border">@order.PaymentMethod</span></td>
                         <td>
+                            @if (!string.IsNullOrEmpty(order.PaymentSlipUrl))
+                            {
+                                <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" onclick="showSlipModal('@order.OrderId', '@order.PaymentSlipUrl')">
+                                    <i class="bi bi-image"></i> ดูสลิป
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">-</span>
+                            }
+                        </td>
+                        <td>
                             @if (order.Status == OrderStatus.Refunded)
                             {
                                 <span class="badge bg-secondary">คืนเงินแล้ว</span>
                             }
+                            else if (order.Status == OrderStatus.Cancelled)
+                            {
+                                <span class="badge bg-danger">ยกเลิกแล้ว</span>
+                            }
                             else if (order.IsPaymentApproved)
                             {
-                                <span class="badge bg-success">ชำระเงินเรียบร้อย</span>
+                                <span class="badge bg-success">อนุมัติการชำระเงินแล้ว</span>
                             }
                             else
                             {
@@ -142,3 +286,55 @@
         </table>
     </div>
 </div>
+
+<!-- Modal ดูรูปสลิปโอนเงิน -->
+<div class="modal fade" id="slipPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="slipModalTitle">สลิปคำสั่งซื้อ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="slipPreviewImg" src="" class="img-fluid rounded-3 shadow-sm" alt="Payment Slip" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal ปฏิเสธสลิป -->
+<div class="modal fade" id="rejectPaymentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="RejectPayment" method="post">
+                <input type="hidden" name="orderId" id="rejectOrderId" />
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-danger">ปฏิเสธหลักฐานการชำระเงิน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label small fw-bold">ระบุเหตุผลที่ปฏิเสธสลิป:</label>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="เช่น ยอดโอนไม่ครบ, สลิปไม่ชัดเจน, สลิปซ้ำ" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-bold">ยืนยันปฏิเสธและคืนสต็อก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showSlipModal(orderId, url) {
+            document.getElementById('slipModalTitle').innerText = 'หลักฐานสลิปโอนเงิน #' + orderId;
+            document.getElementById('slipPreviewImg').src = url;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('slipPreviewModal')).show();
+        }
+        function openRejectModal(orderId) {
+            document.getElementById('rejectOrderId').value = orderId;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('rejectPaymentModal')).show();
+        }
+    </script>
+}

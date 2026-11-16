@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using CSI402_Project_final.Models;
 using System.Security.Claims;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CSI402_Project_final.Controllers
@@ -27,8 +28,23 @@ namespace CSI402_Project_final.Controllers
             }
 
             ViewBag.ReturnUrl = returnUrl;
-            ViewBag.AllDemoUsers = _repo.Users; // สำหรับแสดง Quick Demo Login ช่วยตรวจงาน
+            ViewBag.AllDemoUsers = GetDemoRoleUsers();
             return View(new LoginViewModel { ReturnUrl = returnUrl });
+        }
+
+        private List<SystemUser> GetDemoRoleUsers()
+        {
+            var systemUsernames = new[]
+            {
+                "owner", "admin", "marketing", "inventory", "order",
+                "shipping", "accounting", "support", "customer"
+            };
+            var allUsers = _repo.Users;
+            var prioritized = allUsers
+                .Where(u => systemUsernames.Contains(u.Username.ToLowerInvariant()))
+                .OrderByDescending(u => u.Role)
+                .ToList();
+            return prioritized.Any() ? prioritized : allUsers.Take(10).ToList();
         }
 
         // การประมวลผล Login (POST)
@@ -36,7 +52,7 @@ namespace CSI402_Project_final.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            ViewBag.AllDemoUsers = _repo.Users;
+            ViewBag.AllDemoUsers = GetDemoRoleUsers();
 
             if (!ModelState.IsValid)
             {
@@ -50,31 +66,9 @@ namespace CSI402_Project_final.Controllers
                 return View(model);
             }
 
-            // บันทึก Claims
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim("FullName", user.FullName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim("Phone", user.Phone)
-            };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = model.RememberMe,
-                ExpiresUtc = System.DateTimeOffset.UtcNow.AddHours(8)
-            };
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
-
-            // อัปเดตสถานะใน Repo
-            _repo.CurrentSimulatedRole = user.Role;
+            await SignInUserAsync(user, model.RememberMe);
+            _repo.MergeGuestCartToUser(user.Id);
+            _repo.LogAudit("LOGIN", "user", user.Id.ToString(), $"เข้าสู่ระบบด้วย Username '{user.Username}'", user);
 
             TempData["SuccessMessage"] = $"ยินดีต้อนรับคุณ {user.FullName} เข้าสู่ระบบในฐานะ {user.Role}";
 
@@ -83,7 +77,6 @@ namespace CSI402_Project_final.Controllers
                 return LocalRedirect(model.ReturnUrl);
             }
 
-            // นำทางตามบทบาท (Role Routing)
             return RedirectToRoleHome(user.Role.ToString());
         }
 
@@ -92,27 +85,15 @@ namespace CSI402_Project_final.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> QuickLogin(string username)
         {
-            var user = _repo.Users.Find(u => u.Username.Equals(username, System.StringComparison.OrdinalIgnoreCase));
+            var user = _repo.Users.FirstOrDefault(u =>
+                u.Username.Equals(username, System.StringComparison.OrdinalIgnoreCase) && u.IsActive);
             if (user == null) return RedirectToAction(nameof(Login));
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim("FullName", user.FullName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim("Phone", user.Phone)
-            };
+            await SignInUserAsync(user, isPersistent: true);
+            _repo.MergeGuestCartToUser(user.Id);
+            _repo.LogAudit("QUICK_LOGIN", "user", user.Id.ToString(), $"Quick Login '{user.Username}'", user);
 
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity));
-
-            _repo.CurrentSimulatedRole = user.Role;
             TempData["SuccessMessage"] = $"เข้าสู่ระบบสำเร็จ: {user.FullName} ({user.Role})";
-
             return RedirectToRoleHome(user.Role.ToString());
         }
 
@@ -144,23 +125,8 @@ namespace CSI402_Project_final.Controllers
                 return View(model);
             }
 
-            // ล็อกอินให้อัตโนมัติหลังสมัครเสร็จ
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, newUser.Id.ToString()),
-                new Claim(ClaimTypes.Name, newUser.Username),
-                new Claim(ClaimTypes.Role, newUser.Role.ToString()),
-                new Claim("FullName", newUser.FullName),
-                new Claim(ClaimTypes.Email, newUser.Email),
-                new Claim("Phone", newUser.Phone)
-            };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity));
-
-            _repo.CurrentSimulatedRole = UserRole.Customer;
+            await SignInUserAsync(newUser, isPersistent: true);
+            _repo.MergeGuestCartToUser(newUser.Id);
             TempData["SuccessMessage"] = $"สมัครสมาชิกสำเร็จ! ยินดีต้อนรับคุณ {newUser.FullName}";
 
             return RedirectToAction("Index", "Home");
@@ -171,8 +137,11 @@ namespace CSI402_Project_final.Controllers
         [HttpGet]
         public async Task<IActionResult> Logout()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                _repo.LogAudit("LOGOUT", "user", User.FindFirstValue(ClaimTypes.NameIdentifier), "ออกจากระบบ");
+            }
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            _repo.CurrentSimulatedRole = UserRole.Guest;
             TempData["SuccessMessage"] = "คุณได้ออกจากระบบเรียบร้อยแล้ว";
             return RedirectToAction("Index", "Home");
         }
@@ -182,6 +151,31 @@ namespace CSI402_Project_final.Controllers
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        private async Task SignInUserAsync(SystemUser user, bool isPersistent)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim("FullName", user.FullName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("Phone", user.Phone)
+            };
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = isPersistent,
+                ExpiresUtc = System.DateTimeOffset.UtcNow.AddHours(8)
+            };
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
         }
 
         // Helper: นำทางไปยังหน้าหลักของแต่ละ Role
@@ -197,7 +191,7 @@ namespace CSI402_Project_final.Controllers
                 nameof(UserRole.ITSupport) => RedirectToAction("Index", "Support"),
                 nameof(UserRole.Admin) => RedirectToAction("Index", "Admin"),
                 nameof(UserRole.Owner) => RedirectToAction("Index", "Owner"),
-                _ => RedirectToAction("Index", "Home") // Customer & Guest
+                _ => RedirectToAction("Index", "Home")
             };
         }
     }

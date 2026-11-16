@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using CSI402_Project_final.Helpers;
 using CSI402_Project_final.Models;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CSI402_Project_final.Controllers
 {
@@ -9,21 +13,24 @@ namespace CSI402_Project_final.Controllers
     public class InventoryController : Controller
     {
         private readonly PetShopRepository _repo;
+        private readonly IWebHostEnvironment _env;
 
-        public InventoryController(PetShopRepository repo)
+        public InventoryController(PetShopRepository repo, IWebHostEnvironment env)
         {
             _repo = repo;
+            _env = env;
         }
 
         // หน้าหลักคลังสินค้า: สต็อกสินค้า & แจ้งเตือนสินค้าต่ำกว่าระดับที่กำหนด (Req 18)
         public IActionResult Index()
         {
-            ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            ViewBag.LowStockCount = _repo.Products.Count(p => p.IsLowStock);
-            ViewBag.OutOfStockCount = _repo.Products.Count(p => p.IsOutOfStock);
-            ViewBag.TotalProducts = _repo.Products.Count;
-
             var products = _repo.Products.OrderBy(p => p.StockQuantity).ToList();
+
+            ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
+            ViewBag.LowStockCount = products.Count(p => p.IsLowStock);
+            ViewBag.OutOfStockCount = products.Count(p => p.IsOutOfStock);
+            ViewBag.TotalProducts = products.Count;
+
             return View(products);
         }
 
@@ -31,51 +38,39 @@ namespace CSI402_Project_final.Controllers
         [HttpPost]
         public IActionResult UpdateStock(int id, int adjustment)
         {
-            var product = _repo.Products.FirstOrDefault(p => p.Id == id);
+            var product = _repo.UpdateProductStock(id, adjustment);
             if (product != null)
             {
-                product.StockQuantity = System.Math.Max(0, product.StockQuantity + adjustment);
-                _repo.SaveDatabase();
                 TempData["SuccessMessage"] = $"อัปเดตสต็อกสินค้า '{product.Name}' เป็น {product.StockQuantity} ชิ้น เรียบร้อยแล้ว";
             }
             return RedirectToAction(nameof(Index));
         }
 
-        // เพิ่มหรือแก้ไขสินค้าใหม่ (Req 6, 17)
+        // เพิ่มหรือแก้ไขสินค้า (Req 6, 17) รองรับอัปโหลดรูปภาพและลิงก์รูปภาพ
         [HttpPost]
-        public IActionResult SaveProduct(Product model)
+        public async Task<IActionResult> SaveProduct(Product model, IFormFile? imageFile)
         {
-            if (model.Id == 0)
+            if (imageFile != null && imageFile.Length > 0)
             {
-                model.Id = _repo.Products.Any() ? _repo.Products.Max(p => p.Id) + 1 : 1;
-                if (string.IsNullOrWhiteSpace(model.ImageUrl))
+                var (uploadedUrl, uploadErr) = await FileUploadHelper.SaveImageAsync(imageFile, _env.WebRootPath, "products");
+                if (uploadErr != null)
                 {
-                    model.ImageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&q=80";
+                    TempData["ErrorMessage"] = uploadErr;
+                    return RedirectToAction(nameof(Index));
                 }
-                _repo.Products.Add(model);
-                _repo.SaveDatabase();
-                TempData["SuccessMessage"] = $"เพิ่มสินค้า '{model.Name}' สำเร็จ";
+                if (!string.IsNullOrEmpty(uploadedUrl))
+                {
+                    model.ImageUrl = uploadedUrl;
+                }
+            }
+
+            if (_repo.SaveProduct(model, out var message))
+            {
+                TempData["SuccessMessage"] = message;
             }
             else
             {
-                var existing = _repo.Products.FirstOrDefault(p => p.Id == model.Id);
-                if (existing != null)
-                {
-                    existing.Name = model.Name;
-                    existing.Brand = model.Brand;
-                    existing.PetType = model.PetType;
-                    existing.Category = model.Category;
-                    existing.WeightKg = model.WeightKg;
-                    existing.Price = model.Price;
-                    existing.SpecialDiscountPrice = model.SpecialDiscountPrice;
-                    existing.AgeStage = model.AgeStage;
-                    existing.SpecialNeed = model.SpecialNeed;
-                    existing.StockQuantity = model.StockQuantity;
-                    existing.LowStockThreshold = model.LowStockThreshold;
-                    existing.Description = model.Description;
-                    _repo.SaveDatabase();
-                    TempData["SuccessMessage"] = $"แก้ไขข้อมูลสินค้า '{model.Name}' สำเร็จ";
-                }
+                TempData["ErrorMessage"] = message;
             }
             return RedirectToAction(nameof(Index));
         }
@@ -83,13 +78,12 @@ namespace CSI402_Project_final.Controllers
         [HttpPost]
         public IActionResult DeleteProduct(int id)
         {
-            var existing = _repo.Products.FirstOrDefault(p => p.Id == id);
-            if (existing != null)
-            {
-                _repo.Products.Remove(existing);
-                _repo.SaveDatabase();
-                TempData["SuccessMessage"] = $"ลบสินค้า '{existing.Name}' เรียบร้อยแล้ว";
-            }
+            var (success, message) = _repo.DeleteProduct(id);
+            if (success)
+                TempData["SuccessMessage"] = message;
+            else
+                TempData["ErrorMessage"] = message;
+
             return RedirectToAction(nameof(Index));
         }
     }

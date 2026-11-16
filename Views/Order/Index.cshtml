@@ -109,6 +109,10 @@
                                         <i class="bi bi-truck"></i> แพ็กเสร็จพร้อมส่ง
                                     </button>
                                 }
+                                else if (order.Status == OrderStatus.PendingPayment)
+                                {
+                                    <span class="text-warning small fw-semibold">รอตรวจสลิป (บัญชี)</span>
+                                }
                                 else
                                 {
                                     <span class="text-muted small">เรียบร้อย</span>

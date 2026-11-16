@@ -18,37 +18,39 @@ namespace CSI402_Project_final.Controllers
         // หน้า Executive Dashboard ภาพรวมธุรกิจ (Owner)
         public IActionResult Index()
         {
+            var orders = _repo.Orders;
+            var products = _repo.Products;
+            var promotions = _repo.Promotions;
+
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
+            ViewBag.Financial = _repo.GetFinancialSummary();
 
-            // คำนวณสรุปทางการเงิน
-            var financial = _repo.GetFinancialSummary();
-            ViewBag.Financial = financial;
+            var productTypesById = products.ToDictionary(p => p.Id, p => p.PetType);
+            int dogProductOrders = orders.SelectMany(o => o.Items)
+                .Count(i => productTypesById.TryGetValue(i.ProductId, out var pt) && pt == PetCategory.Dog);
+            int catProductOrders = orders.SelectMany(o => o.Items)
+                .Count(i => productTypesById.TryGetValue(i.ProductId, out var pt) && pt == PetCategory.Cat);
+            int otherProductOrders = orders.SelectMany(o => o.Items)
+                .Count(i => productTypesById.TryGetValue(i.ProductId, out var pt) && pt == PetCategory.Other);
 
-            // สถิติยอดขายตามประเภทสัตว์เลี้ยง
-            int dogProductOrders = _repo.Orders.SelectMany(o => o.Items)
-                .Count(i => _repo.Products.Any(p => p.Id == i.ProductId && p.PetType == PetCategory.Dog));
-            int catProductOrders = _repo.Orders.SelectMany(o => o.Items)
-                .Count(i => _repo.Products.Any(p => p.Id == i.ProductId && p.PetType == PetCategory.Cat));
             ViewBag.DogOrderCount = dogProductOrders;
             ViewBag.CatOrderCount = catProductOrders;
+            ViewBag.OtherOrderCount = otherProductOrders;
 
-            // สินค้าขายดี Top 5 (คำนวณจากจำนวนคนใส่ตะกร้า + ออเดอร์)
-            var topProducts = _repo.Products
+            var topProducts = products
                 .OrderByDescending(p => p.CartAddCount)
                 .Take(5)
                 .ToList();
             ViewBag.TopProducts = topProducts;
 
-            // แคมเปญโปรโมชั่นยอดนิยม
-            var topPromotions = _repo.Promotions
+            var topPromotions = promotions
                 .OrderByDescending(p => p.UsageCount)
                 .Take(4)
                 .ToList();
             ViewBag.TopPromotions = topPromotions;
 
-            // จำนวนออเดอร์ทั้งหมด
-            ViewBag.TotalOrderCount = _repo.Orders.Count;
-            ViewBag.RecentOrders = _repo.Orders.OrderByDescending(o => o.OrderDate).Take(5).ToList();
+            ViewBag.TotalOrderCount = orders.Count;
+            ViewBag.RecentOrders = orders.Take(5).ToList();
 
             return View();
         }

@@ -18,29 +18,25 @@ namespace CSI402_Project_final.Controllers
         // หน้าตรวจสอบคำสั่งซื้อและจัดเตรียมสินค้า
         public IActionResult Index(OrderStatus? status = null)
         {
+            var allOrders = _repo.Orders;
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            var query = _repo.Orders.AsQueryable();
-
-            if (status.HasValue)
-            {
-                query = query.Where(o => o.Status == status.Value);
-            }
-
             ViewBag.SelectedStatus = status;
-            ViewBag.PendingCount = _repo.Orders.Count(o => o.Status == OrderStatus.PaymentVerified);
-            ViewBag.PreparingCount = _repo.Orders.Count(o => o.Status == OrderStatus.Preparing);
+            ViewBag.PendingCount = allOrders.Count(o => o.Status == OrderStatus.PaymentVerified);
+            ViewBag.PreparingCount = allOrders.Count(o => o.Status == OrderStatus.Preparing);
 
-            return View(query.OrderByDescending(o => o.OrderDate).ToList());
+            var filtered = status.HasValue
+                ? allOrders.Where(o => o.Status == status.Value).ToList()
+                : allOrders;
+
+            return View(filtered);
         }
 
-        // อัปเดตสถานะการเตรียมสินค้า
+        // อัปเดตสถานะการเตรียมสินค้า (บันทึกลง DB)
         [HttpPost]
         public IActionResult UpdateStatus(string orderId, OrderStatus newStatus)
         {
-            var order = _repo.Orders.FirstOrDefault(o => o.OrderId == orderId);
-            if (order != null)
+            if (_repo.UpdateOrderStatus(orderId, newStatus))
             {
-                order.Status = newStatus;
                 TempData["SuccessMessage"] = $"อัปเดตสถานะออเดอร์ {orderId} เป็น '{newStatus}' เรียบร้อยแล้ว";
             }
             return RedirectToAction(nameof(Index));

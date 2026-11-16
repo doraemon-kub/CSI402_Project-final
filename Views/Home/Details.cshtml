@@ -61,6 +61,29 @@
                     </div>
                 </div>
 
+                <!-- Stock Status Section -->
+                <div class="mb-3 d-flex align-items-center gap-2" id="stock-badge-container-@Model.Id">
+                    <span class="text-muted small">สถานะสินค้า:</span>
+                    @if (Model.IsOutOfStock)
+                    {
+                        <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2">
+                            <i class="bi bi-x-circle me-1"></i> สินค้าหมดสต็อกชั่วคราว
+                        </span>
+                    }
+                    else if (Model.IsLowStock)
+                    {
+                        <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-2">
+                            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> สินค้าใกล้หมด! เหลือเพียง <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success-subtle text-success border border-success px-3 py-2">
+                            <i class="bi bi-check-circle-fill me-1"></i> มีสินค้าพร้อมส่ง (คงเหลือ <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น)
+                        </span>
+                    }
+                </div>
+
                 <!-- Price & Purchase Action -->
                 <div class="mt-auto border-top pt-4">
                     <div class="d-flex align-items-baseline gap-3 mb-3">
@@ -76,16 +99,36 @@
                         }
                     </div>
 
-                    <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex gap-3">
-                        <input type="hidden" name="productId" value="@Model.Id" />
-                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                        <div style="width: 120px;">
-                            <input type="number" name="quantity" class="form-control form-control-lg text-center" value="1" min="1" max="@Model.StockQuantity" />
+                    @if (User.Identity?.IsAuthenticated != true)
+                    {
+                        <div class="alert alert-warning border-0 rounded-3 p-3 mb-0 shadow-sm">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-lock-fill fs-3 text-warning"></i>
+                                    <div>
+                                        <div class="fw-bold text-dark">กรุณาเข้าสู่ระบบก่อนหยิบสินค้าลงในตะกร้า</div>
+                                        <div class="small text-muted">ผู้เยี่ยมชม (Guest) สามารถชมข้อมูลสินค้าได้ แต่ต้องเข้าสู่ระบบเพื่อซื้อสินค้า</div>
+                                    </div>
+                                </div>
+                                <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary px-3 fw-bold">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> เข้าสู่ระบบเพื่อสั่งซื้อ
+                                </a>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-pet-primary btn-lg flex-grow-1" @(Model.IsOutOfStock ? "disabled" : "")>
-                            <i class="bi bi-cart-plus-fill me-2"></i> เพิ่มลงในตะกร้าสินค้า
-                        </button>
-                    </form>
+                    }
+                    else
+                    {
+                        <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex gap-3 ajax-add-to-cart">
+                            <input type="hidden" name="productId" value="@Model.Id" />
+                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                            <div style="width: 120px;">
+                                <input type="number" name="quantity" class="form-control form-control-lg text-center" value="1" min="1" max="@Model.StockQuantity" id="qty-input-@Model.Id" />
+                            </div>
+                            <button type="submit" class="btn btn-pet-primary btn-lg flex-grow-1" @(Model.IsOutOfStock ? "disabled" : "") id="add-cart-btn-@Model.Id">
+                                <i class="bi bi-cart-plus-fill me-2"></i> <span>เพิ่มลงในตะกร้าสินค้า</span>
+                            </button>
+                        </form>
+                    }
                 </div>
             </div>
         </div>

@@ -15,14 +15,14 @@ namespace CSI402_Project_final.Controllers
 
         // หน้าร้านหลัก พร้อมฟิลเตอร์แยกประเภทสัตว์ (Req 1), น้ำหนัก (Req 2), ช่วงวัย/โรค (Req 7, 9, 10)
         public IActionResult Index(
-            PetCategory? petType = null, 
-            ProductCategory? category = null, 
+            PetCategory? petType = null,
+            ProductCategory? category = null,
             AgeStage? ageStage = null,
             string? specialNeed = null,
             double? maxWeight = null,
             string? search = null)
         {
-            var products = _repo.Products.AsQueryable();
+            var products = _repo.QueryProducts();
 
             if (petType.HasValue)
                 products = products.Where(p => p.PetType == petType.Value);
@@ -40,16 +40,20 @@ namespace CSI402_Project_final.Controllers
                 products = products.Where(p => p.WeightKg <= maxWeight.Value);
 
             if (!string.IsNullOrWhiteSpace(search))
-                products = products.Where(p => p.Name.Contains(search, System.StringComparison.OrdinalIgnoreCase) || 
-                                               p.Brand.Contains(search, System.StringComparison.OrdinalIgnoreCase));
+            {
+                string term = search.Trim();
+                products = products.Where(p => p.Name.Contains(term) || p.Brand.Contains(term));
+            }
 
-            ViewBag.ActivePromotions = _repo.Promotions.Where(p => p.IsValidNow).ToList();
+            ViewBag.ActivePromotions = _repo.GetValidPromotions();
             ViewBag.CurrentCartCount = _repo.CurrentCart.TotalItemCount;
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
             ViewBag.SelectedPetType = petType;
             ViewBag.SelectedCategory = category;
             ViewBag.SelectedAgeStage = ageStage;
             ViewBag.SelectedSpecialNeed = specialNeed;
+            ViewBag.SelectedMaxWeight = maxWeight;
+            ViewBag.SelectedSearch = search;
 
             return View(products.ToList());
         }
@@ -57,11 +61,11 @@ namespace CSI402_Project_final.Controllers
         // หน้ารายละเอียดสินค้า (แสดง Layer ช่วงวัย & Social proof คนใส่ตะกร้า Req 7, 8, 10)
         public IActionResult Details(int id)
         {
-            var product = _repo.Products.FirstOrDefault(p => p.Id == id);
+            var product = _repo.QueryProducts().FirstOrDefault(p => p.Id == id);
             if (product == null) return NotFound();
 
             // สินค้าแนะนำในช่วงวัยเดียวกัน (Req 7, 10)
-            ViewBag.RelatedProducts = _repo.Products
+            ViewBag.RelatedProducts = _repo.QueryProducts()
                 .Where(p => p.Id != id && p.PetType == product.PetType && p.AgeStage == product.AgeStage)
                 .Take(4)
                 .ToList();
@@ -72,12 +76,10 @@ namespace CSI402_Project_final.Controllers
             return View(product);
         }
 
-        // ระบบสลับมุมมอง Role เพื่อให้ทดสอบทั้ง 10 บทบาทได้ทันที
         [HttpPost]
         public IActionResult SwitchRole(UserRole role, string returnUrl = "/")
         {
-            _repo.CurrentSimulatedRole = role;
-            return LocalRedirect(returnUrl);
+            return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Index));
         }
     }
 }

@@ -13,7 +13,7 @@
                 <i class="bi bi-check-circle-fill text-success fs-1"></i>
                 <div>
                     <h4 class="fw-bold m-0">สั่งซื้อสินค้าสำเร็จ! ขอบคุณที่ไว้วางใจ PetStore Pro</h4>
-                    <p class="m-0 text-muted">เลขอ้างอิงคำสั่งซื้อ: <strong>@successOrderId</strong> ทางเรากำลังจัดเตรียมสินค้าเพื่อจัดส่ง</p>
+                    <p class="m-0 text-muted">เลขอ้างอิงคำสั่งซื้อ: <strong>@successOrderId</strong> สามารถตรวจสอบสถานะการชำระเงินและการจัดส่งได้ด้านล่าง</p>
                 </div>
             </div>
         </div>
@@ -22,7 +22,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="fw-bold mb-1"><i class="bi bi-box-seam text-warning"></i> รายการคำสั่งซื้อของคุณ</h3>
-            <span class="text-muted">ตรวจสอบสถานะการแพ็กและเลข Tracking พัสดุ (Customer Role)</span>
+            <span class="text-muted">ตรวจสอบสถานะชำระเงิน แนบสลิป และติดตามเลข Tracking พัสดุ (Customer Role)</span>
         </div>
         <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark btn-sm">เลือกซื้อสินค้าเพิ่ม</a>
     </div>
@@ -43,12 +43,16 @@
                         <div class="card-header bg-light py-3 d-flex flex-wrap justify-content-between align-items-center">
                             <div class="d-flex align-items-center gap-3">
                                 <span class="fw-bold text-dark fs-5">#@order.OrderId</span>
-                                <span class="badge @(order.Status == OrderStatus.Shipped ? "bg-success" : 
-                                                    order.Status == OrderStatus.RefundRequested ? "bg-danger" : 
+                                <span class="badge @(order.Status == OrderStatus.PendingPayment ? "bg-warning text-dark" :
+                                                    order.Status == OrderStatus.Shipped || order.Status == OrderStatus.Completed ? "bg-success" :
+                                                    order.Status == OrderStatus.RefundRequested || order.Status == OrderStatus.Cancelled ? "bg-danger" :
                                                     order.Status == OrderStatus.Refunded ? "bg-secondary" : "bg-primary") px-3 py-2">
-                                    @(order.Status == OrderStatus.PaymentVerified ? "ชำระเงินแล้ว (รอจัดของ)" :
+                                    @(order.Status == OrderStatus.PendingPayment ? "รอตรวจสอบชำระเงิน / สลิป" :
+                                      order.Status == OrderStatus.PaymentVerified ? "ชำระเงินแล้ว (รอจัดของ)" :
                                       order.Status == OrderStatus.Preparing ? "กำลังจัดเตรียมสินค้า" :
                                       order.Status == OrderStatus.Shipped ? "จัดส่งสินค้าแล้ว 🚚" :
+                                      order.Status == OrderStatus.Completed ? "ได้รับสินค้าเรียบร้อย ✅" :
+                                      order.Status == OrderStatus.Cancelled ? "ยกเลิกคำสั่งซื้อแล้ว" :
                                       order.Status == OrderStatus.RefundRequested ? "รอดำเนินการขอคืนเงิน" :
                                       order.Status == OrderStatus.Refunded ? "คืนเงินเรียบร้อยแล้ว" : order.Status.ToString())
                                 </span>
@@ -81,11 +85,52 @@
                                             🎁 <strong>ของแถมฟรีตามโปรโมชั่น:</strong> @order.FreeGiftItem
                                         </div>
                                     }
+
+                                    <!-- ข้อมูลชำระเงิน & อัปโหลดสลิป (Req 19) -->
+                                    <div class="mt-3 p-3 bg-light rounded-3 border">
+                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                            <div class="small">
+                                                <strong>การชำระเงิน:</strong> @order.PaymentMethod
+                                                @if (order.IsPaymentApproved)
+                                                {
+                                                    <span class="badge bg-success ms-1">ยืนยันยอดเงินแล้ว</span>
+                                                }
+                                                else if (order.Status == OrderStatus.PendingPayment)
+                                                {
+                                                    <span class="badge bg-warning text-dark ms-1">รอฝ่ายบัญชีตรวจสอบ</span>
+                                                }
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(order.PaymentSlipUrl))
+                                            {
+                                                <a href="@order.PaymentSlipUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-image"></i> ดูรูปสลิปที่แนบ
+                                                </a>
+                                            }
+                                        </div>
+
+                                        @if (order.Status == OrderStatus.PendingPayment)
+                                        {
+                                            <form asp-action="UploadSlip" method="post" enctype="multipart/form-data" class="mt-2 pt-2 border-top d-flex flex-wrap gap-2 align-items-center">
+                                                <input type="hidden" name="orderId" value="@order.OrderId" />
+                                                <input type="file" name="paymentSlip" class="form-control form-control-sm" style="max-width: 260px;" accept="image/*" required />
+                                                <button type="submit" class="btn btn-sm btn-dark">
+                                                    <i class="bi bi-upload"></i> @(string.IsNullOrEmpty(order.PaymentSlipUrl) ? "แนบสลิปโอนเงิน" : "เปลี่ยนรูปสลิป")
+                                                </button>
+                                            </form>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(order.RefundReason) && order.Status == OrderStatus.Cancelled)
+                                        {
+                                            <div class="small text-danger mt-2">
+                                                <strong>หมายเหตุยกเลิก:</strong> @order.RefundReason
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
 
                                 <div class="col-md-5 border-start-md">
                                     <h6 class="fw-bold text-muted small text-uppercase">การจัดส่งและยอดเงิน</h6>
-                                    
+
                                     @if (!string.IsNullOrEmpty(order.TrackingNumber))
                                     {
                                         <div class="p-3 bg-success-subtle rounded-3 mb-3 border border-success-subtle">
@@ -94,7 +139,14 @@
                                             <div class="small text-muted">น้ำหนักพัสดุชั่งจริง: @order.ActualWeightKg kg</div>
                                         </div>
                                     }
-                                    else
+                                    else if (order.Status == OrderStatus.PendingPayment)
+                                    {
+                                        <div class="p-3 bg-warning-subtle rounded-3 mb-3">
+                                            <div class="small text-dark fw-semibold">⏳ รอการตรวจสอบการชำระเงินจากฝ่ายบัญชี</div>
+                                            <div class="small text-muted">น้ำหนักประเมิน: ⚖️ @order.EstimatedWeightKg kg</div>
+                                        </div>
+                                    }
+                                    else if (order.Status != OrderStatus.Cancelled && order.Status != OrderStatus.Refunded)
                                     {
                                         <div class="p-3 bg-light rounded-3 mb-3">
                                             <div class="small text-muted">สถานะพัสดุ: <strong>กำลังเตรียมบรรจุหีบห่อ</strong></div>
@@ -120,15 +172,14 @@
                                     </div>
 
                                     <!-- ขอยกเลิกคำสั่งซื้อ (Req 20) -->
-                                    @if (order.Status == OrderStatus.PaymentVerified || order.Status == OrderStatus.Preparing)
+                                    @if (order.Status == OrderStatus.PendingPayment || order.Status == OrderStatus.PaymentVerified || order.Status == OrderStatus.Preparing)
                                     {
                                         <div class="mt-3 text-end">
                                             <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelModal-@order.OrderId">
-                                                <i class="bi bi-x-circle"></i> ขอยกเลิกคำสั่งซื้อ / ขอคืนเงิน
+                                                <i class="bi bi-x-circle"></i> @(order.Status == OrderStatus.PendingPayment ? "ยกเลิกคำสั่งซื้อ" : "ขอยกเลิกคำสั่งซื้อ / ขอคืนเงิน")
                                             </button>
                                         </div>
 
-                                        <!-- Modal ขอยกเลิกคำสั่งซื้อ -->
                                         <div class="modal fade" id="cancelModal-@order.OrderId" tabindex="-1">
                                             <div class="modal-dialog">
                                                 <div class="modal-content">
@@ -139,13 +190,20 @@
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                         </div>
                                                         <div class="modal-body">
-                                                            <p class="small text-muted">เมื่อกดยืนยัน คำขอนี้จะถูกส่งไปยังฝ่ายบัญชีเพื่อตรวจสอบและดำเนินการคืนเงินจำนวน <strong>฿@order.GrandTotal.ToString("N0")</strong></p>
+                                                            @if (order.Status == OrderStatus.PendingPayment)
+                                                            {
+                                                                <p class="small text-muted">ยืนยันยกเลิกคำสั่งซื้อที่ยังไม่ผ่านการชำระเงิน</p>
+                                                            }
+                                                            else
+                                                            {
+                                                                <p class="small text-muted">เมื่อกดยืนยัน คำขอนี้จะถูกส่งไปยังฝ่ายบัญชีเพื่อตรวจสอบและดำเนินการคืนเงินจำนวน <strong>฿@order.GrandTotal.ToString("N0")</strong></p>
+                                                            }
                                                             <label class="form-label small fw-bold">ระบุเหตุผลที่ต้องการยกเลิก:</label>
                                                             <textarea name="reason" class="form-control" rows="3" placeholder="เช่น สั่งสินค้าผิดสูตร, ต้องการเปลี่ยนที่อยู่..." required></textarea>
                                                         </div>
                                                         <div class="modal-footer">
                                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-                                                            <button type="submit" class="btn btn-danger">ยืนยันขอยกเลิกและคืนเงิน</button>
+                                                            <button type="submit" class="btn btn-danger">ยืนยันยกเลิกคำสั่งซื้อ</button>
                                                         </div>
                                                     </form>
                                                 </div>

@@ -1,25 +1,29 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CSI402_Project_final.Models
 {
+    // ตรงตาม DATA_DICTIONARY.md และค่าเริ่มต้น User.Role = 0 (Customer) ใน csi402db
     public enum UserRole
     {
-        Guest,
-        Customer,
-        InventoryStaff,
-        OrderStaff,
-        ShippingStaff,
-        MarketingStaff,
-        AccountingStaff,
-        ITSupport,
-        Admin,
-        Owner
+        Customer = 0,
+        Admin = 1,
+        InventoryStaff = 2,
+        OrderStaff = 3,
+        ShippingStaff = 4,
+        MarketingStaff = 5,
+        AccountingStaff = 6,
+        ITSupport = 7,
+        Owner = 8,
+        Guest = 9
     }
 
     public class UserAddress
     {
         public int Id { get; set; }
+        public int UserId { get; set; }
         public string Title { get; set; } = "ที่อยู่บ้าน"; // เช่น บ้าน, ที่ทำงาน, คอนโด
         public string RecipientName { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
@@ -29,8 +33,11 @@ namespace CSI402_Project_final.Models
         public string Province { get; set; } = string.Empty;    // จังหวัด
         public string PostalCode { get; set; } = string.Empty;  // รหัสไปรษณีย์
         public bool IsDefault { get; set; } = true;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
-        public string DisplayAddress => 
+        [NotMapped]
+        public string DisplayAddress =>
             $"{FullAddress} แขวง/ตำบล{Subdistrict} เขต/อำเภอ{District} จ.{Province} {PostalCode}".Trim();
     }
 
@@ -44,11 +51,14 @@ namespace CSI402_Project_final.Models
         public string Phone { get; set; } = string.Empty;
         public UserRole Role { get; set; } = UserRole.Customer;
         public bool IsActive { get; set; } = true;
-        public List<string> GrantedPermissions { get; set; } = new();
+        public List<string>? GrantedPermissions { get; set; } = new();
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
         // ระบบสมุดที่อยู่จัดส่งของลูกค้า
         public List<UserAddress> Addresses { get; set; } = new();
 
+        [NotMapped]
         public UserAddress? DefaultAddress => Addresses.Find(a => a.IsDefault) ?? (Addresses.Count > 0 ? Addresses[0] : null);
     }
 

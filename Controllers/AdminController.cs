@@ -18,34 +18,35 @@ namespace CSI402_Project_final.Controllers
         // หน้าจัดการผู้ใช้และสิทธิ์การเข้าถึง (Admin)
         public IActionResult Index()
         {
+            var users = _repo.Users;
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            ViewBag.TotalStaff = _repo.Users.Count(u => u.Role != UserRole.Customer && u.Role != UserRole.Guest);
-            ViewBag.TotalCustomers = _repo.Users.Count(u => u.Role == UserRole.Customer);
+            ViewBag.TotalStaff = users.Count(u => u.Role != UserRole.Customer && u.Role != UserRole.Guest);
+            ViewBag.TotalCustomers = users.Count(u => u.Role == UserRole.Customer);
 
-            return View(_repo.Users);
+            return View(users);
         }
 
-        // ปรับเปลี่ยนบทบาทและสิทธิ์ของพนักงาน
+        // ปรับเปลี่ยนบทบาทและสิทธิ์ของพนักงาน (บันทึกลง DB)
         [HttpPost]
         public IActionResult UpdateUserRole(int userId, UserRole newRole, bool isActive)
         {
-            var user = _repo.Users.FirstOrDefault(u => u.Id == userId);
-            if (user != null)
+            if (_repo.UpdateUserRole(userId, newRole, isActive))
             {
-                user.Role = newRole;
-                user.IsActive = isActive;
-                TempData["SuccessMessage"] = $"อัปเดตบทบาทของ '{user.FullName}' เป็น '{newRole}' สำเร็จ";
+                TempData["SuccessMessage"] = $"อัปเดตบทบาทผู้ใช้งาน #{userId} เป็น '{newRole}' สำเร็จ";
             }
             return RedirectToAction(nameof(Index));
         }
 
-        // เพิ่มผู้ใช้งานใหม่
+        // เพิ่มผู้ใช้งานใหม่ (บันทึกลง DB)
         [HttpPost]
         public IActionResult CreateUser(SystemUser user)
         {
-            user.Id = _repo.Users.Any() ? _repo.Users.Max(u => u.Id) + 1 : 1;
-            _repo.Users.Add(user);
-            TempData["SuccessMessage"] = $"เพิ่มผู้ใช้งาน '{user.FullName}' ในระบบเรียบร้อยแล้ว";
+            var (success, message) = _repo.CreateUser(user);
+            if (success)
+                TempData["SuccessMessage"] = message;
+            else
+                TempData["ErrorMessage"] = message;
+
             return RedirectToAction(nameof(Index));
         }
     }
