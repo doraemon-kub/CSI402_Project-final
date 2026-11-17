@@ -10,9 +10,14 @@ namespace CSI402_Project_final.Models
     {
         public static void Initialize(PetShopDbContext db)
         {
-            if (!db.Database.CanConnect())
+            try
             {
-                throw new InvalidOperationException("ไม่สามารถเชื่อมต่อฐานข้อมูล MySQL ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือ Connection String");
+                db.Database.OpenConnection();
+                db.Database.CloseConnection();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"ไม่สามารถเชื่อมต่อฐานข้อมูล MySQL ได้: {ex.Message}", ex);
             }
 
             // สร้างโครงสร้างตารางทั้งหมดอัตโนมัติหากยังไม่มีในฐานข้อมูล (สำหรับ Cloud DB ใหม่)
