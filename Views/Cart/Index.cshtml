@@ -6,44 +6,47 @@
     var currentRole = ViewBag.CurrentRole as UserRole?;
 }
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container py-4 py-md-5">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
         <div>
-            <h3 class="fw-bold mb-1"><i class="bi bi-cart3 text-warning"></i> ตะกร้าสินค้าของคุณ</h3>
-            <span class="text-muted">ระบบคำนวณโปรโมชั่น 5 เงื่อนไข และค่าจัดส่งตามน้ำหนักอัตโนมัติ</span>
+            <div class="text-uppercase fw-semibold text-lux-gold mb-1" style="font-size: 0.72rem; letter-spacing: 0.1em;">SHOPPING BAG</div>
+            <h3 class="fw-bold mb-1 text-lux-espresso">ตะกร้าสินค้าของคุณ</h3>
+            <span class="text-lux-muted small">ระบบคำนวณโปรโมชั่น 5 เงื่อนไข และค่าจัดส่งตามน้ำหนักอัตโนมัติ</span>
         </div>
-        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark btn-sm">
-            <i class="bi bi-arrow-left"></i> เลือกซื้อสินค้าเพิ่ม
+        <a asp-controller="Home" asp-action="Index" class="btn btn-lux-outline btn-sm px-3 py-2">
+            <i class="bi bi-arrow-left me-1"></i> เลือกซื้อสินค้าเพิ่ม
         </a>
     </div>
 
     @if (User.Identity?.IsAuthenticated != true)
     {
-        <div class="card border-0 shadow-sm rounded-4 text-center py-5">
-            <div class="card-body">
-                <i class="bi bi-shield-lock text-warning" style="font-size: 3.5rem;"></i>
-                <h4 class="mt-3 fw-bold">กรุณาเข้าสู่ระบบก่อนใช้งานตะกร้าสินค้า</h4>
-                <p class="text-muted">ผู้เยี่ยมชม (Guest) ต้องเข้าสู่ระบบก่อนเพื่อหยิบสินค้าลงตะกร้าและทำการสั่งซื้อ</p>
-                <div class="d-flex justify-content-center gap-2 mt-3">
-                    <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="/Cart" class="btn btn-primary px-4">
-                        <i class="bi bi-box-arrow-in-right me-1"></i> เข้าสู่ระบบ
-                    </a>
-                    <a asp-controller="Auth" asp-action="Register" class="btn btn-outline-secondary px-4">
-                        สมัครสมาชิกใหม่
-                    </a>
-                </div>
+        <div class="lux-card text-center py-5 px-4">
+            <div class="mx-auto rounded-circle d-flex align-items-center justify-content-center mb-3"
+                 style="width: 72px; height: 72px; background: var(--lux-gold-soft); color: var(--lux-gold-dark);">
+                <i class="bi bi-lock-fill fs-2"></i>
+            </div>
+            <h4 class="fw-bold text-lux-espresso">กรุณาเข้าสู่ระบบก่อนใช้งานตะกร้าสินค้า</h4>
+            <p class="text-lux-muted small mb-4">ผู้เยี่ยมชม (Guest) ต้องเข้าสู่ระบบก่อนเพื่อหยิบสินค้าลงตะกร้าและทำการสั่งซื้อ</p>
+            <div class="d-flex justify-content-center gap-2">
+                <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="/Cart" class="btn btn-pet-primary px-4 py-2">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> เข้าสู่ระบบ
+                </a>
+                <a asp-controller="Auth" asp-action="Register" class="btn btn-lux-outline px-4 py-2">
+                    สมัครสมาชิกใหม่
+                </a>
             </div>
         </div>
     }
     else if (!Model.Items.Any())
     {
-        <div class="card border-0 shadow-sm rounded-4 text-center py-5">
-            <div class="card-body">
-                <i class="bi bi-cart-x text-muted" style="font-size: 4rem;"></i>
-                <h4 class="mt-3 text-muted">ยังไม่มีสินค้าในตะกร้า</h4>
-                <p class="text-muted">เลือกสินค้าสัตว์เลี้ยงที่คุณรักเพื่อรับส่วนลดพิเศษและของแถมมากมาย</p>
-                <a asp-controller="Home" asp-action="Index" class="btn btn-pet-primary px-4 mt-2">ไปที่หน้าร้านค้า</a>
+        <div class="lux-card text-center py-5 px-4">
+            <div class="mx-auto rounded-circle d-flex align-items-center justify-content-center mb-3"
+                 style="width: 72px; height: 72px; background: var(--lux-surface-soft); color: var(--lux-muted);">
+                <i class="bi bi-bag fs-2"></i>
             </div>
+            <h4 class="fw-bold text-lux-espresso">ยังไม่มีสินค้าในตะกร้า</h4>
+            <p class="text-lux-muted small mb-4">เลือกสินค้าสัตว์เลี้ยงที่คุณรักเพื่อรับส่วนลดพิเศษและของแถมมากมาย</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-pet-primary px-4 py-2">ไปที่หน้าร้านค้า</a>
         </div>
     }
     else
@@ -51,34 +54,36 @@
         <div class="row g-4">
             <!-- รายการสินค้าในตะกร้า (Req 11) -->
             <div class="col-lg-8">
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white py-3 border-0">
-                        <h6 class="fw-bold m-0 text-dark">
-                            <i class="bi bi-bag-check"></i> สินค้าที่เลือก (@Model.TotalItemCount ชิ้น | รวม ⚖️ @Model.TotalWeightKg kg)
+                <div class="lux-card overflow-hidden mb-4">
+                    <div class="px-4 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--lux-border); background: var(--lux-surface-tint);">
+                        <h6 class="fw-semibold m-0 text-lux-espresso">
+                            <i class="bi bi-bag-check text-lux-gold me-2"></i>สินค้าที่เลือก (@Model.TotalItemCount ชิ้น)
                         </h6>
+                        <span class="lux-tag">น้ำหนักรวม @Model.TotalWeightKg kg</span>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle m-0">
-                            <thead class="table-light">
+                            <thead>
                                 <tr>
-                                    <th style="width: 45%;">สินค้า</th>
+                                    <th class="ps-4" style="width: 45%;">สินค้า</th>
                                     <th>ราคาต่อชิ้น</th>
-                                    <th style="width: 130px;">จำนวน</th>
+                                    <th style="width: 135px;">จำนวน</th>
                                     <th>ราคารวม</th>
-                                    <th></th>
+                                    <th class="pe-3"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var item in Model.Items)
                                 {
                                     <tr>
-                                        <td>
+                                        <td class="ps-4 py-3">
                                             <div class="d-flex align-items-center gap-3">
-                                                <img src="@item.Product.ImageUrl" class="rounded-3" style="width: 60px; height: 60px; object-fit: cover;" />
+                                                <img src="@item.Product.ImageUrl" class="rounded-3" style="width: 64px; height: 64px; object-fit: cover; border: 1px solid var(--lux-border);" />
                                                 <div>
-                                                    <div class="fw-bold text-dark text-truncate" style="max-width: 260px;">@item.Product.Name</div>
-                                                    <div class="small text-muted">
-                                                        แบรนด์: @item.Product.Brand | ⚖️ @item.Product.WeightKg kg/ชิ้น (รวม @item.TotalWeightKg kg)
+                                                    <div class="lux-product-brand">@item.Product.Brand</div>
+                                                    <div class="fw-semibold text-lux-espresso text-truncate" style="max-width: 250px;">@item.Product.Name</div>
+                                                    <div class="small text-lux-muted" style="font-size: 0.76rem;">
+                                                        @item.Product.WeightKg kg/ชิ้น · รวม @item.TotalWeightKg kg
                                                     </div>
                                                 </div>
                                             </div>
@@ -86,32 +91,32 @@
                                         <td>
                                             @if (item.Product.SpecialDiscountPrice.HasValue)
                                             {
-                                                <div class="fw-bold text-danger">฿@item.Product.SpecialDiscountPrice.Value.ToString("N0")</div>
-                                                <div class="text-muted text-decoration-line-through small">฿@item.Product.Price.ToString("N0")</div>
+                                                <div class="fw-bold lux-price-sale">฿@item.Product.SpecialDiscountPrice.Value.ToString("N0")</div>
+                                                <div class="lux-price-old">฿@item.Product.Price.ToString("N0")</div>
                                             }
                                             else
                                             {
-                                                <div class="fw-bold text-dark">฿@item.Product.Price.ToString("N0")</div>
+                                                <div class="fw-semibold text-lux-espresso">฿@item.Product.Price.ToString("N0")</div>
                                             }
                                         </td>
                                         <td>
                                             <!-- ฟอร์มแก้ไขจำนวนสินค้า (Req 11) -->
                                             <form asp-action="Update" method="post" class="d-flex align-items-center gap-1">
                                                 <input type="hidden" name="productId" value="@item.Product.Id" />
-                                                <button type="submit" name="quantity" value="@(item.Quantity - 1)" class="btn btn-sm btn-outline-secondary px-2">-</button>
-                                                <input type="text" class="form-control form-control-sm text-center px-1" style="width: 40px;" value="@item.Quantity" readonly />
-                                                <button type="submit" name="quantity" value="@(item.Quantity + 1)" class="btn btn-sm btn-outline-secondary px-2">+</button>
+                                                <button type="submit" name="quantity" value="@(item.Quantity - 1)" class="btn btn-sm btn-lux-outline px-2 py-1">-</button>
+                                                <input type="text" class="form-control form-control-sm text-center px-1 fw-semibold" style="width: 42px;" value="@item.Quantity" readonly />
+                                                <button type="submit" name="quantity" value="@(item.Quantity + 1)" class="btn btn-sm btn-lux-outline px-2 py-1">+</button>
                                             </form>
                                         </td>
                                         <td>
-                                            <span class="fw-bold text-dark">฿@item.Subtotal.ToString("N0")</span>
+                                            <span class="fw-bold text-lux-espresso">฿@item.Subtotal.ToString("N0")</span>
                                         </td>
-                                        <td>
+                                        <td class="pe-3 text-end">
                                             <!-- ปุ่มลบสินค้า (Req 11) -->
                                             <form asp-action="Remove" method="post">
                                                 <input type="hidden" name="productId" value="@item.Product.Id" />
-                                                <button type="submit" class="btn btn-sm text-danger border-0" title="ลบสินค้านี้">
-                                                    <i class="bi bi-trash3-fill"></i>
+                                                <button type="submit" class="btn btn-sm border-0" style="color: var(--lux-danger);" title="ลบสินค้านี้">
+                                                    <i class="bi bi-trash3"></i>
                                                 </button>
                                             </form>
                                         </td>
@@ -123,29 +128,31 @@
                 </div>
 
                 <!-- Weight-Based Meter: เกณฑ์ 10 kg (Req 4, 14, 15, 16) -->
-                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="background-color: #f8fafc;">
+                <div class="lux-card p-4 mb-4 bg-lux-tint">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold m-0"><i class="bi bi-speedometer text-primary"></i> แถบวัดน้ำหนักพัสดุรวม (เกณฑ์ส่งฟรีไม่เกิน 10 kg)</h6>
-                        <span class="fw-bold @(Model.TotalWeightKg > 10.0 ? "text-danger" : "text-success")">
-                            ⚖️ @Model.TotalWeightKg / 10.0 kg
+                        <h6 class="fw-semibold m-0 text-lux-espresso">
+                            <i class="bi bi-speedometer2 text-lux-gold me-2"></i>เกณฑ์น้ำหนักจัดส่ง (ส่งฟรีเมื่อน้ำหนักไม่เกิน 10 kg)
+                        </h6>
+                        <span class="fw-bold" style="color: @(Model.TotalWeightKg > 10.0 ? "var(--lux-danger)" : "var(--lux-success)");">
+                            @Model.TotalWeightKg / 10.0 kg
                         </span>
                     </div>
-                    
+
                     @{
                         int percent = (int)Math.Min(100, (Model.TotalWeightKg / 10.0) * 100);
-                        string barColor = Model.TotalWeightKg > 10.0 ? "bg-danger" : "bg-success";
+                        string barStyle = Model.TotalWeightKg > 10.0 ? "background-color: var(--lux-danger);" : "background-color: var(--lux-success);";
                     }
-                    <div class="progress mb-2" style="height: 12px;">
-                        <div class="progress-bar @barColor progress-bar-striped progress-bar-animated" style="width: @percent%;"></div>
+                    <div class="progress mb-2 rounded-pill" style="height: 10px; background-color: #E7DFD5;">
+                        <div class="progress-bar rounded-pill" style="width: @percent%; @barStyle"></div>
                     </div>
-                    <div class="small text-muted">
+                    <div class="small">
                         @if (Model.TotalWeightKg <= 10.0)
                         {
-                            <span class="text-success fw-medium"><i class="bi bi-check-circle"></i> น้ำหนักไม่เกิน 10 kg ได้สิทธิ์ส่งฟรีเมื่อยอดซื้อถึง ฿800</span>
+                            <span style="color: var(--lux-success);"><i class="bi bi-check-circle me-1"></i> น้ำหนักไม่เกิน 10 kg ได้สิทธิ์ส่งฟรีเมื่อยอดซื้อถึง ฿800</span>
                         }
                         else
                         {
-                            <span class="text-danger fw-medium"><i class="bi bi-exclamation-triangle-fill"></i> น้ำหนักเกิน 10 kg (+@Math.Ceiling(Model.TotalWeightKg - 10.0) kg) มีค่าบริการจัดส่งเพิ่มเติมกิโลกรัมละ 20 บาท</span>
+                            <span style="color: var(--lux-danger);"><i class="bi bi-exclamation-triangle-fill me-1"></i> น้ำหนักเกิน 10 kg (+@Math.Ceiling(Model.TotalWeightKg - 10.0) kg) มีค่าจัดส่งเพิ่มเติมกิโลกรัมละ 20 บาท</span>
                         }
                     </div>
                 </div>
@@ -153,11 +160,14 @@
                 <!-- แสดงของแถมที่ได้รับ (โปรโมชั่น 4) -->
                 @if (!string.IsNullOrEmpty(Model.FreeGiftItem))
                 {
-                    <div class="alert alert-warning border-0 rounded-4 shadow-sm d-flex align-items-center gap-3">
-                        <i class="bi bi-gift-fill text-warning fs-2"></i>
+                    <div class="lux-card p-4 d-flex align-items-center gap-3" style="background: var(--lux-gold-soft); border-color: #E4D0B9;">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 48px; height: 48px; background: var(--lux-espresso); color: var(--lux-gold-light);">
+                            <i class="bi bi-gift-fill fs-5"></i>
+                        </div>
                         <div>
-                            <div class="fw-bold text-dark">ยินดีด้วย! คุณได้รับของขวัญฟรีตามโปรโมชั่นที่ 4</div>
-                            <div class="small text-muted">ของแถม: <strong>@Model.FreeGiftItem</strong> (เมื่อยอดซื้อถึงกำหนด)</div>
+                            <div class="fw-bold text-lux-espresso">ยินดีด้วย! คุณได้รับของขวัญฟรีตามโปรโมชั่นที่ 4</div>
+                            <div class="small text-lux-muted">ของแถม: <strong class="text-lux-espresso">@Model.FreeGiftItem</strong></div>
                         </div>
                     </div>
                 }
@@ -165,67 +175,61 @@
 
             <!-- สรุปราคาและโปรโมชั่น (Req 3, 12, 13) -->
             <div class="col-lg-4">
-                <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 90px;">
-                    <h5 class="fw-bold text-dark mb-3">สรุปยอดชำระเงิน</h5>
-                    
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">ราคารวมสินค้า (ราคาเดิม):</span>
-                        <span class="fw-bold text-dark">฿@Model.ProductPriceBeforePromo.ToString("N2")</span>
+                <div class="lux-card p-4 sticky-top" style="top: 96px;">
+                    <div class="text-uppercase fw-semibold text-lux-gold mb-1" style="font-size: 0.7rem; letter-spacing: 0.1em;">ORDER SUMMARY</div>
+                    <h5 class="fw-bold text-lux-espresso mb-4">สรุปยอดชำระเงิน</h5>
+
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-lux-muted">ราคารวมสินค้า (ราคาเดิม)</span>
+                        <span class="fw-semibold text-lux-espresso">฿@Model.ProductPriceBeforePromo.ToString("N2")</span>
                     </div>
 
                     <!-- รายการโปรโมชั่นที่ระบบตรวจสอบและใช้อัตโนมัติ (Req 12, 13) -->
                     @if (Model.AppliedPromotions.Any())
                     {
-                        <div class="p-3 my-3 rounded-3" style="background-color: #fef2f2; border: 1px dashed #f87171;">
-                            <div class="small fw-bold text-danger mb-2">
-                                <i class="bi bi-stars"></i> โปรโมชั่นที่เข้าเงื่อนไขอัตโนมัติ:
+                        <div class="p-3 my-3 rounded-3" style="background-color: var(--lux-surface-tint); border: 1px dashed var(--lux-gold);">
+                            <div class="small fw-semibold text-lux-gold mb-2">
+                                <i class="bi bi-stars me-1"></i> โปรโมชั่นที่ใช้ให้อัตโนมัติ
                             </div>
                             @foreach (var promo in Model.AppliedPromotions)
                             {
                                 <div class="d-flex justify-content-between align-items-start mb-1 small">
-                                    <span class="text-dark">@promo.PromotionTitle</span>
-                                    <span class="fw-bold text-danger">-฿@promo.DiscountAmount.ToString("N2")</span>
+                                    <span class="text-lux-espresso">@promo.PromotionTitle</span>
+                                    <span class="fw-bold lux-price-sale">-฿@promo.DiscountAmount.ToString("N2")</span>
                                 </div>
-                                <div class="text-muted" style="font-size: 0.75rem;">(@promo.Note)</div>
+                                <div class="text-lux-muted mb-1" style="font-size: 0.74rem;">@promo.Note</div>
                             }
-                            <hr class="my-2 border-danger-subtle" />
-                            <div class="d-flex justify-content-between fw-bold text-danger small">
-                                <span>รวมส่วนลดโปรโมชั่น:</span>
+                            <hr class="my-2" style="border-color: var(--lux-border-strong);" />
+                            <div class="d-flex justify-content-between fw-bold lux-price-sale small">
+                                <span>รวมส่วนลดโปรโมชั่น</span>
                                 <span>-฿@Model.TotalPromotionDiscount.ToString("N2")</span>
                             </div>
                         </div>
                     }
 
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">ค่าจัดส่งพัสดุ:</span>
-                        <span class="fw-bold @(Model.ShippingFee == 0 ? "text-success" : "text-dark")">
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-lux-muted">ค่าจัดส่งพัสดุ</span>
+                        <span class="fw-semibold" style="color: @(Model.ShippingFee == 0 ? "var(--lux-success)" : "var(--lux-espresso)");">
                             @(Model.ShippingFee == 0 ? "ฟรี (฿0)" : $"฿{Model.ShippingFee:N2}")
                         </span>
                     </div>
-                    <div class="small text-muted mb-3" style="font-size: 0.8rem;">
-                        <i class="bi bi-info-circle"></i> @Model.ShippingCalculationDetail
+                    <div class="small text-lux-muted mb-3" style="font-size: 0.76rem;">
+                        <i class="bi bi-info-circle me-1"></i> @Model.ShippingCalculationDetail
                     </div>
 
-                    <hr class="my-3" />
+                    <hr class="my-3" style="border-color: var(--lux-border);" />
 
-                    <!-- ยอดสุทธิหลังใช้ส่วนลด (Req 3) -->
                     <div class="d-flex justify-content-between align-items-baseline mb-4">
-                        <span class="fw-bold fs-5 text-dark">ยอดชำระสุทธิ:</span>
+                        <span class="fw-bold text-lux-espresso">ยอดชำระสุทธิ</span>
                         <div class="text-end">
-                            <div class="display-6 fw-bold text-danger">฿@Model.GrandTotal.ToString("N2")</div>
-                            <div class="small text-muted">รวมภาษีและค่าจัดส่งแล้ว</div>
+                            <div class="fs-3 fw-bold text-lux-espresso">฿@Model.GrandTotal.ToString("N2")</div>
+                            <div class="text-lux-muted" style="font-size: 0.74rem;">รวมภาษีและค่าจัดส่งแล้ว</div>
                         </div>
                     </div>
 
-                    @if (currentRole == UserRole.Guest)
-                    {
-                        <div class="alert alert-info small p-2 mb-3">
-                            <i class="bi bi-person-exclamation"></i> <strong>โหมด Guest:</strong> คุณสามารถจำลองคำนวณราคาและโปรโมชั่นได้ กรุณากดดำเนินการเพื่อสั่งซื้อ
-                        </div>
-                    }
-
-                    <a asp-action="Checkout" class="btn btn-pet-primary btn-lg w-100 fw-bold py-3 shadow-sm">
-                        <i class="bi bi-credit-card-2-front"></i> ดำเนินการสั่งซื้อและชำระเงิน
+                    <a asp-action="Checkout" class="btn btn-pet-primary btn-lg w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-credit-card-2-front"></i>
+                        <span>ดำเนินการสั่งซื้อและชำระเงิน</span>
                     </a>
                 </div>
             </div>

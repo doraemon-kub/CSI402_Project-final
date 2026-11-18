@@ -15,178 +15,26 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - PetStore Pro</title>
-    <!-- Google Fonts: Prompt -->
+    <!-- Google Fonts: Playfair Display (Brand Serif) + Prompt (Thai Clean Sans) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 & Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Minimalist Luxury Design System -->
+    <link rel="stylesheet" href="~/css/luxury-theme.css" asp-append-version="true" />
     
     <style>
-        :root {
-            --primary-color: #ff6b35;
-            --primary-hover: #e85924;
-            --secondary-color: #004e89;
-            --bg-light: #f8fafc;
-        }
         body {
-            font-family: 'Prompt', sans-serif;
-            background-color: var(--bg-light);
-            color: #334155;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
         }
-        /* Top Mini Bar Responsive */
-        .top-mini-bar {
-            background-color: #0f172a;
-            color: #94a3b8;
-            font-size: 0.8rem;
-            padding: 6px 0;
-            border-bottom: 1px solid #1e293b;
-        }
-        .top-mini-bar a {
-            color: #cbd5e1;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .top-mini-bar a:hover {
-            color: var(--primary-color);
-        }
-        /* Main Navbar */
-        .navbar-main {
-            background: #ffffff;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            padding: 10px 0;
-            border-bottom: 2px solid #f1f5f9;
-        }
-        .pet-brand {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: -0.5px;
-        }
-        .pet-brand:hover {
-            color: var(--primary-hover);
-        }
-        .nav-link {
-            font-weight: 500;
-            color: #334155 !important;
-            padding: 8px 12px !important;
-            border-radius: 8px;
-            transition: all 0.2s;
-            font-size: 0.92rem;
-        }
-        .nav-link:hover {
-            color: var(--primary-color) !important;
-            background-color: #fff7ed;
-        }
-        .btn-pet-primary {
-            background: linear-gradient(135deg, #ff7a3d, #ff5e62);
-            color: #ffffff;
-            border: none;
-            font-weight: 600;
-            border-radius: 10px;
-            padding: 7px 16px;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.25);
-            font-size: 0.88rem;
-        }
-        .btn-pet-primary:hover {
-            background: linear-gradient(135deg, #e86326, #e64c50);
-            color: #ffffff;
-            transform: translateY(-1px);
-        }
-        .badge-cart {
-            position: absolute;
-            top: -4px;
-            right: -6px;
-            background-color: #ef4444;
-            color: white;
-            border-radius: 50%;
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            font-weight: 700;
-            border: 2px solid #ffffff;
-            transition: transform 0.2s ease, background-color 0.2s ease;
-        }
-        @@keyframes badgeBump {
-            0% { transform: scale(1); }
-            40% { transform: scale(1.45); background-color: #10b981; }
-            100% { transform: scale(1); }
-        }
-        .badge-bump {
-            animation: badgeBump 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .btn-pet-primary:active {
-            transform: scale(0.96);
-        }
         .main-container {
             flex: 1;
-            padding-bottom: 40px;
-        }
-        /* Footer */
-        .site-footer {
-            background-color: #0f172a;
-            color: #94a3b8;
-            font-size: 0.88rem;
-            padding-top: 45px;
-            border-top: 4px solid var(--primary-color);
-        }
-        .footer-title {
-            color: #ffffff;
-            font-weight: 600;
-            font-size: 1rem;
-            margin-bottom: 16px;
-            position: relative;
-        }
-        .footer-title::after {
-            content: '';
-            position: absolute;
-            bottom: -6px;
-            left: 0;
-            width: 25px;
-            height: 2px;
-            background-color: var(--primary-color);
-        }
-        .footer-links a {
-            color: #94a3b8;
-            text-decoration: none;
-            display: inline-block;
-            margin-bottom: 8px;
-            transition: all 0.2s;
-        }
-        .footer-links a:hover {
-            color: #ffffff;
-            transform: translateX(4px);
-        }
-        .social-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background-color: #1e293b;
-            color: #cbd5e1;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        .social-btn:hover {
-            background-color: var(--primary-color);
-            color: #ffffff;
-        }
-        .bottom-bar {
-            background-color: #090d16;
-            padding: 16px 0;
-            font-size: 0.8rem;
-            border-top: 1px solid #1e293b;
+            padding-bottom: 56px;
         }
     </style>
 </head>
@@ -203,15 +51,15 @@
                 @if (isAuthenticated)
                 {
                     <div class="dropdown">
-                        <a href="#" class="dropdown-toggle d-flex align-items-center gap-1" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle text-warning"></i>
+                        <a href="#" class="dropdown-toggle d-flex align-items-center gap-1 px-2 py-1 rounded-pill" data-bs-toggle="dropdown" style="outline: none;">
+                            <i class="bi bi-person-circle text-lux-gold"></i>
                             <span class="d-none d-sm-inline">@fullName</span>
-                            <span class="badge @(isStaffOrAdmin ? "bg-warning text-dark" : "bg-primary")" style="font-size: 0.65rem;">@currentRoleName</span>
+                            <span class="badge rounded-pill px-2" style="background: var(--lux-gold); color: #fff; font-size: 0.65rem; font-weight: 500;">@currentRoleName</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-1">
-                            <li class="px-3 py-2 border-bottom bg-light rounded-top">
-                                <div class="small fw-bold text-dark text-truncate" style="max-width: 200px;">@fullName</div>
-                                <div class="small text-muted">@currentRoleName</div>
+                        <ul class="dropdown-menu dropdown-menu-end mt-2">
+                            <li class="px-3 py-2 mb-1 rounded-3 bg-lux-tint" style="border-bottom: 1px solid var(--lux-border);">
+                                <div class="small fw-semibold text-lux-espresso text-truncate" style="max-width: 200px;">@fullName</div>
+                                <div class="text-lux-muted" style="font-size: 0.72rem;">@currentRoleName</div>
                             </li>
                             @if (isStaffOrAdmin)
                             {
@@ -275,13 +123,14 @@
     <nav class="navbar navbar-expand-lg navbar-main sticky-top">
         <div class="container">
             <a class="pet-brand" asp-controller="Home" asp-action="Index">
-                <i class="bi bi-bag-heart-fill"></i> PetStore Pro
+                <span class="pet-brand-mark"><i class="bi bi-heart-fill"></i></span>
+                <span>PetStore <span class="text-lux-gold">Pro</span></span>
             </a>
 
             <!-- Mobile Quick Actions: Cart Button Outside Collapse on Small Screens -->
             <div class="d-flex align-items-center gap-2 d-lg-none">
-                <a asp-controller="Cart" asp-action="Index" class="btn btn-pet-primary position-relative px-2 py-1" style="font-size: 0.8rem;">
-                    <i class="bi bi-cart3"></i>
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-pet-primary position-relative px-3 py-1" style="font-size: 0.8rem;">
+                    <i class="bi bi-bag"></i>
                     <span class="badge-cart">@cartCount</span>
                 </a>
                 <button class="navbar-toggler p-2 border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
@@ -290,25 +139,30 @@
             </div>
 
             <div class="collapse navbar-collapse" id="navMain">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 mt-3 mt-lg-0">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4 gap-1 mt-3 mt-lg-0">
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Home" asp-action="Index">
-                            <i class="bi bi-shop me-1"></i> สินค้าทั้งหมด
+                            สินค้าทั้งหมด
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Dog">
-                            🐶 อาหาร/ของใช้สุนัข
+                            สุนัข
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Cat">
-                            🐱 อาหาร/ของใช้แมว
+                            แมว
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-danger fw-semibold" asp-controller="Home" asp-action="Index">
-                            <i class="bi bi-tag-fill me-1 text-danger"></i> โปรโมชั่น 5 แบบ
+                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Other">
+                            สัตว์เลี้ยงอื่นๆ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-promo fw-medium" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-stars me-1"></i> โปรโมชั่น 5 แบบ
                         </a>
                     </li>
                 </ul>
@@ -324,19 +178,19 @@
                                             currentRoleName == "AccountingStaff" ? "Accounting" : 
                                             currentRoleName == "ITSupport" ? "Support" : 
                                             currentRoleName == "Admin" ? "Admin" : "Owner")" 
-                           asp-action="Index" class="btn btn-outline-dark btn-sm">
-                            <i class="bi bi-grid-1x2-fill text-warning me-1"></i> ระบบหลังบ้าน
+                           asp-action="Index" class="btn btn-lux-outline btn-sm px-3 py-2">
+                            <i class="bi bi-grid-1x2-fill text-lux-gold me-1"></i> ระบบหลังบ้าน
                         </a>
                     }
                     else if (isAuthenticated)
                     {
-                        <a asp-controller="Account" asp-action="Orders" class="btn btn-outline-secondary btn-sm">
+                        <a asp-controller="Account" asp-action="Orders" class="btn btn-lux-outline btn-sm px-3 py-2">
                             <i class="bi bi-box-seam me-1"></i> ออเดอร์ของฉัน
                         </a>
                     }
 
-                    <a asp-controller="Cart" asp-action="Index" class="btn btn-pet-primary position-relative px-3">
-                        <i class="bi bi-cart3 me-1"></i> ตะกร้าสินค้า
+                    <a asp-controller="Cart" asp-action="Index" class="btn btn-pet-primary position-relative px-3 py-2">
+                        <i class="bi bi-bag me-1"></i> ตะกร้าสินค้า
                         <span class="badge-cart">@cartCount</span>
                     </a>
                 </div>
@@ -476,11 +330,9 @@
             if (countValEl) {
                 countValEl.innerText = newCount;
                 if (badgeEl) {
-                    badgeEl.classList.remove("bg-danger");
-                    badgeEl.classList.add("bg-warning", "text-dark");
+                    badgeEl.classList.add("lux-glass-pill-pulse");
                     setTimeout(() => {
-                        badgeEl.classList.remove("bg-warning", "text-dark");
-                        badgeEl.classList.add("bg-danger");
+                        badgeEl.classList.remove("lux-glass-pill-pulse");
                     }, 1200);
                 }
             }
@@ -509,30 +361,30 @@
 
             if (remainingStock <= 0) {
                 if (container) {
-                    container.innerHTML = '<span class="badge bg-danger-subtle text-danger border border-danger" style="font-size: 0.68rem;"><i class="bi bi-x-circle me-1"></i> สินค้าหมด</span>';
+                    container.innerHTML = '<span class="lux-stock-pill lux-stock-out"><span class="lux-stock-dot"></span> สินค้าหมด</span>';
                 }
                 if (addBtn) {
                     addBtn.disabled = true;
-                    addBtn.className = 'btn btn-secondary w-100 btn-sm';
+                    addBtn.className = 'btn btn-secondary w-100 btn-sm rounded-3';
                     addBtn.innerHTML = '<i class="bi bi-x-circle me-1"></i> หมดสต็อก';
                 }
             } else if (remainingStock <= 5) {
                 if (container) {
-                    container.innerHTML = `<span class="badge bg-warning-subtle text-dark border border-warning" style="font-size: 0.68rem;"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> เหลือ <strong id="stock-val-${productId}">${remainingStock}</strong> ชิ้น</span>`;
+                    container.innerHTML = `<span class="lux-stock-pill lux-stock-low"><span class="lux-stock-dot"></span> เหลือ <strong id="stock-val-${productId}">${remainingStock}</strong> ชิ้น</span>`;
                 }
                 if (addBtn && addBtn.disabled) {
                     addBtn.disabled = false;
                     addBtn.className = 'btn btn-pet-primary w-100 btn-sm d-flex align-items-center justify-content-center gap-1';
-                    addBtn.innerHTML = '<i class="bi bi-cart-plus"></i> <span>เพิ่มลงตะกร้า</span>';
+                    addBtn.innerHTML = '<i class="bi bi-bag-plus"></i> <span>เพิ่มลงตะกร้า</span>';
                 }
             } else {
                 if (container) {
-                    container.innerHTML = `<span class="badge bg-success-subtle text-success border border-success" style="font-size: 0.68rem;"><i class="bi bi-box-seam me-1"></i> เหลือ <strong id="stock-val-${productId}">${remainingStock}</strong> ชิ้น</span>`;
+                    container.innerHTML = `<span class="lux-stock-pill lux-stock-ok"><span class="lux-stock-dot"></span> เหลือ <strong id="stock-val-${productId}">${remainingStock}</strong> ชิ้น</span>`;
                 }
                 if (addBtn && addBtn.disabled) {
                     addBtn.disabled = false;
                     addBtn.className = 'btn btn-pet-primary w-100 btn-sm d-flex align-items-center justify-content-center gap-1';
-                    addBtn.innerHTML = '<i class="bi bi-cart-plus"></i> <span>เพิ่มลงตะกร้า</span>';
+                    addBtn.innerHTML = '<i class="bi bi-bag-plus"></i> <span>เพิ่มลงตะกร้า</span>';
                 }
             }
         }

@@ -12,45 +12,57 @@
 
     var ageLayers = new[]
     {
-        new { Stage = AgeStage.PuppyOrKitten, Icon = "🍼", Title = "Layer 1: วัยเด็ก (ลูกสุนัข / ลูกแมว)", Subtitle = "สูตรเสริมภูมิคุ้มกัน พัฒนาสมอง และโครงสร้างกระดูก", Anchor = "layer-puppy" },
-        new { Stage = AgeStage.Adult, Icon = "🐕", Title = "Layer 2: วัยโตเต็มวัย (Adult)", Subtitle = "โภชนาการสมดุล บำรุงขน ผิวหนัง และพลังงานประจำวัน", Anchor = "layer-adult" },
-        new { Stage = AgeStage.Senior, Icon = "🧓", Title = "Layer 3: สูงวัย (Senior)", Subtitle = "ดูแลข้อต่อ ระบบย่อยอาหาร ไต และหัวใจสำหรับสัตว์สูงอายุ", Anchor = "layer-senior" },
-        new { Stage = AgeStage.AllAges, Icon = "🐾", Title = "Layer 4: ใช้ได้ทุกช่วงวัย (All Ages & Supplies)", Subtitle = "ของใช้ สุขอนามัย และสินค้าดูแลสัตว์เลี้ยงทั่วไป", Anchor = "layer-all" }
+        new { Stage = AgeStage.PuppyOrKitten, Num = "01", Title = "วัยเด็ก — ลูกสุนัข & ลูกแมว", Subtitle = "สูตรเสริมภูมิคุ้มกัน พัฒนาสมอง และโครงสร้างกระดูกอย่างอ่อนโยน", Anchor = "layer-puppy" },
+        new { Stage = AgeStage.Adult, Num = "02", Title = "วัยโตเต็มวัย — Adult Selection", Subtitle = "โภชนาการสมดุล บำรุงขน ผิวหนัง และพลังงานประจำวันระดับพรีเมียม", Anchor = "layer-adult" },
+        new { Stage = AgeStage.Senior, Num = "03", Title = "สูงวัย — Senior Care", Subtitle = "ดูแลข้อต่อ ระบบย่อยอาหาร ไต และหัวใจสำหรับสัตว์เลี้ยงสูงอายุ", Anchor = "layer-senior" },
+        new { Stage = AgeStage.AllAges, Num = "04", Title = "ใช้ได้ทุกช่วงวัย — All Ages & Lifestyle", Subtitle = "ของใช้ สุขอนามัย และสินค้าดูแลสัตว์เลี้ยงคัดสรรพิเศษ", Anchor = "layer-all" }
     };
 }
 
-<div class="container py-3 py-md-4">
-    <!-- Dynamic Promotional Banner Alert (Req 13: ดึงโปรโมชั่นที่เปิดใช้งานจริงจาก DB) -->
-    <div class="p-3 p-md-4 mb-4 rounded-4 text-white shadow-sm" style="background: linear-gradient(135deg, #ff7a3d, #ff5e62);">
-        <div class="row align-items-center g-3">
+<div class="container py-4 py-md-5">
+    <!-- Editorial Minimalist Luxury Hero Banner (Req 13) -->
+    <div class="lux-hero p-4 p-md-5 mb-4">
+        <div class="row align-items-center g-4 position-relative" style="z-index: 2;">
             <div class="col-lg-8">
-                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill mb-2 fw-bold" style="font-size: 0.8rem;">
-                    <i class="bi bi-stars"></i> แคมเปญโปรโมชั่นที่กำลังเปิดใช้งาน (@activePromotions.Count รายการ)
-                </span>
-                <h3 class="fw-bold mb-2 fs-4 fs-md-3">โปรคุ้มจัดเต็มเพื่อสัตว์เลี้ยงที่คุณรัก!</h3>
+                <div class="lux-hero-eyebrow mb-3">
+                    <i class="bi bi-stars"></i>
+                    <span>CURATED PET BOUTIQUE · @activePromotions.Count แคมเปญโปรโมชั่นที่เปิดใช้งาน</span>
+                </div>
+                <h1 class="fw-bold mb-2 fs-3 fs-md-2" style="letter-spacing: -0.02em; color: #FAF8F5;">
+                    คัดสรรโภชนาการและของใช้ระดับพรีเมียม เพื่อสัตว์เลี้ยงที่คุณรัก
+                </h1>
+                <p class="mb-3" style="color: #CFC6BC; font-size: 0.92rem; max-width: 640px;">
+                    แยกชั้นสินค้าตามช่วงวัยอย่างพิถีพิถัน พร้อมระบบคำนวณส่วนลดอัตโนมัติ 5 เงื่อนไข และค่าจัดส่งตามน้ำหนักอย่างโปร่งใส
+                </p>
+
                 @if (activePromotions.Any())
                 {
-                    <div class="d-flex flex-wrap gap-2 mt-2 mt-md-3">
+                    <div class="d-flex flex-wrap gap-2 mt-3">
                         @foreach (var promo in activePromotions)
                         {
-                            <span class="badge bg-white text-dark p-2 shadow-sm" style="font-size: 0.78rem;" title="@promo.Description">
-                                <i class="bi bi-check-circle-fill text-success"></i> @promo.Title
+                            <span class="lux-promo-chip" title="@promo.Description">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>@promo.Title</span>
                             </span>
                         }
                     </div>
                 }
                 else
                 {
-                    <p class="small text-white-50 mb-0">ขณะนี้ยังไม่มีแคมเปญโปรโมชั่นที่เปิดใช้งาน</p>
+                    <p class="small mb-0" style="color: #A89E94;">ขณะนี้ยังไม่มีแคมเปญโปรโมชั่นที่เปิดใช้งาน</p>
                 }
             </div>
-            <div class="col-lg-4 text-lg-end d-flex flex-column gap-2">
-                <a asp-controller="Cart" asp-action="Index" class="btn btn-light text-danger fw-bold shadow-sm w-100 py-2 px-3">
-                    <i class="bi bi-cart-check"></i> ตรวจสอบตะกร้า &amp; ส่วนลด
+
+            <div class="col-lg-4 d-flex flex-column gap-2">
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-lux-gold w-100 py-3 px-4 d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-bag-check"></i>
+                    <span>ตรวจสอบตะกร้า &amp; ส่วนลด</span>
                 </a>
                 @if (activePromotions.Any())
                 {
-                    <button type="button" class="btn btn-outline-light btn-sm w-100 fw-semibold" data-bs-toggle="modal" data-bs-target="#promoConditionsModal">
+                    <button type="button" class="btn btn-outline-light w-100 py-2 rounded-3"
+                            style="border-color: rgba(255,255,255,0.22); color: #EFE7DD; font-size: 0.86rem;"
+                            data-bs-toggle="modal" data-bs-target="#promoConditionsModal">
                         <i class="bi bi-info-circle me-1"></i> ดูรายละเอียดเงื่อนไขโปรโมชั่น
                     </button>
                 }
@@ -58,104 +70,110 @@
         </div>
     </div>
 
-    <!-- Filter & Search Section (Req 1, 2, 7, 9, 10) -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-3 p-md-4">
-            <form method="get" asp-controller="Home" asp-action="Index" class="row g-2 g-md-3 align-items-end">
-                <div class="col-12 col-md-6 col-lg-3">
-                    <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-search"></i> ค้นหาชื่อสินค้า / แบรนด์</label>
-                    <input type="text" name="search" class="form-control" placeholder="เช่น Royal Canin, Me-O..." value="@search" />
-                </div>
+    <!-- Clean Minimalist Filter & Search Bar (Req 1, 2, 7, 9, 10) -->
+    <div class="lux-filter-bar p-3 p-md-4 mb-5">
+        <form method="get" asp-controller="Home" asp-action="Index" class="row g-3 align-items-end">
+            <div class="col-12 col-md-6 col-lg-3">
+                <label class="form-label small fw-medium text-lux-muted mb-1">
+                    <i class="bi bi-search me-1"></i> ค้นหาสินค้า / แบรนด์
+                </label>
+                <input type="text" name="search" class="form-control" placeholder="เช่น Royal Canin, Orijen, Me-O..." value="@search" />
+            </div>
 
-                <!-- ประเภทสัตว์ (Req 1, 9) -->
-                <div class="col-6 col-md-3 col-lg-2">
-                    <label class="form-label small fw-bold text-muted mb-1">ประเภทสัตว์เลี้ยง</label>
-                    <select name="petType" class="form-select">
-                        <option value="">ทั้งหมด</option>
-                        <option value="@PetCategory.Dog" selected="@(petType == PetCategory.Dog)">🐶 สุนัข</option>
-                        <option value="@PetCategory.Cat" selected="@(petType == PetCategory.Cat)">🐱 แมว</option>
-                        <option value="@PetCategory.Other" selected="@(petType == PetCategory.Other)">🐾 สัตว์เลี้ยงอื่นๆ</option>
-                    </select>
-                </div>
+            <!-- ประเภทสัตว์ (Req 1, 9) -->
+            <div class="col-6 col-md-3 col-lg-2">
+                <label class="form-label small fw-medium text-lux-muted mb-1">สัตว์เลี้ยง</label>
+                <select name="petType" class="form-select">
+                    <option value="">ทั้งหมด</option>
+                    <option value="@PetCategory.Dog" selected="@(petType == PetCategory.Dog)">สุนัข</option>
+                    <option value="@PetCategory.Cat" selected="@(petType == PetCategory.Cat)">แมว</option>
+                    <option value="@PetCategory.Other" selected="@(petType == PetCategory.Other)">สัตว์เลี้ยงอื่นๆ</option>
+                </select>
+            </div>
 
-                <!-- หมวดหมู่อาหาร/ของใช้ (Req 9) -->
-                <div class="col-6 col-md-3 col-lg-2">
-                    <label class="form-label small fw-bold text-muted mb-1">หมวดหมู่สินค้า</label>
-                    <select name="category" class="form-select">
-                        <option value="">ทั้งหมด</option>
-                        <option value="@ProductCategory.Food" selected="@(category == ProductCategory.Food)">🍲 อาหาร</option>
-                        <option value="@ProductCategory.Supply" selected="@(category == ProductCategory.Supply)">🧸 ของใช้</option>
-                        <option value="@ProductCategory.Hygiene" selected="@(category == ProductCategory.Hygiene)">🧼 สุขอนามัย</option>
-                    </select>
-                </div>
+            <!-- หมวดหมู่ (Req 9) -->
+            <div class="col-6 col-md-3 col-lg-2">
+                <label class="form-label small fw-medium text-lux-muted mb-1">หมวดหมู่</label>
+                <select name="category" class="form-select">
+                    <option value="">ทั้งหมด</option>
+                    <option value="@ProductCategory.Food" selected="@(category == ProductCategory.Food)">อาหาร</option>
+                    <option value="@ProductCategory.Supply" selected="@(category == ProductCategory.Supply)">ของใช้</option>
+                    <option value="@ProductCategory.Hygiene" selected="@(category == ProductCategory.Hygiene)">สุขอนามัย</option>
+                </select>
+            </div>
 
-                <!-- คัดแยกตามน้ำหนักสินค้า (Req 2) -->
-                <div class="col-6 col-md-4 col-lg-2">
-                    <label class="form-label small fw-bold text-muted mb-1">⚖️ น้ำหนักสูงสุด (kg)</label>
-                    <select name="maxWeight" class="form-select">
-                        <option value="">ทุกน้ำหนัก</option>
-                        <option value="1" selected="@(maxWeight == 1)">ไม่เกิน 1 kg</option>
-                        <option value="2" selected="@(maxWeight == 2)">ไม่เกิน 2 kg</option>
-                        <option value="5" selected="@(maxWeight == 5)">ไม่เกิน 5 kg</option>
-                        <option value="10" selected="@(maxWeight == 10)">ไม่เกิน 10 kg (เกณฑ์ส่งฟรี)</option>
-                        <option value="20" selected="@(maxWeight == 20)">ไม่เกิน 20 kg</option>
-                    </select>
-                </div>
+            <!-- น้ำหนักสูงสุด (Req 2) -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <label class="form-label small fw-medium text-lux-muted mb-1">น้ำหนักสูงสุด</label>
+                <select name="maxWeight" class="form-select">
+                    <option value="">ทุกน้ำหนัก</option>
+                    <option value="1" selected="@(maxWeight == 1)">ไม่เกิน 1 kg</option>
+                    <option value="2" selected="@(maxWeight == 2)">ไม่เกิน 2 kg</option>
+                    <option value="5" selected="@(maxWeight == 5)">ไม่เกิน 5 kg</option>
+                    <option value="10" selected="@(maxWeight == 10)">ไม่เกิน 10 kg (ส่งฟรี)</option>
+                    <option value="20" selected="@(maxWeight == 20)">ไม่เกิน 20 kg</option>
+                </select>
+            </div>
 
-                <!-- คัดแยกช่วงวัยแบ่งเป็น Layer (Req 7, 10) -->
-                <div class="col-6 col-md-4 col-lg-1-5" style="flex: 0 0 auto;">
-                    <label class="form-label small fw-bold text-muted mb-1">ช่วงวัย (Layer)</label>
-                    <select name="ageStage" class="form-select">
-                        <option value="">ทุกช่วงวัย</option>
-                        <option value="@AgeStage.PuppyOrKitten" selected="@(ageStage == AgeStage.PuppyOrKitten)">🍼 วัยเด็ก</option>
-                        <option value="@AgeStage.Adult" selected="@(ageStage == AgeStage.Adult)">🐕 โตเต็มวัย</option>
-                        <option value="@AgeStage.Senior" selected="@(ageStage == AgeStage.Senior)">🧓 สูงวัย</option>
-                    </select>
-                </div>
+            <!-- ช่วงวัย (Req 7, 10) -->
+            <div class="col-6 col-md-4 col-lg-3">
+                <label class="form-label small fw-medium text-lux-muted mb-1">ช่วงวัย (Age Layer)</label>
+                <select name="ageStage" class="form-select">
+                    <option value="">ทุกช่วงวัย</option>
+                    <option value="@AgeStage.PuppyOrKitten" selected="@(ageStage == AgeStage.PuppyOrKitten)">วัยเด็ก (ลูกสุนัข/ลูกแมว)</option>
+                    <option value="@AgeStage.Adult" selected="@(ageStage == AgeStage.Adult)">โตเต็มวัย (Adult)</option>
+                    <option value="@AgeStage.Senior" selected="@(ageStage == AgeStage.Senior)">สูงวัย (Senior)</option>
+                </select>
+            </div>
 
-                <!-- สูตรเฉพาะ / โรคประจำตัว (Req 7) -->
-                <div class="col-6 col-md-4 col-lg-2">
-                    <label class="form-label small fw-bold text-muted mb-1">โรคประจำตัว / สูตร</label>
-                    <select name="specialNeed" class="form-select">
-                        <option value="">ทั้งหมด</option>
-                        <option value="โรคไต" selected="@(specialNeed == "โรคไต")">🩺 โรคไต</option>
-                        <option value="บำรุงขน" selected="@(specialNeed == "บำรุงขน")">✨ บำรุงขน</option>
-                        <option value="เสริมสร้างกระดูก" selected="@(specialNeed == "เสริมสร้างกระดูก")">🦴 เสริมกระดูก</option>
-                        <option value="ทั่วไป" selected="@(specialNeed == "ทั่วไป")">🌿 ทั่วไป</option>
-                    </select>
-                </div>
+            <!-- สูตรเฉพาะ / โรคประจำตัว (Req 7) -->
+            <div class="col-8 col-md-8 col-lg-9">
+                <label class="form-label small fw-medium text-lux-muted mb-1">สูตรดูแลเฉพาะทาง / โรคประจำตัว</label>
+                <select name="specialNeed" class="form-select">
+                    <option value="">ทั้งหมด</option>
+                    <option value="โรคไต" selected="@(specialNeed == "โรคไต")">สูตรดูแลโรคไต</option>
+                    <option value="บำรุงขน" selected="@(specialNeed == "บำรุงขน")">สูตรบำรุงขนและผิวหนัง</option>
+                    <option value="เสริมสร้างกระดูก" selected="@(specialNeed == "เสริมสร้างกระดูก")">สูตรเสริมสร้างกระดูก</option>
+                    <option value="ทั่วไป" selected="@(specialNeed == "ทั่วไป")">สูตรทั่วไป</option>
+                </select>
+            </div>
 
-                <div class="col-6 col-md-4 col-lg-auto d-flex gap-2">
-                    <button type="submit" class="btn btn-dark fw-bold d-flex align-items-center justify-content-center gap-1 px-3 py-2">
-                        <i class="bi bi-funnel-fill"></i> <span>กรอง</span>
-                    </button>
-                    <a asp-action="Index" class="btn btn-outline-secondary d-flex align-items-center justify-content-center px-2 py-2" title="ล้างตัวกรอง">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                    </a>
-                </div>
-            </form>
-        </div>
+            <div class="col-4 col-md-4 col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-pet-primary flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2">
+                    <i class="bi bi-sliders2"></i> <span>ค้นหาและกรอง</span>
+                </button>
+                <a asp-action="Index" class="btn btn-lux-outline d-flex align-items-center justify-content-center px-3 py-2" title="ล้างตัวกรอง">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
     </div>
 
-    <!-- Header & Quick Jump to Age Layers (Req 10) -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
+    <!-- Section Header & Quick Jump Pills (Req 10) -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mb-4">
         <div>
-            <h4 class="fw-bold mb-0 fs-5 fs-md-4">
-                รายการสินค้าแยกตามช่วงวัย (Age Layers)
-                <span class="badge bg-secondary fs-6 ms-1">@Model.Count รายการ</span>
+            <div class="text-uppercase fw-semibold text-lux-gold mb-1" style="font-size: 0.72rem; letter-spacing: 0.1em;">
+                CURATED BY LIFE STAGE
+            </div>
+            <h4 class="fw-bold mb-1 fs-5 fs-md-4 text-lux-espresso">
+                คอลเลกชันสินค้าแยกตามช่วงวัย
+                <span class="lux-tag lux-tag-accent ms-2 align-middle" style="font-size: 0.78rem;">@Model.Count รายการ</span>
             </h4>
-            <small class="text-muted" style="font-size: 0.8rem;">ระบบแบ่งชั้นสินค้าตามช่วงอายุที่เหมาะสมกับสัตว์เลี้ยง และคำนวณส่วนลดอัตโนมัติในตะกร้า</small>
+            <p class="text-lux-muted small mb-0">เลือกสรรสินค้าที่เหมาะกับช่วงอายุของสัตว์เลี้ยง คำนวณโปรโมชั่นอัตโนมัติในตะกร้า</p>
         </div>
+
         @if (Model.Any())
         {
-            <div class="d-flex flex-wrap gap-1">
+            <div class="d-flex flex-wrap gap-2">
                 @foreach (var layer in ageLayers)
                 {
                     int layerCount = Model.Count(p => p.AgeStage == layer.Stage);
                     if (layerCount > 0)
                     {
-                        <a href="#@layer.Anchor" class="btn btn-sm btn-outline-dark rounded-pill" style="font-size: 0.78rem;">
-                            @layer.Icon @(layer.Stage == AgeStage.PuppyOrKitten ? "วัยเด็ก" : layer.Stage == AgeStage.Adult ? "โตเต็มวัย" : layer.Stage == AgeStage.Senior ? "สูงวัย" : "ทุกช่วงวัย") (@layerCount)
+                        <a href="#@layer.Anchor" class="lux-jump-pill">
+                            <span class="text-lux-gold me-1">@layer.Num</span>
+                            @(layer.Stage == AgeStage.PuppyOrKitten ? "วัยเด็ก" : layer.Stage == AgeStage.Adult ? "โตเต็มวัย" : layer.Stage == AgeStage.Senior ? "สูงวัย" : "ทุกช่วงวัย")
+                            <span class="opacity-75 ms-1">(@layerCount)</span>
                         </a>
                     }
                 }
@@ -165,11 +183,11 @@
 
     @if (!Model.Any())
     {
-        <div class="card border-0 shadow-sm rounded-4 text-center py-5">
-            <div class="text-muted fs-5">ไม่พบสินค้าตามเงื่อนไขที่เลือก</div>
-            <div>
-                <a asp-action="Index" class="btn btn-outline-primary mt-3 btn-sm">ล้างตัวกรองทั้งหมด</a>
-            </div>
+        <div class="lux-card text-center py-5 px-4">
+            <i class="bi bi-search text-lux-gold" style="font-size: 2.5rem;"></i>
+            <h5 class="mt-3 fw-semibold text-lux-espresso">ไม่พบสินค้าตามเงื่อนไขที่เลือก</h5>
+            <p class="text-lux-muted small mb-4">ลองปรับเปลี่ยนคำค้นหาหรือล้างตัวกรองเพื่อดูสินค้าทั้งหมด</p>
+            <a asp-action="Index" class="btn btn-pet-primary px-4">ล้างตัวกรองทั้งหมด</a>
         </div>
     }
     else
@@ -180,16 +198,19 @@
             var layerProducts = Model.Where(p => p.AgeStage == layer.Stage).ToList();
             if (!layerProducts.Any()) continue;
 
-            <section id="@layer.Anchor" class="mb-4 pb-2">
-                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center p-3 mb-3 rounded-4 bg-white shadow-sm border-start border-4 border-warning">
-                    <div>
-                        <h5 class="fw-bold mb-0 text-dark">@layer.Icon @layer.Title</h5>
-                        <small class="text-muted">@layer.Subtitle</small>
+            <section id="@layer.Anchor" class="mb-5">
+                <div class="lux-layer-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="lux-layer-num">@layer.Num</span>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-lux-espresso" style="font-size: 1.05rem;">@layer.Title</h5>
+                            <small class="text-lux-muted">@layer.Subtitle</small>
+                        </div>
                     </div>
-                    <span class="badge bg-light text-dark border mt-2 mt-sm-0">@layerProducts.Count สินค้าในชั้นนี้</span>
+                    <span class="lux-tag">@layerProducts.Count รายการในชั้นนี้</span>
                 </div>
 
-                <div class="row g-2 g-md-3 g-lg-4">
+                <div class="row g-3 g-md-4">
                     @foreach (var item in layerProducts)
                     {
                         @await Html.PartialAsync("_ProductCard", item)
@@ -203,47 +224,49 @@
 <!-- Modal แสดงเงื่อนไขโปรโมชั่นทั้งหมดที่เปิดใช้งานอยู่ (Req 13) -->
 <div class="modal fade" id="promoConditionsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header bg-light border-0">
-                <h5 class="modal-title fw-bold"><i class="bi bi-tags-fill text-danger me-2"></i>รายละเอียดและเงื่อนไขโปรโมชั่นปัจจุบัน</h5>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-lux-espresso">
+                    <i class="bi bi-stars text-lux-gold me-2"></i>รายละเอียดและเงื่อนไขโปรโมชั่นปัจจุบัน
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="list-group list-group-flush">
                     @foreach (var promo in activePromotions)
                     {
-                        <div class="list-group-item px-0 py-3">
+                        <div class="list-group-item px-0 py-3" style="border-color: var(--lux-border);">
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
-                                <h6 class="fw-bold text-dark m-0">@promo.Title</h6>
-                                <span class="badge bg-dark">โค้ด: @promo.Code</span>
+                                <h6 class="fw-bold text-lux-espresso m-0">@promo.Title</h6>
+                                <span class="badge rounded-pill px-3 py-1" style="background: var(--lux-espresso); font-weight: 500;">โค้ด: @promo.Code</span>
                             </div>
-                            <p class="small text-muted mb-2">@promo.Description</p>
-                            <div class="d-flex flex-wrap gap-2 small">
+                            <p class="small text-lux-muted mb-2">@promo.Description</p>
+                            <div class="d-flex flex-wrap align-items-center gap-2 small">
                                 @if (promo.MinQuantity > 0)
                                 {
-                                    <span class="badge bg-light text-dark border">ขั้นต่ำ @promo.MinQuantity ชิ้น</span>
+                                    <span class="lux-tag">ขั้นต่ำ @promo.MinQuantity ชิ้น</span>
                                 }
                                 @if (promo.MinSpend > 0)
                                 {
-                                    <span class="badge bg-light text-dark border">ยอดขั้นต่ำ ฿@promo.MinSpend.ToString("N0")</span>
+                                    <span class="lux-tag">ยอดขั้นต่ำ ฿@promo.MinSpend.ToString("N0")</span>
                                 }
                                 @if (!string.IsNullOrWhiteSpace(promo.ParticipatingBrand))
                                 {
-                                    <span class="badge bg-info-subtle text-dark border">แบรนด์ที่เข้าร่วม: @promo.ParticipatingBrand</span>
+                                    <span class="lux-tag lux-tag-accent">แบรนด์ที่เข้าร่วม: @promo.ParticipatingBrand</span>
                                 }
                                 @if (!string.IsNullOrWhiteSpace(promo.GiftItemName))
                                 {
-                                    <span class="badge bg-warning-subtle text-dark border">ของแถม: @promo.GiftItemName</span>
+                                    <span class="lux-tag lux-tag-accent">ของแถม: @promo.GiftItemName</span>
                                 }
-                                <span class="text-muted ms-auto">ใช้ได้ถึง: @promo.EndDate.ToString("dd/MM/yyyy")</span>
+                                <span class="text-lux-muted ms-auto" style="font-size: 0.78rem;">ใช้ได้ถึง @promo.EndDate.ToString("dd/MM/yyyy")</span>
                             </div>
                         </div>
                     }
                 </div>
             </div>
-            <div class="modal-footer border-0 bg-light">
+            <div class="modal-footer">
                 <a asp-controller="Cart" asp-action="Index" class="btn btn-pet-primary btn-sm px-4">ไปที่ตะกร้าสินค้า</a>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-lux-outline btn-sm px-3" data-bs-dismiss="modal">ปิด</button>
             </div>
         </div>
     </div>

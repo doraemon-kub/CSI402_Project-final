@@ -2,90 +2,112 @@
 @using CSI402_Project_final.Models
 
 <div class="col-6 col-md-4 col-lg-3">
-    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative">
-        <!-- Badge บอกจำนวนคนใส่ตะกร้า (Req 8 Real-Time Target) -->
-        <div class="position-absolute top-0 start-0 m-2 m-md-3 z-1">
-            <span class="badge bg-danger shadow-sm" id="cart-count-badge-@Model.Id" style="font-size: 0.7rem;">
-                <i class="bi bi-fire"></i> <span id="cart-count-val-@Model.Id">@Model.CartAddCount</span> คนในตะกร้า
-            </span>
-        </div>
+    <div class="lux-product-card h-100 d-flex flex-column position-relative">
+        <!-- Product Photography Stage -->
+        <div class="lux-product-media">
+            <a asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id" class="d-block w-100 h-100">
+                <img src="@Model.ImageUrl" alt="@Model.Name" loading="lazy" />
+            </a>
 
-        <!-- Badge ช่วงวัย (Req 10) -->
-        <div class="position-absolute top-0 end-0 m-2 m-md-3 z-1">
-            <span class="badge bg-info text-dark shadow-sm" style="font-size: 0.7rem;">
-                @(Model.AgeStage == AgeStage.PuppyOrKitten ? "🍼 วัยเด็ก" :
-                  Model.AgeStage == AgeStage.Adult ? "🐕 โตเต็มวัย" :
-                  Model.AgeStage == AgeStage.Senior ? "🧓 สูงวัย" : "🐾 ทุกวัย")
-            </span>
-        </div>
-
-        <img src="@Model.ImageUrl" class="card-img-top" alt="@Model.Name" style="height: 145px; object-fit: cover;" />
-
-        <div class="card-body d-flex flex-column p-2 p-md-3">
-            <div class="small text-muted mb-1 d-flex justify-content-between" style="font-size: 0.75rem;">
-                <span class="text-truncate">แบรนด์: <strong>@Model.Brand</strong></span>
-                <span class="flex-shrink-0">⚖️ @Model.WeightKg kg</span>
+            <!-- Floating Real-Time Cart Counter Badge (Req 8) -->
+            <div class="position-absolute top-0 start-0 m-2 z-1">
+                <span class="lux-glass-pill lux-glass-pill-hot" id="cart-count-badge-@Model.Id">
+                    <i class="bi bi-fire"></i> <span id="cart-count-val-@Model.Id">@Model.CartAddCount</span> ในตะกร้า
+                </span>
             </div>
 
-            <h6 class="card-title fw-bold mb-1 mb-md-2 text-truncate" title="@Model.Name" style="font-size: 0.88rem;">
-                <a asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id" class="text-dark text-decoration-none">
+            <!-- Floating Age Stage Pill (Req 10) -->
+            <div class="position-absolute top-0 end-0 m-2 z-1">
+                <span class="lux-glass-pill">
+                    @(Model.AgeStage == AgeStage.PuppyOrKitten ? "วัยเด็ก" :
+                      Model.AgeStage == AgeStage.Adult ? "โตเต็มวัย" :
+                      Model.AgeStage == AgeStage.Senior ? "สูงวัย" : "ทุกวัย")
+                </span>
+            </div>
+
+            @if (Model.SpecialDiscountPrice.HasValue)
+            {
+                var savePct = Math.Round((1 - (Model.SpecialDiscountPrice.Value / Model.Price)) * 100);
+                if (savePct > 0)
+                {
+                    <div class="position-absolute bottom-0 start-0 m-2 z-1">
+                        <span class="badge rounded-pill px-2 py-1" style="background-color: var(--lux-danger); font-size: 0.68rem; font-weight: 500;">
+                            -@savePct%
+                        </span>
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Product Info Body -->
+        <div class="p-3 d-flex flex-column flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                <span class="lux-product-brand text-truncate">@Model.Brand</span>
+                <span class="text-lux-muted flex-shrink-0" style="font-size: 0.72rem;">@Model.WeightKg kg</span>
+            </div>
+
+            <h6 class="lux-product-title mb-2" title="@Model.Name">
+                <a asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id">
                     @Model.Name
                 </a>
             </h6>
 
-            <div class="small text-muted mb-2 d-flex flex-wrap align-items-center justify-content-between gap-1">
+            <!-- Tags & Real-time Stock Status -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-3">
                 <div class="d-flex flex-wrap gap-1">
-                    <span class="badge bg-light text-dark border" style="font-size: 0.68rem;">
-                        @(Model.PetType == PetCategory.Dog ? "สุนัข" : Model.PetType == PetCategory.Cat ? "แมว" : "สัตว์เลี้ยงอื่นๆ")
+                    <span class="lux-tag">
+                        @(Model.PetType == PetCategory.Dog ? "สุนัข" : Model.PetType == PetCategory.Cat ? "แมว" : "อื่นๆ")
                     </span>
-                    <span class="badge bg-light text-primary border" style="font-size: 0.68rem;">@Model.SpecialNeed</span>
+                    <span class="lux-tag lux-tag-accent">@Model.SpecialNeed</span>
                 </div>
-                <!-- แสดงจำนวนสินค้าคงเหลือในสต็อก (Stock Status) -->
+
                 <div id="stock-badge-container-@Model.Id">
                     @if (Model.IsOutOfStock)
                     {
-                        <span class="badge bg-danger-subtle text-danger border border-danger" style="font-size: 0.68rem;">
-                            <i class="bi bi-x-circle me-1"></i> สินค้าหมด
+                        <span class="lux-stock-pill lux-stock-out">
+                            <span class="lux-stock-dot"></span> สินค้าหมด
                         </span>
                     }
                     else if (Model.IsLowStock)
                     {
-                        <span class="badge bg-warning-subtle text-dark border border-warning" style="font-size: 0.68rem;">
-                            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> เหลือ <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น
+                        <span class="lux-stock-pill lux-stock-low">
+                            <span class="lux-stock-dot"></span> เหลือ <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น
                         </span>
                     }
                     else
                     {
-                        <span class="badge bg-success-subtle text-success border border-success" style="font-size: 0.68rem;">
-                            <i class="bi bi-box-seam me-1"></i> เหลือ <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น
+                        <span class="lux-stock-pill lux-stock-ok">
+                            <span class="lux-stock-dot"></span> เหลือ <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น
                         </span>
                     }
                 </div>
             </div>
 
-            <!-- Price Section (Req 3: แสดงราคาเดิมและราคาลด) -->
-            <div class="mt-auto pt-2 border-top">
+            <!-- Price & Action Footer -->
+            <div class="mt-auto pt-2" style="border-top: 1px solid var(--lux-border);">
                 <div class="d-flex align-items-baseline gap-2 mb-2">
                     @if (Model.SpecialDiscountPrice.HasValue)
                     {
-                        <span class="fs-5 fw-bold text-danger">฿@Model.SpecialDiscountPrice.Value.ToString("N0")</span>
-                        <span class="text-muted text-decoration-line-through small" style="font-size: 0.75rem;">฿@Model.Price.ToString("N0")</span>
+                        <span class="lux-price-now lux-price-sale">฿@Model.SpecialDiscountPrice.Value.ToString("N0")</span>
+                        <span class="lux-price-old">฿@Model.Price.ToString("N0")</span>
                     }
                     else
                     {
-                        <span class="fs-5 fw-bold text-dark">฿@Model.Price.ToString("N0")</span>
+                        <span class="lux-price-now">฿@Model.Price.ToString("N0")</span>
                     }
                 </div>
 
                 @if (User.Identity?.IsAuthenticated != true)
                 {
-                    <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString" class="btn btn-outline-danger w-100 btn-sm d-flex align-items-center justify-content-center gap-1" style="font-size: 0.82rem; padding: 6px 8px;" title="เข้าสู่ระบบเพื่อหยิบสินค้าลงในตะกร้า">
-                        <i class="bi bi-box-arrow-in-right"></i> <span>เข้าสู่ระบบก่อนซื้อ</span>
+                    <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                       class="btn btn-lux-guest w-100 btn-sm d-flex align-items-center justify-content-center gap-1 py-2"
+                       style="font-size: 0.8rem;" title="เข้าสู่ระบบเพื่อหยิบสินค้าลงในตะกร้า">
+                        <i class="bi bi-lock"></i> <span>เข้าสู่ระบบก่อนซื้อ</span>
                     </a>
                 }
                 else if (Model.IsOutOfStock)
                 {
-                    <button type="button" class="btn btn-secondary w-100 btn-sm" disabled style="font-size: 0.82rem; padding: 6px 8px;" id="add-cart-btn-@Model.Id">
+                    <button type="button" class="btn btn-secondary w-100 btn-sm rounded-3 py-2" disabled style="font-size: 0.8rem;" id="add-cart-btn-@Model.Id">
                         <i class="bi bi-x-circle me-1"></i> หมดสต็อก
                     </button>
                 }
@@ -95,8 +117,8 @@
                         <input type="hidden" name="productId" value="@Model.Id" />
                         <input type="hidden" name="quantity" value="1" />
                         <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-                        <button type="submit" class="btn btn-pet-primary w-100 btn-sm d-flex align-items-center justify-content-center gap-1" style="font-size: 0.82rem; padding: 6px 8px;" id="add-cart-btn-@Model.Id">
-                            <i class="bi bi-cart-plus"></i> <span>เพิ่มลงตะกร้า</span>
+                        <button type="submit" class="btn btn-pet-primary w-100 btn-sm d-flex align-items-center justify-content-center gap-1 py-2" style="font-size: 0.82rem;" id="add-cart-btn-@Model.Id">
+                            <i class="bi bi-bag-plus"></i> <span>เพิ่มลงตะกร้า</span>
                         </button>
                     </form>
                 }
@@ -104,4 +126,3 @@
         </div>
     </div>
 </div>
-

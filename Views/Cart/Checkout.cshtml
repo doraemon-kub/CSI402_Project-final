@@ -12,65 +12,74 @@
     var qrImageUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={Uri.EscapeDataString(promptPayPayload)}";
 }
 
-<div class="container py-4" style="max-width: 920px;">
-    <h3 class="fw-bold mb-4 text-dark"><i class="bi bi-credit-card-2-front text-warning"></i> ยืนยันการสั่งซื้อและชำระเงิน</h3>
+<div class="container py-4 py-md-5" style="max-width: 960px;">
+    <div class="mb-4">
+        <div class="text-uppercase fw-semibold text-lux-gold mb-1" style="font-size: 0.72rem; letter-spacing: 0.1em;">CHECKOUT</div>
+        <h3 class="fw-bold text-lux-espresso m-0">ยืนยันการสั่งซื้อและชำระเงิน</h3>
+    </div>
 
     <div class="row g-4">
         <!-- ฟอร์มที่อยู่และการชำระเงิน -->
         <div class="col-md-7">
-            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-                <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill text-danger"></i> ข้อมูลผู้รับและที่อยู่จัดส่ง</h5>
+            <div class="lux-card p-4 p-md-5 mb-4">
+                <h5 class="fw-bold text-lux-espresso mb-3">
+                    <i class="bi bi-geo-alt text-lux-gold me-2"></i>ข้อมูลผู้รับและที่อยู่จัดส่ง
+                </h5>
                 <form asp-action="SubmitOrder" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">ชื่อ-นามสกุล ผู้รับ</label>
+                        <label class="form-label small fw-medium text-lux-muted">ชื่อ-นามสกุล ผู้รับ</label>
                         <input type="text" name="customerName" class="form-control" value="@defaultName" required />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">เบอร์โทรศัพท์ติดต่อ</label>
+                        <label class="form-label small fw-medium text-lux-muted">เบอร์โทรศัพท์ติดต่อ</label>
                         <input type="tel" name="customerPhone" class="form-control" value="@defaultPhone" required />
                     </div>
                     <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <label class="form-label small fw-bold">ที่อยู่จัดส่งสินค้า</label>
-                            <a asp-controller="Account" asp-action="Profile" class="small text-decoration-none">
-                                <i class="bi bi-pencil-square"></i> จัดการสมุดที่อยู่
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-medium text-lux-muted mb-0">ที่อยู่จัดส่งสินค้า</label>
+                            <a asp-controller="Account" asp-action="Profile" class="small text-lux-gold text-decoration-none fw-medium">
+                                <i class="bi bi-pencil-square me-1"></i>จัดการสมุดที่อยู่
                             </a>
                         </div>
                         <textarea name="shippingAddress" class="form-control" rows="3" required>@defaultAddress</textarea>
                     </div>
 
-                    <h5 class="fw-bold mb-3"><i class="bi bi-qr-code text-primary"></i> ช่องทางการชำระเงิน (Req 19)</h5>
+                    <hr class="my-4" style="border-color: var(--lux-border);" />
+
+                    <h5 class="fw-bold text-lux-espresso mb-3">
+                        <i class="bi bi-qr-code text-lux-gold me-2"></i>ช่องทางการชำระเงิน
+                    </h5>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">เลือกวิธีการชำระเงิน</label>
+                        <label class="form-label small fw-medium text-lux-muted">เลือกวิธีการชำระเงิน</label>
                         <select name="paymentMethod" id="paymentMethodSelect" class="form-select" onchange="togglePaymentSection()">
-                            <option value="โอนผ่านธนาคาร / PromptPay" selected>🏦 โอนผ่านธนาคาร / สแกน PromptPay (แนบสลิป)</option>
-                            <option value="เก็บเงินปลายทาง (COD)">🚚 เก็บเงินปลายทาง (COD)</option>
+                            <option value="โอนผ่านธนาคาร / PromptPay" selected>โอนผ่านธนาคาร / สแกน PromptPay (แนบสลิป)</option>
+                            <option value="เก็บเงินปลายทาง (COD)">เก็บเงินปลายทาง (COD)</option>
                         </select>
                     </div>
 
                     <div id="bankTransferBox">
-                        <div class="p-3 border rounded-3 bg-light mb-3 text-center">
-                            <div class="small fw-bold text-muted mb-2">สแกน PromptPay QR Code (ระบุยอดชำระอัตโนมัติ)</div>
-                            <img src="@qrImageUrl" class="img-thumbnail mb-2" style="width: 160px; height: 160px;" alt="PromptPay QR" />
-                            <div class="small text-muted">พร้อมเพย์: 081-234-5678 (บจก. เพ็ทสโตร์ โปร)</div>
-                            <div class="fw-bold text-danger fs-5 mt-1">ยอดชำระ: ฿@Model.GrandTotal.ToString("N2")</div>
+                        <div class="p-4 rounded-4 bg-lux-tint mb-3 text-center" style="border: 1px solid var(--lux-border);">
+                            <div class="small fw-medium text-lux-muted mb-2">สแกน PromptPay QR Code (ระบุยอดชำระอัตโนมัติ)</div>
+                            <img src="@qrImageUrl" class="rounded-3 bg-white p-2 mb-2 shadow-sm" style="width: 168px; height: 168px; border: 1px solid var(--lux-border);" alt="PromptPay QR" />
+                            <div class="small text-lux-muted">พร้อมเพย์: 081-234-5678 · บจก. เพ็ทสโตร์ โปร</div>
+                            <div class="fw-bold text-lux-espresso fs-5 mt-1">ยอดชำระ: ฿@Model.GrandTotal.ToString("N2")</div>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label small fw-bold">แนบหลักฐานสลิปการโอนเงิน (JPG, PNG, WEBP ไม่เกิน 5MB)</label>
+                            <label class="form-label small fw-medium text-lux-muted">แนบหลักฐานสลิปการโอนเงิน (JPG, PNG, WEBP ไม่เกิน 5MB)</label>
                             <input type="file" name="paymentSlip" id="paymentSlipInput" class="form-control" accept="image/*" />
-                            <div class="small text-muted mt-1">
-                                <i class="bi bi-shield-check text-primary"></i> คำสั่งซื้อจะเข้าสู่สถานะ <strong>รอฝ่ายบัญชีตรวจสอบสลิป</strong> (สามารถแนบหรืออัปเดตสลิปภายหลังในหน้าประวัติคำสั่งซื้อได้)
+                            <div class="small text-lux-muted mt-2">
+                                <i class="bi bi-shield-check text-lux-gold me-1"></i>คำสั่งซื้อจะเข้าสู่สถานะ <strong>รอฝ่ายบัญชีตรวจสอบสลิป</strong>
                             </div>
                         </div>
                     </div>
 
-                    <div id="codNoticeBox" class="alert alert-info small d-none mb-4">
-                        <i class="bi bi-truck"></i> เลือกชำระเงินปลายทาง (COD): คำสั่งซื้อจะถูกส่งเข้าคิวจัดเตรียมสินค้าทันที กรุณาเตรียมชำระเงินจำนวน <strong>฿@Model.GrandTotal.ToString("N2")</strong> กับพนักงานขนส่ง
+                    <div id="codNoticeBox" class="p-3 rounded-3 bg-lux-tint small d-none mb-4" style="border: 1px solid var(--lux-border-strong);">
+                        <i class="bi bi-truck text-lux-gold me-1"></i> เลือกชำระเงินปลายทาง (COD): กรุณาเตรียมชำระเงินจำนวน <strong>฿@Model.GrandTotal.ToString("N2")</strong> กับพนักงานขนส่ง
                     </div>
 
-                    <button type="submit" class="btn btn-pet-primary btn-lg w-100 fw-bold py-3 shadow-sm">
-                        <i class="bi bi-check2-circle"></i> ยืนยันการสั่งซื้อทันที
+                    <button type="submit" class="btn btn-pet-primary btn-lg w-100 py-3">
+                        <i class="bi bi-check2-circle me-1"></i> ยืนยันการสั่งซื้อทันที
                     </button>
                 </form>
             </div>
@@ -78,44 +87,45 @@
 
         <!-- สรุปตะกร้าด้านข้าง -->
         <div class="col-md-5">
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <h6 class="fw-bold mb-3 text-dark">สรุปรายการคำสั่งซื้อ</h6>
+            <div class="lux-card p-4 sticky-top" style="top: 96px;">
+                <div class="text-uppercase fw-semibold text-lux-gold mb-1" style="font-size: 0.7rem; letter-spacing: 0.1em;">ITEMS IN BAG</div>
+                <h6 class="fw-bold mb-3 text-lux-espresso">สรุปรายการคำสั่งซื้อ</h6>
                 <div class="small mb-3">
                     @foreach (var item in Model.Items)
                     {
                         <div class="d-flex justify-content-between mb-2">
-                            <span>@item.Product.Name (x@item.Quantity)</span>
-                            <span class="fw-bold">฿@item.Subtotal.ToString("N0")</span>
+                            <span class="text-lux-muted">@item.Product.Name <span class="text-lux-espresso fw-medium">(x@item.Quantity)</span></span>
+                            <span class="fw-semibold text-lux-espresso">฿@item.Subtotal.ToString("N0")</span>
                         </div>
                     }
                 </div>
 
-                <hr class="my-2" />
-                <div class="d-flex justify-content-between small mb-1">
-                    <span class="text-muted">น้ำหนักสินค้ารวม:</span>
-                    <span class="fw-bold">⚖️ @Model.TotalWeightKg kg</span>
+                <hr class="my-3" style="border-color: var(--lux-border);" />
+                <div class="d-flex justify-content-between small mb-2">
+                    <span class="text-lux-muted">น้ำหนักสินค้ารวม</span>
+                    <span class="fw-semibold text-lux-espresso">@Model.TotalWeightKg kg</span>
                 </div>
-                <div class="d-flex justify-content-between small mb-1">
-                    <span class="text-muted">ส่วนลดโปรโมชั่น:</span>
-                    <span class="fw-bold text-danger">-฿@Model.TotalPromotionDiscount.ToString("N2")</span>
+                <div class="d-flex justify-content-between small mb-2">
+                    <span class="text-lux-muted">ส่วนลดโปรโมชั่น</span>
+                    <span class="fw-semibold lux-price-sale">-฿@Model.TotalPromotionDiscount.ToString("N2")</span>
                 </div>
-                <div class="d-flex justify-content-between small mb-1">
-                    <span class="text-muted">ค่าจัดส่ง:</span>
-                    <span class="fw-bold">฿@Model.ShippingFee.ToString("N2")</span>
+                <div class="d-flex justify-content-between small mb-2">
+                    <span class="text-lux-muted">ค่าจัดส่ง</span>
+                    <span class="fw-semibold text-lux-espresso">฿@Model.ShippingFee.ToString("N2")</span>
                 </div>
 
                 @if (!string.IsNullOrEmpty(Model.FreeGiftItem))
                 {
-                    <div class="d-flex justify-content-between small mb-1 text-warning">
-                        <span>ของแถมฟรี:</span>
-                        <span class="fw-bold">@Model.FreeGiftItem</span>
+                    <div class="d-flex justify-content-between small mb-2 text-lux-gold">
+                        <span>ของแถมฟรี</span>
+                        <span class="fw-semibold">@Model.FreeGiftItem</span>
                     </div>
                 }
 
-                <hr class="my-3" />
+                <hr class="my-3" style="border-color: var(--lux-border);" />
                 <div class="d-flex justify-content-between align-items-baseline">
-                    <span class="fw-bold fs-6">ยอดสุทธิ:</span>
-                    <span class="fs-4 fw-bold text-danger">฿@Model.GrandTotal.ToString("N2")</span>
+                    <span class="fw-bold text-lux-espresso">ยอดสุทธิ</span>
+                    <span class="fs-4 fw-bold text-lux-espresso">฿@Model.GrandTotal.ToString("N2")</span>
                 </div>
             </div>
         </div>

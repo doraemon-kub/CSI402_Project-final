@@ -8,15 +8,18 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-5 col-md-7">
-            <!-- Login Card -->
-            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
-                <div class="p-4 text-center text-white" style="background: linear-gradient(135deg, #ff7a3d, #e86326);">
-                    <div class="fs-1 mb-2"><i class="bi bi-person-circle"></i></div>
-                    <h4 class="fw-bold m-0">เข้าสู่ระบบ PetStore Pro</h4>
-                    <p class="small text-white-50 m-0">เข้าสู่ระบบเพื่อจัดการคำสั่งซื้อ หรือเข้าถึงระบบงานตามบทบาทของคุณ</p>
+            <!-- Luxury Minimalist Login Card -->
+            <div class="lux-card overflow-hidden mb-4" style="box-shadow: var(--lux-shadow-lg);">
+                <div class="p-4 p-md-5 text-center" style="background: linear-gradient(135deg, #231D19, #382D25); color: #FAF8F5;">
+                    <div class="mx-auto rounded-circle d-flex align-items-center justify-content-center mb-3"
+                         style="width: 56px; height: 56px; background: rgba(223, 195, 168, 0.14); border: 1px solid rgba(223, 195, 168, 0.3); color: var(--lux-gold-light);">
+                        <i class="bi bi-person fs-3"></i>
+                    </div>
+                    <h4 class="font-serif-brand fw-bold mb-1">Welcome Back</h4>
+                    <p class="small mb-0" style="color: #CFC6BC;">เข้าสู่ระบบ PetStore Pro เพื่อสั่งซื้อสินค้าหรือจัดการระบบตามบทบาท</p>
                 </div>
 
-                <div class="card-body p-4 p-md-5">
+                <div class="p-4 p-md-5">
                     @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
                     {
                         <div class="alert alert-danger rounded-3 py-2 small mb-4" role="alert">
@@ -29,9 +32,9 @@
                         <input type="hidden" asp-for="ReturnUrl" />
 
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-muted">ชื่อผู้ใช้หรืออีเมล</label>
+                            <label class="form-label small fw-medium text-lux-muted">ชื่อผู้ใช้หรืออีเมล</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-person"></i></span>
+                                <span class="input-group-text border-end-0"><i class="bi bi-person"></i></span>
                                 <input asp-for="Username" class="form-control border-start-0" placeholder="เช่น customer, inventory, owner..." />
                             </div>
                             <span asp-validation-for="Username" class="text-danger small"></span>
@@ -39,11 +42,11 @@
 
                         <div class="mb-3">
                             <div class="d-flex justify-content-between">
-                                <label class="form-label small fw-bold text-muted">รหัสผ่าน</label>
-                                <a href="#" class="small text-decoration-none text-muted">ลืมรหัสผ่าน?</a>
+                                <label class="form-label small fw-medium text-lux-muted">รหัสผ่าน</label>
+                                <a href="#" class="small text-decoration-none text-lux-muted">ลืมรหัสผ่าน?</a>
                             </div>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock"></i></span>
+                                <span class="input-group-text border-end-0"><i class="bi bi-lock"></i></span>
                                 <input asp-for="Password" class="form-control border-start-0" placeholder="รหัสผ่าน (ทุกบทบาทใช้ 123456)" />
                             </div>
                             <span asp-validation-for="Password" class="text-danger small"></span>
@@ -51,38 +54,38 @@
 
                         <div class="form-check mb-4">
                             <input asp-for="RememberMe" class="form-check-input" />
-                            <label asp-for="RememberMe" class="form-check-label small text-muted">จดจำการเข้าสู่ระบบ</label>
+                            <label asp-for="RememberMe" class="form-check-label small text-lux-muted">จดจำการเข้าสู่ระบบ</label>
                         </div>
 
-                        <button type="submit" class="btn btn-pet-primary w-100 py-3 fw-bold rounded-3 shadow-sm mb-3">
+                        <button type="submit" class="btn btn-pet-primary w-100 py-3 fw-medium mb-3">
                             <i class="bi bi-box-arrow-in-right me-1"></i> เข้าสู่ระบบ
                         </button>
 
-                        <div class="text-center small text-muted">
-                            ยังไม่มีบัญชีสมาชิก? <a asp-action="Register" class="text-primary fw-bold text-decoration-none">สมัครสมาชิกใหม่</a>
+                        <div class="text-center small text-lux-muted">
+                            ยังไม่มีบัญชีสมาชิก? <a asp-action="Register" class="text-lux-gold fw-semibold text-decoration-none">สมัครสมาชิกใหม่</a>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- Quick Demo Login Card (ช่วยให้อาจารย์/ผู้ทดสอบคลิกทดสอบแต่ละบทบาทได้ทันที) -->
-            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <!-- Quick Demo Login Card -->
+            <div class="lux-card p-4">
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="badge bg-warning text-dark"><i class="bi bi-lightning-charge-fill"></i> Fast Switch</span>
-                    <h6 class="fw-bold m-0 text-dark">ทดสอบเข้าสู่ระบบแยกตามบทบาท (1-Click Login)</h6>
+                    <span class="lux-tag lux-tag-accent"><i class="bi bi-lightning-charge-fill me-1"></i>Fast Switch</span>
+                    <h6 class="fw-bold m-0 text-lux-espresso">ทดสอบเข้าสู่ระบบตามบทบาท (1-Click)</h6>
                 </div>
-                <p class="small text-muted mb-3">คลิกเลือกบทบาทที่ต้องการ เพื่อเข้าสู่ระบบและทดสอบหน้าจอเฉพาะของแต่ละฝ่ายได้ทันที:</p>
-                
+                <p class="small text-lux-muted mb-3">คลิกเลือกบทบาทที่ต้องการเพื่อทดสอบหน้าจอเฉพาะของแต่ละฝ่ายได้ทันที:</p>
+
                 <div class="d-flex flex-wrap gap-2">
                     @foreach (var u in demoUsers)
                     {
                         <form asp-action="QuickLogin" method="post" class="m-0">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="username" value="@u.Username" />
-                            <button type="submit" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
-                                <span class="badge @(u.Role == UserRole.Owner ? "bg-dark text-white" :
+                            <button type="submit" class="btn btn-sm btn-lux-outline d-flex align-items-center gap-2 py-1 px-2" style="font-size: 0.78rem;">
+                                <span class="badge rounded-pill @(u.Role == UserRole.Owner ? "bg-dark" :
                                                     u.Role == UserRole.Admin ? "bg-danger" :
-                                                    u.Role == UserRole.Customer ? "bg-success" : "bg-primary")">
+                                                    u.Role == UserRole.Customer ? "bg-success" : "bg-secondary")" style="font-size: 0.66rem; font-weight: 500;">
                                     @u.Role
                                 </span>
                                 <span>@u.Username</span>
@@ -90,7 +93,7 @@
                         </form>
                     }
                 </div>
-                <div class="small text-muted mt-2 text-end" style="font-size: 0.75rem;">
+                <div class="small text-lux-muted mt-3 text-end" style="font-size: 0.74rem;">
                     * รหัสผ่านสำหรับกรอกเองทุก User คือ: <code>123456</code>
                 </div>
             </div>

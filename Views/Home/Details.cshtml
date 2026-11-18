@@ -3,114 +3,124 @@
 @{
     ViewData["Title"] = Model.Name;
     var related = ViewBag.RelatedProducts as List<Product> ?? new();
+    var petLabel = Model.PetType == PetCategory.Dog ? "สุนัข" : Model.PetType == PetCategory.Cat ? "แมว" : "สัตว์เลี้ยงอื่นๆ";
+    var ageLabel = Model.AgeStage == AgeStage.PuppyOrKitten ? "วัยเด็ก"
+                 : Model.AgeStage == AgeStage.Adult ? "โตเต็มวัย"
+                 : Model.AgeStage == AgeStage.Senior ? "สูงวัย" : "ทุกช่วงวัย";
 }
 
-<div class="container py-4">
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-action="Index">หน้าร้านค้า</a></li>
-            <li class="breadcrumb-item">@(Model.PetType == PetCategory.Dog ? "สุนัข" : "แมว")</li>
-            <li class="breadcrumb-item active">@Model.Name</li>
+<div class="container py-4 py-md-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a asp-action="Index" class="text-lux-muted text-decoration-none">หน้าร้านค้า</a></li>
+            <li class="breadcrumb-item text-lux-muted">@petLabel</li>
+            <li class="breadcrumb-item active text-lux-espresso fw-medium" aria-current="page">@Model.Name</li>
         </ol>
     </nav>
 
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+    <div class="lux-card overflow-hidden mb-5">
         <div class="row g-0">
-            <div class="col-md-5">
-                <img src="@Model.ImageUrl" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 380px;" alt="@Model.Name" />
+            <!-- Left: Editorial Photography -->
+            <div class="col-md-5 bg-lux-soft position-relative">
+                <img src="@Model.ImageUrl" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 400px; max-height: 540px;" alt="@Model.Name" />
+                <div class="position-absolute top-0 start-0 m-3">
+                    <span class="lux-glass-pill lux-glass-pill-hot px-3 py-2" id="cart-count-badge-@Model.Id" style="font-size: 0.78rem;">
+                        <i class="bi bi-fire"></i> มี <strong id="cart-count-val-@Model.Id">@Model.CartAddCount</strong> คนกำลังใส่ตะกร้าชิ้นนี้
+                    </span>
+                </div>
             </div>
+
+            <!-- Right: Product Details -->
             <div class="col-md-7 p-4 p-lg-5 d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge bg-danger px-3 py-2 rounded-pill">
-                        <i class="bi bi-fire"></i> สินค้ายอดนิยม: มี @Model.CartAddCount คนกำลังใส่ตะกร้าชิ้นนี้ (Req 8)
-                    </span>
-                    <span class="badge bg-secondary">แบรนด์ @Model.Brand</span>
+                    <span class="lux-product-brand" style="font-size: 0.8rem;">@Model.Brand</span>
+                    <span class="lux-tag">@petLabel · @Model.Category</span>
                 </div>
 
-                <h2 class="fw-bold text-dark mb-2">@Model.Name</h2>
-                <p class="text-muted mb-4">@Model.Description</p>
+                <h2 class="fw-bold text-lux-espresso mb-3" style="letter-spacing: -0.02em;">@Model.Name</h2>
+                <p class="text-lux-muted mb-4" style="line-height: 1.7;">@Model.Description</p>
 
-                <!-- Spec Info: น้ำหนัก & ช่วงวัย & สูตรเฉพาะ (Req 1, 2, 7, 10) -->
+                <!-- Spec Info Tiles (Req 1, 2, 7, 10) -->
                 <div class="row g-3 mb-4">
                     <div class="col-6 col-sm-3">
-                        <div class="p-3 bg-light rounded-3 text-center">
-                            <div class="small text-muted">สัตว์เลี้ยง</div>
-                            <div class="fw-bold">@(Model.PetType == PetCategory.Dog ? "🐶 สุนัข" : "🐱 แมว")</div>
+                        <div class="p-3 bg-lux-tint rounded-3 text-center h-100" style="border: 1px solid var(--lux-border);">
+                            <div class="small text-lux-muted mb-1">สัตว์เลี้ยง</div>
+                            <div class="fw-semibold text-lux-espresso">@petLabel</div>
                         </div>
                     </div>
                     <div class="col-6 col-sm-3">
-                        <div class="p-3 bg-light rounded-3 text-center">
-                            <div class="small text-muted">ช่วงวัยที่เหมาะสม</div>
-                            <div class="fw-bold text-primary">
-                                @(Model.AgeStage == AgeStage.PuppyOrKitten ? "🍼 วัยเด็ก" :
-                                  Model.AgeStage == AgeStage.Adult ? "🐕 โตเต็มวัย" : "🧓 สูงวัย")
-                            </div>
+                        <div class="p-3 bg-lux-tint rounded-3 text-center h-100" style="border: 1px solid var(--lux-border);">
+                            <div class="small text-lux-muted mb-1">ช่วงวัย</div>
+                            <div class="fw-semibold text-lux-gold">@ageLabel</div>
                         </div>
                     </div>
                     <div class="col-6 col-sm-3">
-                        <div class="p-3 bg-light rounded-3 text-center">
-                            <div class="small text-muted">น้ำหนักสินค้า</div>
-                            <div class="fw-bold">⚖️ @Model.WeightKg kg</div>
+                        <div class="p-3 bg-lux-tint rounded-3 text-center h-100" style="border: 1px solid var(--lux-border);">
+                            <div class="small text-lux-muted mb-1">น้ำหนักสุทธิ</div>
+                            <div class="fw-semibold text-lux-espresso">@Model.WeightKg kg</div>
                         </div>
                     </div>
                     <div class="col-6 col-sm-3">
-                        <div class="p-3 bg-light rounded-3 text-center">
-                            <div class="small text-muted">สูตรการดูแล</div>
-                            <div class="fw-bold text-success">@Model.SpecialNeed</div>
+                        <div class="p-3 bg-lux-tint rounded-3 text-center h-100" style="border: 1px solid var(--lux-border);">
+                            <div class="small text-lux-muted mb-1">สูตรการดูแล</div>
+                            <div class="fw-semibold text-lux-espresso">@Model.SpecialNeed</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Stock Status Section -->
-                <div class="mb-3 d-flex align-items-center gap-2" id="stock-badge-container-@Model.Id">
-                    <span class="text-muted small">สถานะสินค้า:</span>
+                <div class="mb-4 d-flex align-items-center gap-2" id="stock-badge-container-@Model.Id">
+                    <span class="text-lux-muted small">สถานะคลังสินค้า:</span>
                     @if (Model.IsOutOfStock)
                     {
-                        <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2">
-                            <i class="bi bi-x-circle me-1"></i> สินค้าหมดสต็อกชั่วคราว
+                        <span class="lux-stock-pill lux-stock-out px-3 py-1" style="font-size: 0.78rem;">
+                            <span class="lux-stock-dot"></span> สินค้าหมดสต็อกชั่วคราว
                         </span>
                     }
                     else if (Model.IsLowStock)
                     {
-                        <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-2">
-                            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> สินค้าใกล้หมด! เหลือเพียง <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น
+                        <span class="lux-stock-pill lux-stock-low px-3 py-1" style="font-size: 0.78rem;">
+                            <span class="lux-stock-dot"></span> ใกล้หมด · เหลือเพียง <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น
                         </span>
                     }
                     else
                     {
-                        <span class="badge bg-success-subtle text-success border border-success px-3 py-2">
-                            <i class="bi bi-check-circle-fill me-1"></i> มีสินค้าพร้อมส่ง (คงเหลือ <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น)
+                        <span class="lux-stock-pill lux-stock-ok px-3 py-1" style="font-size: 0.78rem;">
+                            <span class="lux-stock-dot"></span> พร้อมส่ง · คงเหลือ <strong id="stock-val-@Model.Id">@Model.StockQuantity</strong> ชิ้น
                         </span>
                     }
                 </div>
 
                 <!-- Price & Purchase Action -->
-                <div class="mt-auto border-top pt-4">
-                    <div class="d-flex align-items-baseline gap-3 mb-3">
+                <div class="mt-auto pt-4" style="border-top: 1px solid var(--lux-border);">
+                    <div class="d-flex align-items-baseline gap-3 mb-4">
                         @if (Model.SpecialDiscountPrice.HasValue)
                         {
-                            <span class="display-6 fw-bold text-danger">฿@Model.SpecialDiscountPrice.Value.ToString("N0")</span>
-                            <span class="fs-5 text-muted text-decoration-line-through">฿@Model.Price.ToString("N0")</span>
-                            <span class="badge bg-success-subtle text-success border border-success">ประหยัดทันที</span>
+                            <span class="display-6 fw-bold lux-price-sale">฿@Model.SpecialDiscountPrice.Value.ToString("N0")</span>
+                            <span class="fs-5 lux-price-old">฿@Model.Price.ToString("N0")</span>
+                            <span class="lux-stock-pill lux-stock-ok px-3 py-1">ราคาพิเศษ</span>
                         }
                         else
                         {
-                            <span class="display-6 fw-bold text-dark">฿@Model.Price.ToString("N0")</span>
+                            <span class="display-6 fw-bold text-lux-espresso">฿@Model.Price.ToString("N0")</span>
                         }
                     </div>
 
                     @if (User.Identity?.IsAuthenticated != true)
                     {
-                        <div class="alert alert-warning border-0 rounded-3 p-3 mb-0 shadow-sm">
+                        <div class="p-3 p-md-4 rounded-4 bg-lux-tint" style="border: 1px solid #E5D4C1;">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-shield-lock-fill fs-3 text-warning"></i>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                         style="width: 44px; height: 44px; background: var(--lux-gold-soft); color: var(--lux-gold-dark);">
+                                        <i class="bi bi-lock-fill fs-5"></i>
+                                    </div>
                                     <div>
-                                        <div class="fw-bold text-dark">กรุณาเข้าสู่ระบบก่อนหยิบสินค้าลงในตะกร้า</div>
-                                        <div class="small text-muted">ผู้เยี่ยมชม (Guest) สามารถชมข้อมูลสินค้าได้ แต่ต้องเข้าสู่ระบบเพื่อซื้อสินค้า</div>
+                                        <div class="fw-semibold text-lux-espresso">กรุณาเข้าสู่ระบบก่อนหยิบสินค้าลงในตะกร้า</div>
+                                        <div class="small text-lux-muted">ผู้เยี่ยมชมสามารถชมข้อมูลสินค้าได้ แต่ต้องเข้าสู่ระบบเพื่อสั่งซื้อ</div>
                                     </div>
                                 </div>
-                                <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary px-3 fw-bold">
+                                <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-pet-primary px-4 py-2">
                                     <i class="bi bi-box-arrow-in-right me-1"></i> เข้าสู่ระบบเพื่อสั่งซื้อ
                                 </a>
                             </div>
@@ -121,11 +131,11 @@
                         <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex gap-3 ajax-add-to-cart">
                             <input type="hidden" name="productId" value="@Model.Id" />
                             <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                            <div style="width: 120px;">
-                                <input type="number" name="quantity" class="form-control form-control-lg text-center" value="1" min="1" max="@Model.StockQuantity" id="qty-input-@Model.Id" />
+                            <div style="width: 110px;">
+                                <input type="number" name="quantity" class="form-control form-control-lg text-center fw-semibold" value="1" min="1" max="@Model.StockQuantity" id="qty-input-@Model.Id" />
                             </div>
-                            <button type="submit" class="btn btn-pet-primary btn-lg flex-grow-1" @(Model.IsOutOfStock ? "disabled" : "") id="add-cart-btn-@Model.Id">
-                                <i class="bi bi-cart-plus-fill me-2"></i> <span>เพิ่มลงในตะกร้าสินค้า</span>
+                            <button type="submit" class="btn btn-pet-primary btn-lg flex-grow-1 py-3" @(Model.IsOutOfStock ? "disabled" : "") id="add-cart-btn-@Model.Id">
+                                <i class="bi bi-bag-plus me-2"></i> <span>เพิ่มลงในตะกร้าสินค้า</span>
                             </button>
                         </form>
                     }
@@ -134,21 +144,33 @@
         </div>
     </div>
 
-    <!-- แนะนำสินค้าตามช่วงวัยและสายพันธุ์เดียวกัน (Req 7, 10) -->
+    <!-- แนะนำสินค้าตามช่วงวัยเดียวกัน (Req 7, 10) -->
     @if (related.Any())
     {
-        <h4 class="fw-bold mb-3"><i class="bi bi-stars text-warning"></i> สินค้าแนะนำสำหรับช่วงวัยนี้</h4>
-        <div class="row g-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <div class="text-uppercase fw-semibold text-lux-gold mb-1" style="font-size: 0.72rem; letter-spacing: 0.1em;">YOU MAY ALSO LIKE</div>
+                <h4 class="fw-bold text-lux-espresso m-0">สินค้าแนะนำสำหรับช่วงวัยนี้</h4>
+            </div>
+        </div>
+        <div class="row g-3 g-md-4">
             @foreach (var rel in related)
             {
-                <div class="col-md-3">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                        <img src="@rel.ImageUrl" class="card-img-top" style="height: 150px; object-fit: cover;" alt="@rel.Name" />
-                        <div class="card-body p-3">
-                            <h6 class="fw-bold text-truncate">@rel.Name</h6>
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span class="fw-bold text-danger">฿@rel.EffectivePrice.ToString("N0")</span>
-                                <a asp-action="Details" asp-route-id="@rel.Id" class="btn btn-sm btn-outline-dark">ดูข้อมูล</a>
+                <div class="col-6 col-md-3">
+                    <div class="lux-product-card h-100 d-flex flex-column">
+                        <div class="lux-product-media" style="height: 165px;">
+                            <a asp-action="Details" asp-route-id="@rel.Id" class="d-block w-100 h-100">
+                                <img src="@rel.ImageUrl" alt="@rel.Name" loading="lazy" />
+                            </a>
+                        </div>
+                        <div class="p-3 d-flex flex-column flex-grow-1">
+                            <span class="lux-product-brand mb-1">@rel.Brand</span>
+                            <h6 class="lux-product-title mb-2" style="min-height: 2.4rem;">
+                                <a asp-action="Details" asp-route-id="@rel.Id">@rel.Name</a>
+                            </h6>
+                            <div class="mt-auto d-flex justify-content-between align-items-center pt-2" style="border-top: 1px solid var(--lux-border);">
+                                <span class="fw-bold text-lux-espresso">฿@rel.EffectivePrice.ToString("N0")</span>
+                                <a asp-action="Details" asp-route-id="@rel.Id" class="btn btn-sm btn-lux-outline px-3">ดูสินค้า</a>
                             </div>
                         </div>
                     </div>

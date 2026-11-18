@@ -3,56 +3,130 @@
 @{
     Layout = "_BackOfficeLayout";
     ViewData["Title"] = "3. ระบบจัดการสินค้าและสต็อก (Inventory Staff)";
+    int totalProducts = ViewBag.TotalProducts ?? Model.Count;
     int lowStock = ViewBag.LowStockCount ?? 0;
     int outOfStock = ViewBag.OutOfStockCount ?? 0;
+    int normalStock = ViewBag.NormalStockCount ?? 0;
+    string stockFilter = ViewBag.StockFilter as string ?? "all";
+    string? search = ViewBag.Search as string;
 }
 
-<!-- Summary Alert Cards (Req 18: ระบบแจ้งเตือนเมื่อสินค้าต่ำกว่าระดับที่กำหนด) -->
+<!-- Summary Alert Cards (Clickable Filter Cards — Req 18) -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small">สินค้าทั้งหมดในคลัง</div>
-                    <div class="fs-3 fw-bold text-dark">@Model.Count SKU</div>
+        <a asp-action="Index" asp-route-stockFilter="all" asp-route-search="@search" class="text-decoration-none d-block">
+            <div class="card p-3 bg-white h-100" style="transition: transform 0.2s, box-shadow 0.2s; @(stockFilter == "all" ? "border: 2px solid var(--lux-espresso) !important; box-shadow: 0 8px 20px rgba(35,29,25,0.1) !important;" : "")">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-lux-muted small fw-medium">สินค้าทั้งหมดในคลัง</div>
+                        <div class="fs-3 fw-bold text-lux-espresso">@totalProducts SKU</div>
+                        <div class="small text-lux-muted" style="font-size: 0.72rem;">คลิกเพื่อแสดงสินค้าทั้งหมด</div>
+                    </div>
+                    <div class="p-3 rounded-3 fs-3" style="background: var(--lux-gold-soft); color: var(--lux-gold-dark);">
+                        <i class="bi bi-boxes"></i>
+                    </div>
                 </div>
-                <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-3"><i class="bi bi-boxes"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm rounded-4 p-3 @(lowStock > 0 ? "bg-warning-subtle border border-warning" : "bg-white")">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-bold">⚠️ แจ้งเตือน: สต็อกต่ำกว่าเกณฑ์ (Low Stock)</div>
-                    <div class="fs-3 fw-bold text-warning">@lowStock รายการ</div>
+        <a asp-action="Index" asp-route-stockFilter="low" asp-route-search="@search" class="text-decoration-none d-block">
+            <div class="card p-3 h-100 @(lowStock > 0 ? "bg-warning-subtle" : "bg-white")" style="transition: transform 0.2s, box-shadow 0.2s; @(stockFilter == "low" ? "border: 2px solid var(--lux-warning) !important; box-shadow: 0 8px 20px rgba(154,100,20,0.16) !important;" : "")">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small fw-semibold" style="color: var(--lux-warning);">⚠️ สต็อกต่ำกว่าเกณฑ์ (Low Stock)</div>
+                        <div class="fs-3 fw-bold" style="color: var(--lux-warning);">@lowStock รายการ</div>
+                        <div class="small text-lux-muted" style="font-size: 0.72rem;">คลิกเพื่อกรองสินค้าใกล้หมด</div>
+                    </div>
+                    <div class="p-3 rounded-3 fs-3" style="background: #F6DC9D; color: #7C4F0C;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
                 </div>
-                <div class="p-3 bg-warning text-dark rounded-3 fs-3"><i class="bi bi-exclamation-triangle-fill"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm rounded-4 p-3 @(outOfStock > 0 ? "bg-danger-subtle border border-danger" : "bg-white")">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-bold">❌ สินค้าหมดสต็อก (Out of Stock)</div>
-                    <div class="fs-3 fw-bold text-danger">@outOfStock รายการ</div>
+        <a asp-action="Index" asp-route-stockFilter="out" asp-route-search="@search" class="text-decoration-none d-block">
+            <div class="card p-3 h-100 @(outOfStock > 0 ? "bg-danger-subtle" : "bg-white")" style="transition: transform 0.2s, box-shadow 0.2s; @(stockFilter == "out" ? "border: 2px solid var(--lux-danger) !important; box-shadow: 0 8px 20px rgba(180,62,50,0.16) !important;" : "")">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small fw-semibold" style="color: var(--lux-danger);">❌ สินค้าหมดสต็อก (Out of Stock)</div>
+                        <div class="fs-3 fw-bold" style="color: var(--lux-danger);">@outOfStock รายการ</div>
+                        <div class="small text-lux-muted" style="font-size: 0.72rem;">คลิกเพื่อกรองสินค้าหมดสต็อก</div>
+                    </div>
+                    <div class="p-3 rounded-3 fs-3 text-white" style="background: var(--lux-danger);">
+                        <i class="bi bi-x-octagon-fill"></i>
+                    </div>
                 </div>
-                <div class="p-3 bg-danger text-white rounded-3 fs-3"><i class="bi bi-x-octagon-fill"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
-<!-- Header Actions -->
-<div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold m-0 text-dark">ตารางข้อมูลสินค้าและระดับสต็อก (Req 6, 17, 18)</h5>
-        <button type="button" class="btn btn-primary" onclick="openCreateProductModal()">
+<!-- Header Actions & Stock Filter Bar -->
+<div class="card p-4 mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
+        <div>
+            <h5 class="fw-bold m-0 text-lux-espresso">ตารางข้อมูลสินค้าและระดับสต็อก (Req 6, 17, 18)</h5>
+            <small class="text-lux-muted">กำลังแสดง @Model.Count จากทั้งหมด @totalProducts รายการ</small>
+        </div>
+        <button type="button" class="btn btn-primary px-3 py-2" onclick="openCreateProductModal()">
             <i class="bi bi-plus-circle me-1"></i> เพิ่มสินค้าใหม่เข้าระบบ
         </button>
     </div>
 
+    <!-- Filter Pills & Search -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-stretch align-items-lg-center gap-3 p-3 rounded-3 mb-4 bg-lux-tint" style="border: 1px solid var(--lux-border);">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="small fw-semibold text-lux-muted me-1"><i class="bi bi-funnel me-1"></i>กรองสถานะ:</span>
+            <a asp-action="Index" asp-route-stockFilter="all" asp-route-search="@search"
+               class="btn btn-sm rounded-pill px-3 @(stockFilter == "all" ? "btn-pet-primary" : "btn-lux-outline")">
+                ทั้งหมด (@totalProducts)
+            </a>
+            <a asp-action="Index" asp-route-stockFilter="low" asp-route-search="@search"
+               class="btn btn-sm rounded-pill px-3 @(stockFilter == "low" ? "btn-warning text-dark fw-semibold" : "btn-lux-outline")">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i> Low Stock (@lowStock)
+            </a>
+            <a asp-action="Index" asp-route-stockFilter="out" asp-route-search="@search"
+               class="btn btn-sm rounded-pill px-3 @(stockFilter == "out" ? "btn-danger fw-semibold" : "btn-lux-outline")">
+                <i class="bi bi-x-octagon-fill me-1"></i> Out of Stock (@outOfStock)
+            </a>
+            <a asp-action="Index" asp-route-stockFilter="normal" asp-route-search="@search"
+               class="btn btn-sm rounded-pill px-3 @(stockFilter == "normal" ? "btn-success fw-semibold" : "btn-lux-outline")">
+                <i class="bi bi-check-circle-fill me-1"></i> สต็อกปกติ (@normalStock)
+            </a>
+        </div>
+
+        <form method="get" asp-action="Index" class="d-flex gap-2" style="min-width: 260px;">
+            <input type="hidden" name="stockFilter" value="@stockFilter" />
+            <input type="text" name="search" value="@search" class="form-control form-control-sm" placeholder="ค้นหาชื่อสินค้า / แบรนด์..." />
+            <button type="submit" class="btn btn-sm btn-pet-primary px-3 flex-shrink-0">
+                <i class="bi bi-search"></i>
+            </button>
+            @if (!string.IsNullOrWhiteSpace(search) || stockFilter != "all")
+            {
+                <a asp-action="Index" class="btn btn-sm btn-lux-outline px-2 flex-shrink-0" title="ล้างตัวกรอง">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            }
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-inbox text-lux-gold" style="font-size: 2.5rem;"></i>
+            <h6 class="mt-3 fw-semibold text-lux-espresso">ไม่พบรายการสินค้าในเงื่อนไขที่เลือก</h6>
+            <p class="small text-lux-muted mb-3">
+                @(stockFilter == "low" ? "ยอดเยี่ยม! ขณะนี้ไม่มีสินค้าที่สต็อกต่ำกว่าเกณฑ์" :
+                  stockFilter == "out" ? "ยอดเยี่ยม! ขณะนี้ไม่มีสินค้าที่หมดสต็อก" :
+                  "ลองเปลี่ยนคำค้นหาหรือเลือกดูสินค้าทั้งหมด")
+            </p>
+            <a asp-action="Index" class="btn btn-sm btn-lux-outline px-3">แสดงสินค้าทั้งหมด</a>
+        </div>
+    }
+    else
+    {
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">
@@ -119,6 +193,8 @@
                         <td>
                             <form asp-action="UpdateStock" method="post" class="d-flex gap-1">
                                 <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="stockFilter" value="@stockFilter" />
+                                <input type="hidden" name="search" value="@search" />
                                 <button type="submit" name="adjustment" value="-1" class="btn btn-sm btn-outline-danger px-2">-1</button>
                                 <button type="submit" name="adjustment" value="5" class="btn btn-sm btn-outline-success px-2">+5</button>
                             </form>
@@ -158,6 +234,7 @@
             </tbody>
         </table>
     </div>
+    }
 </div>
 
 <!-- Modal เพิ่ม / แก้ไขข้อมูลสินค้า (Req 6, 17) -->

@@ -21,29 +21,53 @@ namespace CSI402_Project_final.Controllers
             _env = env;
         }
 
-        // หน้าหลักคลังสินค้า: สต็อกสินค้า & แจ้งเตือนสินค้าต่ำกว่าระดับที่กำหนด (Req 18)
-        public IActionResult Index()
+        // หน้าหลักคลังสินค้า: สต็อกสินค้า & แจ้งเตือนสินค้าต่ำกว่าระดับที่กำหนด (Req 18) พร้อมตัวกรอง Low Stock / Out of Stock
+        public IActionResult Index(string? stockFilter = "all", string? search = null)
         {
-            var products = _repo.Products.OrderBy(p => p.StockQuantity).ToList();
+            var allProducts = _repo.Products.OrderBy(p => p.StockQuantity).ToList();
 
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            ViewBag.LowStockCount = products.Count(p => p.IsLowStock);
-            ViewBag.OutOfStockCount = products.Count(p => p.IsOutOfStock);
-            ViewBag.TotalProducts = products.Count;
+            ViewBag.TotalProducts = allProducts.Count;
+            ViewBag.LowStockCount = allProducts.Count(p => p.IsLowStock);
+            ViewBag.OutOfStockCount = allProducts.Count(p => p.IsOutOfStock);
+            ViewBag.NormalStockCount = allProducts.Count(p => !p.IsLowStock && !p.IsOutOfStock);
 
-            return View(products);
+            string normalizedFilter = (stockFilter ?? "all").Trim().ToLowerInvariant();
+            IEnumerable<Product> filtered = allProducts;
+
+            filtered = normalizedFilter switch
+            {
+                "low" => filtered.Where(p => p.IsLowStock),
+                "out" => filtered.Where(p => p.IsOutOfStock),
+                "normal" => filtered.Where(p => !p.IsLowStock && !p.IsOutOfStock),
+                "alert" => filtered.Where(p => p.IsLowStock || p.IsOutOfStock),
+                _ => filtered
+            };
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                string kw = search.Trim();
+                filtered = filtered.Where(p =>
+                    p.Name.Contains(kw, System.StringComparison.OrdinalIgnoreCase) ||
+                    p.Brand.Contains(kw, System.StringComparison.OrdinalIgnoreCase));
+            }
+
+            ViewBag.StockFilter = normalizedFilter;
+            ViewBag.Search = search;
+
+            return View(filtered.ToList());
         }
 
-        // อัปเดตสต็อกรวดเร็ว
+        // อัปเดตสต็อกรวดเร็ว (คงสถานะ Filter เดิมไว้)
         [HttpPost]
-        public IActionResult UpdateStock(int id, int adjustment)
+        public IActionResult UpdateStock(int id, int adjustment, string? stockFilter = null, string? search = null)
         {
             var product = _repo.UpdateProductStock(id, adjustment);
             if (product != null)
             {
                 TempData["SuccessMessage"] = $"อัปเดตสต็อกสินค้า '{product.Name}' เป็น {product.StockQuantity} ชิ้น เรียบร้อยแล้ว";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { stockFilter, search });
         }
 
         // เพิ่มหรือแก้ไขสินค้า (Req 6, 17) รองรับอัปโหลดรูปภาพและลิงก์รูปภาพ
