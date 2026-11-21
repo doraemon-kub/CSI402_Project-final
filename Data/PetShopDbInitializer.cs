@@ -17,7 +17,8 @@ namespace CSI402_Project_final.Models
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException($"ไม่สามารถเชื่อมต่อฐานข้อมูล MySQL ได้: {ex.Message}", ex);
+                Console.WriteLine($"[Database Warning] ยังไม่สามารถเชื่อมต่อฐานข้อมูลได้: {ex.Message}");
+                return;
             }
 
             // สร้างโครงสร้างตารางทั้งหมดอัตโนมัติหากยังไม่มีในฐานข้อมูล (สำหรับ Cloud DB ใหม่)
@@ -27,15 +28,15 @@ namespace CSI402_Project_final.Models
             var now = DateTime.Now;
             var seedUsers = new List<SystemUser>
             {
-                new SystemUser { Username = "owner", Password = "123456", FullName = "คุณภูไพศาล (Owner)", Email = "owner@petshop.com", Phone = "081-999-0001", Role = UserRole.Owner, IsActive = true, CreatedAt = now, UpdatedAt = now },
-                new SystemUser { Username = "admin", Password = "123456", FullName = "ธนพล (Admin)", Email = "admin@petshop.com", Phone = "081-999-0002", Role = UserRole.Admin, IsActive = true, CreatedAt = now, UpdatedAt = now },
-                new SystemUser { Username = "marketing", Password = "123456", FullName = "อลิสา (Marketing Staff)", Email = "marketing@petshop.com", Phone = "081-999-0003", Role = UserRole.MarketingStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
-                new SystemUser { Username = "inventory", Password = "123456", FullName = "สมชาย (Inventory Staff)", Email = "inventory@petshop.com", Phone = "081-999-0004", Role = UserRole.InventoryStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
-                new SystemUser { Username = "order", Password = "123456", FullName = "วิภา (Order Staff)", Email = "order@petshop.com", Phone = "081-999-0005", Role = UserRole.OrderStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
-                new SystemUser { Username = "shipping", Password = "123456", FullName = "เดชา (Shipping Staff)", Email = "shipping@petshop.com", Phone = "081-999-0006", Role = UserRole.ShippingStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
-                new SystemUser { Username = "accounting", Password = "123456", FullName = "อรวรรณ (Accounting Staff)", Email = "accounting@petshop.com", Phone = "081-999-0007", Role = UserRole.AccountingStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
-                new SystemUser { Username = "support", Password = "123456", FullName = "สมศักดิ์ (IT Support)", Email = "support@petshop.com", Phone = "081-999-0008", Role = UserRole.ITSupport, IsActive = true, CreatedAt = now, UpdatedAt = now },
-                new SystemUser { Username = "customer", Password = "123456", FullName = "คุณกิตติชัย (Customer)", Email = "customer@example.com", Phone = "081-234-5678", Role = UserRole.Customer, IsActive = true, CreatedAt = now, UpdatedAt = now }
+                new SystemUser { Username = "owner", Password = "123456", FullName = "คุณภูไพศาล", Email = "owner@petshop.com", Phone = "081-999-0001", Role = UserRole.Owner, IsActive = true, CreatedAt = now, UpdatedAt = now },
+                new SystemUser { Username = "admin", Password = "123456", FullName = "ธนพล", Email = "admin@petshop.com", Phone = "081-999-0002", Role = UserRole.Admin, IsActive = true, CreatedAt = now, UpdatedAt = now },
+                new SystemUser { Username = "marketing", Password = "123456", FullName = "อลิสา", Email = "marketing@petshop.com", Phone = "081-999-0003", Role = UserRole.MarketingStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
+                new SystemUser { Username = "inventory", Password = "123456", FullName = "สมชาย", Email = "inventory@petshop.com", Phone = "081-999-0004", Role = UserRole.InventoryStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
+                new SystemUser { Username = "order", Password = "123456", FullName = "วิภา", Email = "order@petshop.com", Phone = "081-999-0005", Role = UserRole.OrderStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
+                new SystemUser { Username = "shipping", Password = "123456", FullName = "เดชา", Email = "shipping@petshop.com", Phone = "081-999-0006", Role = UserRole.ShippingStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
+                new SystemUser { Username = "accounting", Password = "123456", FullName = "อรวรรณ", Email = "accounting@petshop.com", Phone = "081-999-0007", Role = UserRole.AccountingStaff, IsActive = true, CreatedAt = now, UpdatedAt = now },
+                new SystemUser { Username = "support", Password = "123456", FullName = "สมศักดิ์", Email = "support@petshop.com", Phone = "081-999-0008", Role = UserRole.ITSupport, IsActive = true, CreatedAt = now, UpdatedAt = now },
+                new SystemUser { Username = "customer", Password = "123456", FullName = "คุณกิตติชัย", Email = "customer@example.com", Phone = "081-234-5678", Role = UserRole.Customer, IsActive = true, CreatedAt = now, UpdatedAt = now }
             };
 
             var existingUsernames = db.Users.Select(u => u.Username.ToLower()).ToHashSet();
@@ -48,6 +49,33 @@ namespace CSI402_Project_final.Models
             if (usersToAdd.Any())
             {
                 db.Users.AddRange(usersToAdd);
+                db.SaveChanges();
+            }
+
+            // ล้างชื่อผู้ใช้งานในฐานข้อมูลที่มีวงเล็บบทบาทต่อท้าย เช่น (Customer), (Owner) ให้สะอาด
+            var usersInDb = db.Users.ToList();
+            bool hasCleanedUsers = false;
+            foreach (var u in usersInDb)
+            {
+                if (!string.IsNullOrWhiteSpace(u.FullName) && System.Text.RegularExpressions.Regex.IsMatch(u.FullName, @"\s*\([^)]+\)"))
+                {
+                    u.FullName = System.Text.RegularExpressions.Regex.Replace(u.FullName, @"\s*\([^)]+\)", "").Trim();
+                    hasCleanedUsers = true;
+                }
+            }
+            if (hasCleanedUsers)
+            {
+                db.SaveChanges();
+            }
+
+            // ล้างค่า mock CartAddCount ในฐานข้อมูลทั้งหมดให้เป็น 0 ตามที่ผู้ใช้ต้องการ
+            var productsWithMockCart = db.Products.Where(p => p.CartAddCount > 0).ToList();
+            if (productsWithMockCart.Any())
+            {
+                foreach (var p in productsWithMockCart)
+                {
+                    p.CartAddCount = 0;
+                }
                 db.SaveChanges();
             }
 
@@ -153,7 +181,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "ทั่วไป",
                     StockQuantity = 15,
                     LowStockThreshold = 5,
-                    CartAddCount = 3,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=600&q=80",
                     Description = "อาหารเม็ดสำหรับสุนัขโตพันธุ์กลาง ช่วยเสริมสร้างภูมิคุ้มกันและดูแลทางเดินอาหาร",
                     CreatedAt = now,
@@ -172,7 +200,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "เสริมสร้างกระดูก",
                     StockQuantity = 8,
                     LowStockThreshold = 5,
-                    CartAddCount = 5,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=80",
                     Description = "สำหรับลูกสุนัขพันธุ์ใหญ่ อายุ 2-15 เดือน โปรตีนคุณภาพสูง เสริมสร้างโครงสร้างกระดูก",
                     CreatedAt = now,
@@ -191,7 +219,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "บำรุงไตและชะลอวัย",
                     StockQuantity = 10,
                     LowStockThreshold = 5,
-                    CartAddCount = 2,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1534361960057-19889db98a1e?w=600&q=80",
                     Description = "เม็ดอาหารแช่น้ำให้นิ่มง่าย สำหรับสุนัขสูงวัย 12 ปีขึ้นไป มีสารต้านอนุมูลอิสระชะลอความเสื่อมของเซลล์ไต",
                     CreatedAt = now,
@@ -210,7 +238,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "บำรุงสมอง",
                     StockQuantity = 12,
                     LowStockThreshold = 5,
-                    CartAddCount = 4,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80",
                     Description = "สูตรเม็ดเล็กทานง่าย มี DHA ธรรมชาติจากน้ำมันปลา พัฒนาการสมองและการมองเห็น",
                     CreatedAt = now,
@@ -229,7 +257,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "บำรุงขนและผิวหนัง",
                     StockQuantity = 6,
                     LowStockThreshold = 3,
-                    CartAddCount = 1,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&q=80",
                     Description = "อาหารเกรดโฮลิสติก โปรตีนจากเนื้อแกะและข้าวกล้อง ปราศจากข้าวโพดและถั่วเหลือง น้ำหนักพอดีเกณฑ์ 10kg",
                     CreatedAt = now,
@@ -248,7 +276,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "เสริมกล้ามเนื้อ",
                     StockQuantity = 4,
                     LowStockThreshold = 2,
-                    CartAddCount = 2,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1568640347023-a616a30bc3bd?w=600&q=80",
                     Description = "กระสอบจัมโบ้ 15 กิโลกรัม เหมาะสำหรับสุนัขพลังงานสูง น้ำหนักเกิน 10kg คำนวณค่าส่งส่วนเกินตามเกณฑ์",
                     CreatedAt = now,
@@ -267,7 +295,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "แพ้ง่าย",
                     StockQuantity = 7,
                     LowStockThreshold = 3,
-                    CartAddCount = 6,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=600&q=80",
                     Description = "อาหารสุนัขเกรดซูเปอร์พรีเมียมจากแคนาดา ปราศจากธัญพืช เนื้อสัตว์สดคุณภาพ 85%",
                     CreatedAt = now,
@@ -286,7 +314,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "ทั่วไป",
                     StockQuantity = 25,
                     LowStockThreshold = 5,
-                    CartAddCount = 8,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&q=80",
                     Description = "ของเล่นสุนัขยางธรรมชาติสำหรับแทะและขัดฟัน ลดความเครียด สามารถสอดไส้ขนมได้",
                     CreatedAt = now,
@@ -305,7 +333,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "เสริมข้อต่อกระดูก",
                     StockQuantity = 5,
                     LowStockThreshold = 2,
-                    CartAddCount = 1,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1541599540903-216a46ca1dc0?w=600&q=80",
                     Description = "เบาะนอนเพื่อสุขภาพช่วยกระจายแรงกดทับ สำหรับสุนัขโตและสุนัขสูงอายุที่มีปัญหาข้อสะโพก",
                     CreatedAt = now,
@@ -324,7 +352,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "สุขอนามัย",
                     StockQuantity = 30,
                     LowStockThreshold = 5,
-                    CartAddCount = 9,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600&q=80",
                     Description = "แผ่นอนามัยซึมซับเจลพิเศษ ดับกลิ่นสาบและป้องกันแบคทีเรีย ซึมซับไวไม่รั่วซึม",
                     CreatedAt = now,
@@ -343,7 +371,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "บำรุงขนและผิวหนัง",
                     StockQuantity = 18,
                     LowStockThreshold = 5,
-                    CartAddCount = 3,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1583511655826-05700d52f4d9?w=600&q=80",
                     Description = "แชมพูอาบน้ำสูตรอ่อนโยนผสมคอนดิชันเนอร์ ป้องกันขนพันกัน กลิ่นหอมสดชื่น",
                     CreatedAt = now,
@@ -364,7 +392,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "บำรุงสมองและสายตา",
                     StockQuantity = 20,
                     LowStockThreshold = 5,
-                    CartAddCount = 7,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&q=80",
                     Description = "อาหารลูกแมวอุดมด้วย DHA จากน้ำมันปลาทะเล และพรีไบโอติก เสริมภูมิคุ้มกัน",
                     CreatedAt = now,
@@ -383,7 +411,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "ขับก้อนขน",
                     StockQuantity = 15,
                     LowStockThreshold = 5,
-                    CartAddCount = 5,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&q=80",
                     Description = "อาหารแมวเปอร์เซียและแมวขนยาว เสริมใยอาหารธรรมชาติป้องกันการเกิดก้อนขนอุดตัน",
                     CreatedAt = now,
@@ -402,7 +430,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "บำรุงขนและผิวหนัง",
                     StockQuantity = 12,
                     LowStockThreshold = 4,
-                    CartAddCount = 4,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=600&q=80",
                     Description = "ช่วยให้ขนเงางามสุขภาพดีขึ้นภายใน 21 วัน มีกรดไขมันโอเมก้า 3 และ 6 สูง",
                     CreatedAt = now,
@@ -421,7 +449,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "ชะลอความชรา",
                     StockQuantity = 9,
                     LowStockThreshold = 3,
-                    CartAddCount = 2,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=600&q=80",
                     Description = "ชะลอความเสื่อมของไต ควบคุมฟอสฟอรัส เสริมสร้างการทำงานของหัวใจในแมวอายุ 7 ปีขึ้นไป",
                     CreatedAt = now,
@@ -440,7 +468,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "บำรุงขนและผิวหนัง",
                     StockQuantity = 16,
                     LowStockThreshold = 5,
-                    CartAddCount = 10,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600&q=80",
                     Description = "โซเดียมต่ำ ไร้ข้าวโพดและกลูเตน ขนสวยเงางาม รสชาติอร่อยถูกใจเจ้านาย",
                     CreatedAt = now,
@@ -459,7 +487,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "ทั่วไป",
                     StockQuantity = 8,
                     LowStockThreshold = 3,
-                    CartAddCount = 3,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=600&q=80",
                     Description = "อาหารเม็ดกรอบสอดไส้ครีม รสปลาทูยอดนิยม บำรุงสายตาและการมองเห็น",
                     CreatedAt = now,
@@ -478,7 +506,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "ทั่วไป",
                     StockQuantity = 6,
                     LowStockThreshold = 2,
-                    CartAddCount = 2,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=600&q=80",
                     Description = "คอนโดแมวเนื้อผ้ากำมะหยี่นุ่มสบาย เสาหุ้มเชือกป่านธรรมชาติ พร้อมเปลนอนและลูกบอลดึ๋งดั๋ง",
                     CreatedAt = now,
@@ -497,7 +525,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "ทั่วไป",
                     StockQuantity = 40,
                     LowStockThreshold = 10,
-                    CartAddCount = 12,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1561948955-570b270e7c36?w=600&q=80",
                     Description = "ก้านจับยืดหยุ่น ขนนกสีสันสดใส กระตุ้นสัญชาตญาณนักล่าและการออกกำลังกายของแมว",
                     CreatedAt = now,
@@ -516,7 +544,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "สุขอนามัย",
                     StockQuantity = 12,
                     LowStockThreshold = 5,
-                    CartAddCount = 4,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1574158622682-e40e69881006?w=600&q=80",
                     Description = "จับตัวเป็นก้อนเร็ว ละลายน้ำได้ ทิ้งลงชักโครกได้ ไร้ฝุ่น 99%",
                     CreatedAt = now,
@@ -535,7 +563,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "สุขอนามัย",
                     StockQuantity = 15,
                     LowStockThreshold = 4,
-                    CartAddCount = 6,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=600&q=80",
                     Description = "เม็ดเล็ก 1.5mm ประหยัดทราย ไร้ฝุ่น คุมกลิ่นยอดเยี่ยม ฟู้ดเกรด ปลอดภัยต่อน้องแมว",
                     CreatedAt = now,
@@ -556,7 +584,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "ไฟเบอร์สูง",
                     StockQuantity = 14,
                     LowStockThreshold = 4,
-                    CartAddCount = 3,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=600&q=80",
                     Description = "อาหารเม็ดหญ้าทิโมธีคุณภาพสูงสำหรับกระต่ายโต ไฟเบอร์สูง เสริมสร้างระบบทางเดินอาหาร",
                     CreatedAt = now,
@@ -575,7 +603,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "เสริมวิตามิน",
                     StockQuantity = 22,
                     LowStockThreshold = 5,
-                    CartAddCount = 5,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=600&q=80",
                     Description = "ขนมผลไม้อบแห้งธรรมชาติ สำหรับแฮมสเตอร์ กระต่าย แกสบี้ และชูการ์ไกลเดอร์ ปราศจากน้ำตาลปรุงแต่ง",
                     CreatedAt = now,
@@ -594,7 +622,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "ทั่วไป",
                     StockQuantity = 7,
                     LowStockThreshold = 2,
-                    CartAddCount = 1,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&q=80",
                     Description = "กรงเหล็กพ่นกันสนิมอย่างดี มีบันไดและชั้นลอย ถาดรองด้านล่างดึงล้างทำความสะอาดง่าย สะดวกสบาย",
                     CreatedAt = now,
@@ -613,7 +641,7 @@ namespace CSI402_Project_final.Models
                     SpecialNeed = "สุขอนามัย",
                     StockQuantity = 18,
                     LowStockThreshold = 4,
-                    CartAddCount = 4,
+                    CartAddCount = 0,
                     ImageUrl = "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=600&q=80",
                     Description = "วัสดุรองกรงทำจากเยื่อกระดาษบริสุทธิ์ ไร้ฝุ่น 99.9% ซึมซับดีกว่าขี้เลื่อยทั่วไป 2 เท่า นุ่มฟูปลอดภัยต่อระบบหายใจ",
                     CreatedAt = now,
@@ -649,4 +677,5 @@ namespace CSI402_Project_final.Models
         }
     }
 }
+
 

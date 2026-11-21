@@ -79,6 +79,7 @@
                             {
                                 <form asp-action="DispatchOrder" method="post" class="row g-2 align-items-center">
                                     <input type="hidden" name="orderId" value="@order.OrderId" />
+                                    <input type="hidden" name="role" value="@(ViewContext.HttpContext.Request.Query["role"].FirstOrDefault() ?? User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)" />
                                     
                                     <div class="col-sm-3">
                                         <div class="input-group input-group-sm">

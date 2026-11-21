@@ -58,12 +58,19 @@ namespace CSI402_Project_final.Controllers
             var product = _repo.GetProductById(productId);
             string productName = product?.Name ?? "สินค้า";
 
-            // SignalR: กระจายการอัปเดตจำนวนคนใส่ตะกร้าและสต็อกคงเหลือแบบ Real-Time (Req 8)
-            await _hubContext.Clients.All.SendAsync("ReceiveCartCountUpdate", productId, newCount);
-            if (product != null)
+            // SignalR: กระจายการอัปเดตจำนวนคนใส่ตะกร้าและสต็อกคงเหลือแบบ Real-Time (Req 8) ในพื้นหลังโดยไม่บล็อกการตอบกลับ
+            _ = Task.Run(async () =>
             {
-                await _hubContext.Clients.All.SendAsync("ReceiveStockUpdate", productId, product.StockQuantity);
-            }
+                try
+                {
+                    await _hubContext.Clients.All.SendAsync("ReceiveCartCountUpdate", productId, newCount);
+                    if (product != null)
+                    {
+                        await _hubContext.Clients.All.SendAsync("ReceiveStockUpdate", productId, product.StockQuantity);
+                    }
+                }
+                catch { }
+            });
 
             // รองรับ AJAX ไม่ต้องโหลดหน้าใหม่ เพื่อความลื่นไหล (Smooth User Experience)
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
@@ -127,6 +134,13 @@ namespace CSI402_Project_final.Controllers
             return View(cart);
         }
 
+        // หากมีการเปิดหน้า /Cart/SubmitOrder ด้วย GET (เช่น กดรีเฟรชหน้า หรือกด Back) ให้กลับไปหน้า Checkout อย่างถูกต้อง
+        [HttpGet]
+        public IActionResult SubmitOrder()
+        {
+            return RedirectToAction(nameof(Checkout));
+        }
+
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> SubmitOrder(
@@ -136,43 +150,58 @@ namespace CSI402_Project_final.Controllers
             string paymentMethod = "โอนผ่านธนาคาร / PromptPay",
             IFormFile? paymentSlip = null)
         {
-            string? slipUrl = null;
-            if (paymentSlip != null && paymentSlip.Length > 0)
+            try
             {
-                var (uploadedUrl, uploadErr) = await FileUploadHelper.SaveImageAsync(paymentSlip, _env.WebRootPath, "slips");
-                if (uploadErr != null)
+                string? slipUrl = null;
+                if (paymentSlip != null && paymentSlip.Length > 0)
                 {
-                    TempData["ErrorMessage"] = uploadErr;
+                    var (uploadedUrl, uploadErr) = await FileUploadHelper.SaveImageAsync(paymentSlip, _env.WebRootPath, "slips");
+                    if (uploadErr != null)
+                    {
+                        TempData["ErrorMessage"] = uploadErr;
+                        return RedirectToAction(nameof(Checkout));
+                    }
+                    slipUrl = uploadedUrl;
+                }
+
+                var username = User.Identity?.Name ?? "";
+                var (newOrder, errorMessage) = _repo.CheckoutCurrentCart(
+                    username, customerName, customerPhone, shippingAddress, paymentMethod, slipUrl);
+
+                if (newOrder == null)
+                {
+                    TempData["ErrorMessage"] = errorMessage ?? "ไม่สามารถดำเนินการสั่งซื้อได้";
                     return RedirectToAction(nameof(Checkout));
                 }
-                slipUrl = uploadedUrl;
-            }
 
-            var username = User.Identity?.Name ?? "";
-            var (newOrder, errorMessage) = _repo.CheckoutCurrentCart(
-                username, customerName, customerPhone, shippingAddress, paymentMethod, slipUrl);
-
-            if (newOrder == null)
-            {
-                TempData["ErrorMessage"] = errorMessage ?? "ไม่สามารถดำเนินการสั่งซื้อได้";
-                return RedirectToAction(nameof(Index));
-            }
-
-            // SignalR: แจ้งเตือนฝ่ายคำสั่งซื้อ/บัญชี แบบ Real-Time ทันที
-            await _hubContext.Clients.All.SendAsync("ReceiveNewOrderAlert", newOrder.OrderId, newOrder.CustomerName, newOrder.GrandTotal);
-
-            // ตรวจสอบสินค้าที่เหลือเพื่อเตือน Low Stock (Req 18)
-            var productIds = newOrder.Items.Select(i => i.ProductId).ToList();
-            var affectedProducts = _repo.QueryProducts().Where(p => productIds.Contains(p.Id)).ToList();
-            foreach (var prod in affectedProducts)
-            {
-                if (prod.IsLowStock)
+                // SignalR: แจ้งเตือนฝ่ายคำสั่งซื้อ/บัญชี แบบ Real-Time ทันที (มี try-catch เพื่อป้องกันข้อผิดพลาดของ socket ไม่ให้กระทบการสั่งซื้อ)
+                try
                 {
-                    await _hubContext.Clients.All.SendAsync("ReceiveLowStockAlert", prod.Name, prod.StockQuantity);
-                }
-            }
+                    await _hubContext.Clients.All.SendAsync("ReceiveNewOrderAlert", newOrder.OrderId, newOrder.CustomerName, newOrder.GrandTotal);
 
-            return RedirectToAction("Orders", "Account", new { successOrderId = newOrder.OrderId });
+                    // ตรวจสอบสินค้าที่เหลือเพื่อเตือน Low Stock (Req 18)
+                    var productIds = newOrder.Items.Select(i => i.ProductId).ToList();
+                    var affectedProducts = _repo.Products.Where(p => productIds.Contains(p.Id)).ToList();
+                    foreach (var prod in affectedProducts)
+                    {
+                        if (prod.IsLowStock)
+                        {
+                            await _hubContext.Clients.All.SendAsync("ReceiveLowStockAlert", prod.Name, prod.StockQuantity);
+                        }
+                    }
+                }
+                catch
+                {
+                    // การส่ง SignalR ไม่ควรทำให้กระบวนการสั่งซื้อล้มเหลว
+                }
+
+                return RedirectToAction("Orders", "Account", new { successOrderId = newOrder.OrderId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"เกิดข้อผิดพลาดในการสั่งซื้อ: {ex.Message}";
+                return RedirectToAction(nameof(Checkout));
+            }
         }
     }
 }

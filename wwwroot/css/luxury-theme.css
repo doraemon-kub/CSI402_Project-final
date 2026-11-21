@@ -781,3 +781,53 @@ body.lux-backoffice .btn-outline-primary:hover {
     .lux-product-media { height: 155px; }
     .lux-hero { border-radius: 16px; }
 }
+
+/* =====================================================================
+   7. Alert Dismissible Centering (Fix crooked/misaligned 'X' button)
+   ===================================================================== */
+.alert.alert-dismissible {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.65rem 1rem !important;
+    position: relative;
+}
+
+.alert.alert-dismissible .btn-close {
+    position: static !important;
+    padding: 0 !important;
+    margin: 0 0 0 1rem !important;
+    width: 0.82rem !important;
+    height: 0.82rem !important;
+    flex-shrink: 0 !important;
+    opacity: 0.6 !important;
+    transition: opacity 0.2s ease-in-out;
+    background-size: 0.82rem !important;
+    vertical-align: middle !important;
+}
+
+.alert.alert-dismissible .btn-close:hover {
+    opacity: 1 !important;
+}
+
+/* Multi-Role Quick Switcher Pill */
+.multi-role-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(223, 195, 168, 0.18);
+    border: 1px solid rgba(223, 195, 168, 0.4);
+    color: var(--lux-espresso);
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.multi-role-pill:hover {
+    background: var(--lux-espresso);
+    color: #FFF;
+    border-color: var(--lux-espresso);
+}
+

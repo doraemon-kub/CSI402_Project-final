@@ -5,16 +5,9 @@
     <div class="lux-product-card h-100 d-flex flex-column position-relative">
         <!-- Product Photography Stage -->
         <div class="lux-product-media">
-            <a asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id" class="d-block w-100 h-100">
+            <a asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id" asp-route-role="@ViewContext.HttpContext.Request.Query["role"]" class="d-block w-100 h-100">
                 <img src="@Model.ImageUrl" alt="@Model.Name" loading="lazy" />
             </a>
-
-            <!-- Floating Real-Time Cart Counter Badge (Req 8) -->
-            <div class="position-absolute top-0 start-0 m-2 z-1">
-                <span class="lux-glass-pill lux-glass-pill-hot" id="cart-count-badge-@Model.Id">
-                    <i class="bi bi-fire"></i> <span id="cart-count-val-@Model.Id">@Model.CartAddCount</span> ในตะกร้า
-                </span>
-            </div>
 
             <!-- Floating Age Stage Pill (Req 10) -->
             <div class="position-absolute top-0 end-0 m-2 z-1">
@@ -47,7 +40,7 @@
             </div>
 
             <h6 class="lux-product-title mb-2" title="@Model.Name">
-                <a asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id">
+                <a asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id" asp-route-role="@ViewContext.HttpContext.Request.Query["role"]">
                     @Model.Name
                 </a>
             </h6>
@@ -113,7 +106,7 @@
                 }
                 else
                 {
-                    <form asp-controller="Cart" asp-action="Add" method="post" class="ajax-add-to-cart m-0" id="add-to-cart-form-@Model.Id">
+                    <form asp-controller="Cart" asp-action="Add" method="post" class="ajax-add-to-cart m-0" id="add-to-cart-form-@Model.Id" data-product-name="@Model.Name">
                         <input type="hidden" name="productId" value="@Model.Id" />
                         <input type="hidden" name="quantity" value="1" />
                         <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />

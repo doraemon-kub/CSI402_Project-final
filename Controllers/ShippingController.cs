@@ -40,7 +40,7 @@ namespace CSI402_Project_final.Controllers
 
         // บันทึกเลขพัสดุและน้ำหนักจริง (Req 4, 14, 16)
         [HttpPost]
-        public async Task<IActionResult> DispatchOrder(string orderId, string courier, string trackingNumber, double actualWeightKg)
+        public async Task<IActionResult> DispatchOrder(string orderId, string courier, string trackingNumber, double actualWeightKg, string? role = null)
         {
             if (_repo.DispatchOrder(orderId, courier, trackingNumber, actualWeightKg))
             {
@@ -49,7 +49,7 @@ namespace CSI402_Project_final.Controllers
 
                 TempData["SuccessMessage"] = $"บันทึกเลขพัสดุ {trackingNumber} สำหรับคำสั่งซื้อ {orderId} และเปลี่ยนสถานะเป็น 'จัดส่งแล้ว' เรียบร้อยแล้ว";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { role });
         }
     }
 }

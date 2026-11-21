@@ -33,11 +33,15 @@ namespace CSI402_Project_final.Controllers
 
         // อัปเดตสถานะการเตรียมสินค้า (บันทึกลง DB)
         [HttpPost]
-        public IActionResult UpdateStatus(string orderId, OrderStatus newStatus)
+        public IActionResult UpdateStatus(string orderId, OrderStatus newStatus, string? role = null)
         {
             if (_repo.UpdateOrderStatus(orderId, newStatus))
             {
                 TempData["SuccessMessage"] = $"อัปเดตสถานะออเดอร์ {orderId} เป็น '{newStatus}' เรียบร้อยแล้ว";
+            }
+            if (!string.IsNullOrEmpty(role))
+            {
+                return RedirectToAction(nameof(Index), new { role = role });
             }
             return RedirectToAction(nameof(Index));
         }

@@ -29,19 +29,19 @@ namespace CSI402_Project_final.Controllers
 
         // สวิตช์เปิด/ปิดโปรโมชั่น (Req 5)
         [HttpPost]
-        public IActionResult ToggleStatus(int id)
+        public IActionResult ToggleStatus(int id, string? role = null)
         {
             var promo = _repo.TogglePromotionStatus(id);
             if (promo != null)
             {
                 TempData["SuccessMessage"] = $"ปรับสถานะโปรโมชั่น '{promo.Title}' เป็น {(promo.IsActive ? "เปิดใช้งาน (Active)" : "ปิดชั่วคราว (Inactive)")} เรียบร้อยแล้ว";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { role });
         }
 
         // สร้างหรือแก้ไขแคมเปญโปรโมชั่น (Req 5, 25, 26)
         [HttpPost]
-        public IActionResult Save(Promotion model)
+        public IActionResult Save(Promotion model, string? role = null)
         {
             var (success, message) = _repo.SavePromotion(model);
             if (success)
@@ -49,15 +49,15 @@ namespace CSI402_Project_final.Controllers
             else
                 TempData["ErrorMessage"] = message;
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { role });
         }
 
         [HttpPost]
-        public IActionResult Create(Promotion model) => Save(model);
+        public IActionResult Create(Promotion model, string? role = null) => Save(model, role);
 
         // ลบโปรโมชั่น (Req 5)
         [HttpPost]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(int id, string? role = null)
         {
             var (success, message) = _repo.DeletePromotion(id);
             if (success)
@@ -65,7 +65,7 @@ namespace CSI402_Project_final.Controllers
             else
                 TempData["ErrorMessage"] = message;
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { role });
         }
     }
 }

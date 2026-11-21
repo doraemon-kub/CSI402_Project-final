@@ -15,28 +15,32 @@
 <!-- Executive KPI Summary Cards -->
 <div class="row g-3 mb-4">
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
+        <div class="card border-0 shadow-sm rounded-4 p-4 text-white"
+             style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
             <div class="text-white-50 small fw-bold text-uppercase">ยอดขายรวมสุทธิ (Gross Revenue)</div>
             <div class="fs-2 fw-bold mt-1">฿@fin.TotalRevenue.ToString("N0")</div>
             <small class="text-white-50"><i class="bi bi-graph-up-arrow"></i> ออเดอร์ทั้งหมด @totalOrders รายการ</small>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #059669, #047857);">
+        <div class="card border-0 shadow-sm rounded-4 p-4 text-white"
+             style="background: linear-gradient(135deg, #059669, #047857);">
             <div class="text-white-50 small fw-bold text-uppercase">กำไรสุทธิจริง (Net Profit)</div>
             <div class="fs-2 fw-bold mt-1">฿@fin.NetProfit.ToString("N0")</div>
             <small class="text-white-50"><i class="bi bi-cash-stack"></i> หักรายจ่าย &amp; คืนเงินจริงแล้ว</small>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #d97706, #b45309);">
+        <div class="card border-0 shadow-sm rounded-4 p-4 text-white"
+             style="background: linear-gradient(135deg, #d97706, #b45309);">
             <div class="text-white-50 small fw-bold text-uppercase">รายจ่ายดำเนินการที่บันทึก</div>
             <div class="fs-2 fw-bold mt-1">฿@fin.TotalExpenses.ToString("N0")</div>
             <small class="text-white-50">ข้อมูลจากฝ่ายบัญชี (Monthly)</small>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+        <div class="card border-0 shadow-sm rounded-4 p-4 text-white"
+             style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
             <div class="text-white-50 small fw-bold text-uppercase">ยอดขอคืนเงิน (Refunded)</div>
             <div class="fs-2 fw-bold mt-1">฿@fin.TotalRefunds.ToString("N0")</div>
             <small class="text-white-50">จำนวน @fin.RefundedOrdersCount รายการ</small>
@@ -54,163 +58,177 @@
     }
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
-            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-pie-chart-fill text-primary"></i> สัดส่วนยอดขายตามประเภทสัตว์เลี้ยง</h5>
-            <div class="p-3 bg-light rounded-4 mb-3">
-                <div class="d-flex justify-content-between mb-1">
-                    <span>🐶 สุนัข (@dogOrders รายการ)</span>
-                    <strong class="text-primary">@dogPct%</strong>
-                </div>
-                <div class="progress mb-3" style="height: 12px;">
-                    <div class="progress-bar bg-primary" style="width: @(dogPct)%;"></div>
-                </div>
-
-                <div class="d-flex justify-content-between mb-1">
-                    <span>🐱 แมว (@catOrders รายการ)</span>
-                    <strong class="text-warning">@catPct%</strong>
-                </div>
-                <div class="progress mb-3" style="height: 12px;">
-                    <div class="progress-bar bg-warning" style="width: @(catPct)%;"></div>
-                </div>
-
-                <div class="d-flex justify-content-between mb-1">
-                    <span>🐾 สัตว์เลี้ยงอื่นๆ (@otherOrders รายการ)</span>
-                    <strong class="text-success">@otherPct%</strong>
-                </div>
-                <div class="progress" style="height: 12px;">
-                    <div class="progress-bar bg-success" style="width: @(otherPct)%;"></div>
-                </div>
-            </div>
-            <small class="text-muted">
-                * คำนวณสัดส่วนจริงจากจำนวนรายการสินค้าที่ถูกสั่งซื้อในตาราง OrderItem
-            </small>
-        </div>
-    </div>
-
-    <!-- ประสิทธิภาพแคมเปญโปรโมชั่น (Req 27) -->
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
-            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-trophy-fill text-warning"></i> แคมเปญโปรโมชั่นที่สร้างยอดขายสูงสุด</h5>
-            <div class="list-group list-group-flush">
-                @foreach (var promo in topPromotions)
-                {
-                    <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-bold text-dark">@promo.Title</div>
-                            <small class="text-muted">รหัส: <code>@promo.Code</code></small>
-                        </div>
-                        <span class="badge bg-danger-subtle text-danger fs-6 px-3 py-2 fw-bold">
-                            @promo.UsageCount ครั้ง
-                        </span>
+            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-pie-chart-fill text-primary"></i>
+                สัดส่วนยอดขายตามประเภทสัตว์เลี้ยง</h5>
+                <div class="p-3 bg-light rounded-4 mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>🐶 สุนัข (@dogOrders รายการ)</span>
+                        <strong class="text-primary">@dogPct%</strong>
                     </div>
-                }
+                    <div class="progress mb-3" style="height: 12px;">
+                        <div class="progress-bar bg-primary" style="width: @(dogPct)%;"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>🐱 แมว (@catOrders รายการ)</span>
+                        <strong class="text-warning">@catPct%</strong>
+                    </div>
+                    <div class="progress mb-3" style="height: 12px;">
+                        <div class="progress-bar bg-warning" style="width: @(catPct)%;"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>🐾 สัตว์เลี้ยงอื่นๆ (@otherOrders รายการ)</span>
+                        <strong class="text-success">@otherPct%</strong>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar bg-success" style="width: @(otherPct)%;"></div>
+                    </div>
+                </div>
+                <small class="text-muted">
+                    * คำนวณสัดส่วนจริงจากจำนวนรายการสินค้าที่ถูกสั่งซื้อในตาราง OrderItem
+                </small>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="row g-4 mb-4">
-    <!-- Top 5 Best Sellers -->
-    <div class="col-lg-7">
-        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
-            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-star-fill text-warning"></i> 5 อันดับสินค้าขายดี &amp; คนใส่ตะกร้ามากที่สุด (Req 8)</h5>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>สินค้า</th>
-                            <th>แบรนด์ / หมวด</th>
-                            <th>ราคา</th>
-                            <th>คนใส่ตะกร้า</th>
-                            <th>สต็อกคงเหลือ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var prod in topProducts)
+        <!-- ประสิทธิภาพแคมเปญโปรโมชั่น (Req 27) -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-trophy-fill text-warning"></i>
+                    แคมเปญโปรโมชั่นที่สร้างยอดขายสูงสุด</h5>
+                    <div class="list-group list-group-flush">
+                        @foreach (var promo in topPromotions)
                         {
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <img src="@prod.ImageUrl" class="rounded-2" style="width: 40px; height: 40px; object-fit: cover;" />
-                                        <span class="fw-bold text-dark text-truncate" style="max-width: 200px;">@prod.Name</span>
-                                    </div>
-                                </td>
-                                <td><span class="badge bg-light text-dark border">@prod.Brand</span></td>
-                                <td class="fw-bold">฿@prod.EffectivePrice.ToString("N0")</td>
-                                <td><span class="badge bg-danger">🔥 @prod.CartAddCount ครั้ง</span></td>
-                                <td>@prod.StockQuantity ชิ้น</td>
-                            </tr>
+                            <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold text-dark">@promo.Title</div>
+                                    <small class="text-muted">รหัส: <code>@promo.Code</code></small>
+                                </div>
+                                <span class="badge bg-danger-subtle text-danger fs-6 px-3 py-2 fw-bold">
+                                    @promo.UsageCount ครั้ง
+                                </span>
+                            </div>
                         }
-                    </tbody>
-                </table>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ทางลัดสิทธิ์ Owner เข้าถึงทุกโมดูล -->
-    <div class="col-lg-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
-            <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-universal-access text-success"></i> สิทธิ์ผู้บริหารสูงสุด (Super-Access)</h5>
-            <p class="small text-muted mb-3">Owner สามารถเข้าถึงและตรวจสอบการทำงานของทุกแผนกงานได้โดยตรงตามสิทธิ์:</p>
-            <div class="d-grid gap-2">
-                <a asp-controller="Inventory" asp-action="Index" class="btn btn-outline-dark text-start">
-                    <i class="bi bi-boxes me-2"></i> ไปยัง คลังสินค้า (Inventory)
-                </a>
-                <a asp-controller="Order" asp-action="Index" class="btn btn-outline-dark text-start">
-                    <i class="bi bi-card-checklist me-2"></i> ไปยัง ฝ่ายคำสั่งซื้อ (Order)
-                </a>
-                <a asp-controller="Shipping" asp-action="Index" class="btn btn-outline-dark text-start">
-                    <i class="bi bi-truck me-2"></i> ไปยัง การจัดส่ง (Shipping)
-                </a>
-                <a asp-controller="Marketing" asp-action="Index" class="btn btn-outline-dark text-start">
-                    <i class="bi bi-tags me-2"></i> ไปยัง การตลาดและโปรโมชั่น (Marketing)
-                </a>
-                <a asp-controller="Accounting" asp-action="Index" class="btn btn-outline-dark text-start">
-                    <i class="bi bi-cash-coin me-2"></i> ไปยัง บัญชีและการเงิน (Accounting)
-                </a>
-                <a asp-controller="Support" asp-action="Index" class="btn btn-outline-dark text-start">
-                    <i class="bi bi-headset me-2"></i> ไปยัง IT Support Helpdesk
-                </a>
-                <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-dark text-start">
-                    <i class="bi bi-person-gear me-2"></i> ไปยัง จัดการสิทธิ์ผู้ใช้ (Admin)
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+        <div class="row g-4 mb-4">
+            <!-- Top 5 Best Sellers -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-star-fill text-warning"></i> 5 อันดับสินค้าขายดี &amp;
+                        คนใส่ตะกร้ามากที่สุด (Req 8)</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>สินค้า</th>
+                                        <th>แบรนด์ / หมวด</th>
+                                        <th>ราคา</th>
+                                        <th>คนใส่ตะกร้า</th>
+                                        <th>สต็อกคงเหลือ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var prod in topProducts)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <img src="@prod.ImageUrl" class="rounded-2"
+                                                         style="width: 40px; height: 40px; object-fit: cover;" />
+                                                    <span class="fw-bold text-dark text-truncate"
+                                                          style="max-width: 200px;">@prod.Name</span>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge bg-light text-dark border">@prod.Brand</span></td>
+                                            <td class="fw-bold">฿@prod.EffectivePrice.ToString("N0")</td>
+                                            <td><span class="badge bg-danger">🔥 @prod.CartAddCount ครั้ง</span></td>
+                                            <td>@prod.StockQuantity ชิ้น</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-<!-- Recent Orders Summary -->
-<div class="card border-0 shadow-sm rounded-4 p-4">
-    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-clock-history text-primary"></i> คำสั่งซื้อล่าสุดในระบบ (@recentOrders.Count รายการ)</h5>
-    @if (!recentOrders.Any())
-    {
-        <div class="text-center text-muted py-3">ยังไม่มีคำสั่งซื้อในระบบ</div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>เลขออเดอร์</th>
-                        <th>ลูกค้า</th>
-                        <th>วันที่สั่งซื้อ</th>
-                        <th>ยอดสุทธิ</th>
-                        <th>สถานะ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var ord in recentOrders)
-                    {
-                        <tr>
-                            <td class="fw-bold text-primary">#@ord.OrderId</td>
-                            <td>@ord.CustomerName</td>
-                            <td><small class="text-muted">@ord.OrderDate.ToString("dd/MM/yyyy HH:mm")</small></td>
-                            <td class="fw-bold">฿@ord.GrandTotal.ToString("N2")</td>
-                            <td><span class="badge bg-light text-dark border">@ord.Status</span></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-</div>
+                <!-- ทางลัดสิทธิ์ Owner เข้าถึงทุกโมดูล -->
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                        <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-universal-access text-success"></i> สิทธิ์ผู้บริหารสูงสุด
+                            (Super-Access)</h5>
+                            <p class="small text-muted mb-3">Owner สามารถเข้าถึงและตรวจสอบการทำงานของทุกแผนกงานได้โดยตรงตามสิทธิ์:</p>
+                            <div class="d-grid gap-2">
+                                <a asp-controller="Inventory" asp-action="Index" asp-route-role="Owner"
+                                   class="btn btn-outline-dark text-start">
+                                    <i class="bi bi-boxes me-2"></i> ไปยัง คลังสินค้า (Inventory)
+                                </a>
+                                <a asp-controller="Order" asp-action="Index" asp-route-role="Owner"
+                                   class="btn btn-outline-dark text-start">
+                                    <i class="bi bi-card-checklist me-2"></i> ไปยัง ฝ่ายคำสั่งซื้อ (Order)
+                                </a>
+                                <a asp-controller="Shipping" asp-action="Index" asp-route-role="Owner"
+                                   class="btn btn-outline-dark text-start">
+                                    <i class="bi bi-truck me-2"></i> ไปยัง การจัดส่ง (Shipping)
+                                </a>
+                                <a asp-controller="Marketing" asp-action="Index" asp-route-role="Owner"
+                                   class="btn btn-outline-dark text-start">
+                                    <i class="bi bi-tags me-2"></i> ไปยัง การตลาดและโปรโมชั่น (Marketing)
+                                </a>
+                                <a asp-controller="Accounting" asp-action="Index" asp-route-role="Owner"
+                                   class="btn btn-outline-dark text-start">
+                                    <i class="bi bi-cash-coin me-2"></i> ไปยัง บัญชีและการเงิน (Accounting)
+                                </a>
+                                <a asp-controller="Support" asp-action="Index" asp-route-role="Owner"
+                                   class="btn btn-outline-dark text-start">
+                                    <i class="bi bi-headset me-2"></i> ไปยัง IT Support Helpdesk
+                                </a>
+                                <a asp-controller="Admin" asp-action="Index" asp-route-role="Owner"
+                                   class="btn btn-outline-dark text-start">
+                                    <i class="bi bi-person-gear me-2"></i> ไปยัง จัดการสิทธิ์ผู้ใช้ (Admin)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders Summary -->
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-clock-history text-primary"></i> คำสั่งซื้อล่าสุดในระบบ
+                        (@recentOrders.Count รายการ)</h5>
+                        @if (!recentOrders.Any())
+                        {
+                            <div class="text-center text-muted py-3">ยังไม่มีคำสั่งซื้อในระบบ</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>เลขออเดอร์</th>
+                                            <th>ลูกค้า</th>
+                                            <th>วันที่สั่งซื้อ</th>
+                                            <th>ยอดสุทธิ</th>
+                                            <th>สถานะ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var ord in recentOrders)
+                                        {
+                                            <tr>
+                                                <td class="fw-bold text-primary">#@ord.OrderId</td>
+                                                <td>@ord.CustomerName</td>
+                                                <td><small class="text-muted">@ord.OrderDate.ToString("dd/MM/yyyy HH:mm")</small></td>
+                                                <td class="fw-bold">฿@ord.GrandTotal.ToString("N2")</td>
+                                                <td><span class="badge bg-light text-dark border">@ord.Status</span></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>

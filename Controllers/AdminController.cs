@@ -28,18 +28,18 @@ namespace CSI402_Project_final.Controllers
 
         // ปรับเปลี่ยนบทบาทและสิทธิ์ของพนักงาน (บันทึกลง DB)
         [HttpPost]
-        public IActionResult UpdateUserRole(int userId, UserRole newRole, bool isActive)
+        public IActionResult UpdateUserRole(int userId, UserRole newRole, bool isActive, string? role = null)
         {
             if (_repo.UpdateUserRole(userId, newRole, isActive))
             {
                 TempData["SuccessMessage"] = $"อัปเดตบทบาทผู้ใช้งาน #{userId} เป็น '{newRole}' สำเร็จ";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { role });
         }
 
         // เพิ่มผู้ใช้งานใหม่ (บันทึกลง DB)
         [HttpPost]
-        public IActionResult CreateUser(SystemUser user)
+        public IActionResult CreateUser(SystemUser user, string? role = null)
         {
             var (success, message) = _repo.CreateUser(user);
             if (success)
@@ -47,7 +47,7 @@ namespace CSI402_Project_final.Controllers
             else
                 TempData["ErrorMessage"] = message;
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { role });
         }
     }
 }

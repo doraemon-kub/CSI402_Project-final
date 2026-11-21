@@ -2,10 +2,35 @@
 @using System.Security.Claims
 @inject CSI402_Project_final.Models.PetShopRepository Repo
 @{
+    var roleParam = ViewContext.HttpContext.Request.Query["role"].FirstOrDefault() 
+                    ?? ViewContext.HttpContext.Request.Query["asRole"].FirstOrDefault();
+
     var isAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
     var currentUsername = User.Identity?.Name ?? "";
     var currentRoleName = User.FindFirstValue(ClaimTypes.Role) ?? "Guest";
-    var fullName = User.FindFirst("FullName")?.Value ?? currentUsername;
+    var rawFullName = User.FindFirst("FullName")?.Value ?? currentUsername;
+
+    if (!string.IsNullOrEmpty(roleParam))
+    {
+        if (string.Equals(roleParam, "guest", StringComparison.OrdinalIgnoreCase))
+        {
+            isAuthenticated = false;
+            currentRoleName = "Guest";
+            currentUsername = "";
+            rawFullName = "ผู้เยี่ยมชม";
+        }
+        else
+        {
+            var demo = DemoUserHelper.GetDemoUserInfo(roleParam);
+            isAuthenticated = true;
+            currentRoleName = demo.RoleName;
+            currentUsername = demo.Username;
+            rawFullName = demo.FullName;
+        }
+    }
+
+    var fullName = System.Text.RegularExpressions.Regex.Replace(rawFullName ?? "", @"\s*\([^)]*\)", "").Trim();
+    if (string.IsNullOrEmpty(fullName)) fullName = currentUsername;
     var cartCount = Repo.CurrentCart.TotalItemCount;
     var isStaffOrAdmin = isAuthenticated && currentRoleName != "Customer" && currentRoleName != "Guest";
 }
@@ -15,6 +40,31 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - PetStore Pro</title>
+
+    <!-- Tab-Isolated Session Enforcer (รองรับการเปิดหลายแท็บ/แยกบทบาทอิสระในบราวเซอร์เดียวกันเหมือน React/sessionStorage) -->
+    <script>
+        (function () {
+            try {
+                var path = window.location.pathname.toLowerCase();
+                if (path.startsWith('/auth/login') || path.startsWith('/auth/register')) return;
+
+                var url = new URL(window.location.href);
+                var urlRole = url.searchParams.get('role') || url.searchParams.get('asRole');
+                var tabRole = sessionStorage.getItem('petshop_tab_role');
+
+                if (urlRole) {
+                    sessionStorage.setItem('petshop_tab_role', urlRole);
+                } else if (tabRole) {
+                    url.searchParams.set('role', tabRole);
+                    window.location.replace(url.toString());
+                } else {
+                    sessionStorage.setItem('petshop_tab_role', 'Guest');
+                    url.searchParams.set('role', 'Guest');
+                    window.location.replace(url.toString());
+                }
+            } catch (e) { }
+        })();
+    </script>
     <!-- Google Fonts: Playfair Display (Brand Serif) + Prompt (Thai Clean Sans) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,18 +98,43 @@
                 <span class="d-none d-md-inline"><i class="bi bi-telephone me-1"></i> 02-999-8888</span>
             </div>
             <div class="d-flex align-items-center gap-2 small">
+                <!-- Multi-Role Switcher: สลับบทบาทผู้ใช้งานทันที -->
+                <div class="dropdown">
+                    <button class="btn btn-sm py-0 px-2 rounded-pill d-flex align-items-center gap-1" data-bs-toggle="dropdown" style="background: rgba(223,195,168,0.2); color: #DFC3A8; font-size: 0.72rem; border: 1px solid rgba(223,195,168,0.35);" title="สลับบทบาทผู้ใช้งาน (Multi-Role)">
+                        <i class="bi bi-layers-half text-warning"></i>
+                        <span class="d-none d-md-inline">Multi-Role</span>
+                        <i class="bi bi-chevron-down" style="font-size: 0.6rem;"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm small p-2" style="min-width: 240px; font-size: 0.8rem;">
+                        <li class="dropdown-header text-uppercase text-lux-muted" style="font-size: 0.65rem;">สลับบทบาทเฉพาะแท็บนี้ (Multi-Role)</li>
+                        <li><a class="dropdown-item py-1 rounded" href="/?role=Guest"><i class="bi bi-globe me-2 text-muted"></i> 🌐 ผู้เยี่ยมชม (Guest)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" href="/?role=Customer"><i class="bi bi-person me-2 text-success"></i> 👤 ลูกค้า (Customer)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" href="/Inventory?role=InventoryStaff"><i class="bi bi-boxes me-2 text-primary"></i> 📦 คลังสินค้า (Inventory)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" href="/Order?role=OrderStaff"><i class="bi bi-card-checklist me-2 text-info"></i> 📋 คำสั่งซื้อ (Order)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" href="/Shipping?role=ShippingStaff"><i class="bi bi-truck me-2 text-warning"></i> 🚚 จัดส่งสินค้า (Shipping)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" href="/Marketing?role=MarketingStaff"><i class="bi bi-tags me-2 text-danger"></i> 🏷️ โปรโมชั่น (Marketing)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" href="/Accounting?role=AccountingStaff"><i class="bi bi-cash-coin me-2 text-success"></i> 💰 การเงิน/บัญชี (ACC)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" href="/Support?role=ITSupport"><i class="bi bi-headset me-2 text-primary"></i> 🎧 IT Support (Helpdesk)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" href="/Admin?role=Admin"><i class="bi bi-person-gear me-2 text-secondary"></i> ⚙️ ผู้ดูแลระบบ (Admin)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" href="/Owner?role=Owner"><i class="bi bi-graph-up-arrow me-2 text-lux-gold"></i> 👑 เจ้าของร้าน (Owner)</a></li>
+                    </ul>
+                </div>
+
                 @if (isAuthenticated)
                 {
                     <div class="dropdown">
                         <a href="#" class="dropdown-toggle d-flex align-items-center gap-1 px-2 py-1 rounded-pill" data-bs-toggle="dropdown" style="outline: none;">
                             <i class="bi bi-person-circle text-lux-gold"></i>
                             <span class="d-none d-sm-inline">@fullName</span>
-                            <span class="badge rounded-pill px-2" style="background: var(--lux-gold); color: #fff; font-size: 0.65rem; font-weight: 500;">@currentRoleName</span>
+                            @if (isStaffOrAdmin)
+                            {
+                                <span class="badge rounded-pill px-2" style="background: var(--lux-gold); color: #fff; font-size: 0.65rem; font-weight: 500;">@currentRoleName</span>
+                            }
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end mt-2">
                             <li class="px-3 py-2 mb-1 rounded-3 bg-lux-tint" style="border-bottom: 1px solid var(--lux-border);">
                                 <div class="small fw-semibold text-lux-espresso text-truncate" style="max-width: 200px;">@fullName</div>
-                                <div class="text-lux-muted" style="font-size: 0.72rem;">@currentRoleName</div>
+                                <div class="text-lux-muted" style="font-size: 0.72rem;">@(isStaffOrAdmin ? currentRoleName : "ลูกค้าสมาชิก")</div>
                             </li>
                             @if (isStaffOrAdmin)
                             {
@@ -95,7 +170,7 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                                <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0" onsubmit="sessionStorage.setItem('petshop_tab_role', 'Guest');">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="dropdown-item py-2 text-danger">
                                         <i class="bi bi-box-arrow-right me-2"></i> ออกจากระบบ
@@ -122,14 +197,14 @@
     <!-- 2. Main Navigation Bar with Mobile Quick Actions -->
     <nav class="navbar navbar-expand-lg navbar-main sticky-top">
         <div class="container">
-            <a class="pet-brand" asp-controller="Home" asp-action="Index">
+            <a class="pet-brand" asp-controller="Home" asp-action="Index" asp-route-role="@roleParam">
                 <span class="pet-brand-mark"><i class="bi bi-heart-fill"></i></span>
                 <span>PetStore <span class="text-lux-gold">Pro</span></span>
             </a>
 
             <!-- Mobile Quick Actions: Cart Button Outside Collapse on Small Screens -->
             <div class="d-flex align-items-center gap-2 d-lg-none">
-                <a asp-controller="Cart" asp-action="Index" class="btn btn-pet-primary position-relative px-3 py-1" style="font-size: 0.8rem;">
+                <a asp-controller="Cart" asp-action="Index" asp-route-role="@roleParam" class="btn btn-pet-primary position-relative px-3 py-1" style="font-size: 0.8rem;">
                     <i class="bi bi-bag"></i>
                     <span class="badge-cart">@cartCount</span>
                 </a>
@@ -141,22 +216,22 @@
             <div class="collapse navbar-collapse" id="navMain">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4 gap-1 mt-3 mt-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-role="@roleParam">
                             สินค้าทั้งหมด
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Dog">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Dog" asp-route-role="@roleParam">
                             สุนัข
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Cat">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Cat" asp-route-role="@roleParam">
                             แมว
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Other">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Other" asp-route-role="@roleParam">
                             สัตว์เลี้ยงอื่นๆ
                         </a>
                     </li>
@@ -201,19 +276,25 @@
     <!-- 3. Global Notification Flash Message -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="container mt-3">
-            <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3 py-2 small" role="alert">
-                <i class="bi bi-check-circle-fill me-2 text-success"></i> @TempData["SuccessMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="container mt-2 mb-0">
+            <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3 py-2 px-3 small d-flex align-items-center justify-content-between mb-0" role="alert">
+                <div class="d-flex align-items-center me-2">
+                    <i class="bi bi-check-circle-fill me-2 text-success fs-6"></i>
+                    <span>@TempData["SuccessMessage"]</span>
+                </div>
+                <button type="button" class="btn-close position-static p-1 m-0" data-bs-dismiss="alert" aria-label="Close" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0;"></button>
             </div>
         </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="container mt-3">
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 py-2 small" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i> @TempData["ErrorMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="container mt-2 mb-0">
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 py-2 px-3 small d-flex align-items-center justify-content-between mb-0" role="alert">
+                <div class="d-flex align-items-center me-2">
+                    <i class="bi bi-exclamation-triangle-fill me-2 text-danger fs-6"></i>
+                    <span>@TempData["ErrorMessage"]</span>
+                </div>
+                <button type="button" class="btn-close position-static p-1 m-0" data-bs-dismiss="alert" aria-label="Close" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0;"></button>
             </div>
         </div>
     }
@@ -410,7 +491,7 @@
                 bsToast.show();
             }
         }
-        // 4. ระบบเพิ่มสินค้าลงตะกร้าแบบ AJAX ลื่นไหลโดยไม่ต้องโหลดหน้าเว็บใหม่ (Smooth Add to Cart)
+        // 4. ระบบเพิ่มสินค้าลงตะกร้าแบบ Optimistic Instant Feedback (กดปุ๊บ เพิ่มทันทีใน 0 ms ไม่ต้องรอหมุนโหลด)
         document.addEventListener('submit', async function (e) {
             const form = e.target.closest('form.ajax-add-to-cart, form[action*="/Cart/Add"]');
             if (!form) return;
@@ -419,15 +500,66 @@
 
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalHtml = submitBtn ? submitBtn.innerHTML : '';
+            const formData = new FormData(form);
+            const productId = formData.get('productId');
+            const qtyToAdd = parseInt(formData.get('quantity') || '1', 10) || 1;
 
-            // แสดงสถานะปุ่มกำลังประมวลผล
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> เพิ่ม...';
+            // ดึงชื่อสินค้า
+            let productName = form.getAttribute('data-product-name');
+            if (!productName) {
+                const titleEl = form.closest('.lux-product-card')?.querySelector('.lux-product-title a') 
+                             || document.querySelector('h2');
+                productName = titleEl ? titleEl.textContent.trim() : 'สินค้า';
             }
 
+            // คำนวณ Optimistic Cart Count ทันที
+            let prevCartCount = 0;
+            const anyBadge = document.querySelector('.badge-cart');
+            if (anyBadge) {
+                prevCartCount = parseInt(anyBadge.textContent.trim(), 10) || 0;
+            }
+            const optimisticCartCount = prevCartCount + qtyToAdd;
+
+            // [Optimistic 1]: อัปเดตตัวเลขบนตะกร้าทันทีใน 0 ms พร้อมเอฟเฟกต์เด้ง (Bounce)
+            document.querySelectorAll('.badge-cart').forEach(badge => {
+                badge.textContent = optimisticCartCount;
+                badge.classList.remove('badge-bump');
+                void badge.offsetWidth; // trigger reflow
+                badge.classList.add('badge-bump');
+            });
+
+            // [Optimistic 2]: เปลี่ยนปุ่มเป็นสีเขียว "เพิ่มแล้ว!" ทันที ไม่ค้าง ไม่ขึ้น spinner ให้เสียเวลา
+            if (submitBtn) {
+                submitBtn.classList.remove('btn-pet-primary');
+                submitBtn.classList.add('btn-success');
+                submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> เพิ่มแล้ว!';
+
+                setTimeout(() => {
+                    submitBtn.classList.remove('btn-success');
+                    submitBtn.classList.add('btn-pet-primary');
+                    submitBtn.innerHTML = originalHtml;
+                }, 900);
+            }
+
+            // [Optimistic 3]: อัปเดตจำนวนสต็อกบนหน้าจอทันที
+            const stockValEl = document.getElementById(`stock-val-${productId}`);
+            let prevStock = null;
+            if (stockValEl) {
+                prevStock = parseInt(stockValEl.textContent.trim(), 10);
+                if (!isNaN(prevStock)) {
+                    const newStock = Math.max(0, prevStock - qtyToAdd);
+                    stockValEl.textContent = newStock;
+                    if (newStock === 0) {
+                        updateProductStockUI(productId, 0);
+                    }
+                }
+            }
+
+            // [Optimistic 4]: แสดง Toast แจ้งเตือนมุมขวาล่างทันที
+            showCartToast(productName, optimisticCartCount);
+
+            // [Background Sync]: ส่งบันทึกลง Database ในพื้นหลัง
             try {
-                const formData = new FormData(form);
                 const response = await fetch(form.action, {
                     method: 'POST',
                     body: formData,
@@ -442,8 +574,12 @@
 
                     // กรณีที่ผู้ใช้ยังไม่ได้ล็อกอิน (Guest) นำทางไปหน้าเข้าสู่ระบบทันที
                     if (data.requireLogin) {
+                        // Rollback
+                        document.querySelectorAll('.badge-cart').forEach(badge => badge.textContent = prevCartCount);
+                        if (stockValEl && prevStock !== null) stockValEl.textContent = prevStock;
                         if (submitBtn) {
-                            submitBtn.disabled = false;
+                            submitBtn.classList.remove('btn-success');
+                            submitBtn.classList.add('btn-pet-primary');
                             submitBtn.innerHTML = originalHtml;
                         }
                         showWarningToast(data.message || 'กรุณาเข้าสู่ระบบก่อนหยิบสินค้าลงในตะกร้า');
@@ -454,49 +590,33 @@
                     }
 
                     if (!data.success) {
+                        // Rollback
+                        document.querySelectorAll('.badge-cart').forEach(badge => badge.textContent = prevCartCount);
+                        if (stockValEl && prevStock !== null) stockValEl.textContent = prevStock;
                         if (submitBtn) {
-                            submitBtn.disabled = false;
+                            submitBtn.classList.remove('btn-success');
+                            submitBtn.classList.add('btn-pet-primary');
                             submitBtn.innerHTML = originalHtml;
                         }
                         showWarningToast(data.message || 'ไม่สามารถเพิ่มสินค้าลงในตะกร้าได้');
                         return;
                     }
 
-                    // 1. อัปเดตตัวเลขตะกร้าสินค้าในแถบเมนูด้านบนทั้ง Mobile และ Desktop พร้อมเอฟเฟกต์เด้ง (Bounce)
+                    // ซิงค์ตัวเลขจริงจาก Server ให้ตรงกัน
                     document.querySelectorAll('.badge-cart').forEach(badge => {
                         badge.textContent = data.cartCount;
-                        badge.classList.remove('badge-bump');
-                        void badge.offsetWidth; // trigger reflow
-                        badge.classList.add('badge-bump');
                     });
 
-                    // 2. อัปเดตจำนวนคนใส่ตะกร้าบนการ์ดสินค้าทันที (Req 8 Real-time count)
+                    // อัปเดตจำนวนคนใส่ตะกร้า (Req 8 Real-time count)
                     const countValEl = document.getElementById(`cart-count-val-${data.productId}`);
                     if (countValEl) {
                         countValEl.textContent = data.productCartCount;
                     }
 
-                    // 3. อัปเดตจำนวนสต็อกคงเหลือบนการ์ดสินค้าทันที (ลดลงเมื่อใส่ตะกร้า)
+                    // อัปเดตสต็อกจริงจาก Server
                     if (typeof data.remainingStock !== 'undefined') {
                         updateProductStockUI(data.productId, data.remainingStock);
                     }
-
-                    // 4. เปลี่ยนสถานะปุ่มเป็นเครื่องหมายถูกสีเขียวชั่วขณะ
-                    if (submitBtn) {
-                        submitBtn.classList.remove('btn-pet-primary');
-                        submitBtn.classList.add('btn-success');
-                        submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> เพิ่มแล้ว!';
-
-                        setTimeout(() => {
-                            submitBtn.classList.remove('btn-success');
-                            submitBtn.classList.add('btn-pet-primary');
-                            submitBtn.innerHTML = originalHtml;
-                            submitBtn.disabled = false;
-                        }, 1200);
-                    }
-
-                    // 4. แสดง Toast แจ้งเตือนแบบลื่นไหลมุมขวาล่าง
-                    showCartToast(data.productName || 'สินค้า', data.cartCount);
                 } else {
                     form.submit();
                 }
@@ -544,6 +664,9 @@
             }
         }
     </script>
+    <!-- Socket.io / SignalR Real-Time WebSocket Engine -->
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/petstore-socket.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

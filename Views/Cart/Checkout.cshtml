@@ -12,7 +12,7 @@
     var qrImageUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={Uri.EscapeDataString(promptPayPayload)}";
 }
 
-<div class="container py-4 py-md-5" style="max-width: 960px;">
+<div class="container pt-2 pt-md-3 pb-4 pb-md-5" style="max-width: 960px;">
     <div class="mb-4">
         <div class="text-uppercase fw-semibold text-lux-gold mb-1" style="font-size: 0.72rem; letter-spacing: 0.1em;">CHECKOUT</div>
         <h3 class="fw-bold text-lux-espresso m-0">ยืนยันการสั่งซื้อและชำระเงิน</h3>
@@ -94,7 +94,7 @@
                     @foreach (var item in Model.Items)
                     {
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-lux-muted">@item.Product.Name <span class="text-lux-espresso fw-medium">(x@item.Quantity)</span></span>
+                            <span class="text-lux-muted">@item.Product.Name <span class="text-lux-espresso fw-medium">(x@(item.Quantity))</span></span>
                             <span class="fw-semibold text-lux-espresso">฿@item.Subtotal.ToString("N0")</span>
                         </div>
                     }

@@ -38,38 +38,50 @@ namespace CSI402_Project_final.Controllers
 
         // อนุมัติการชำระเงิน / สลิปโอนเงิน (Req 19)
         [HttpPost]
-        public IActionResult ApprovePayment(string orderId)
+        public IActionResult ApprovePayment(string orderId, string? returnUrl = null, string? role = null)
         {
             var order = _repo.ApprovePayment(orderId);
             if (order != null)
             {
                 TempData["SuccessMessage"] = $"อนุมัติการชำระเงินคำสั่งซื้อ #{orderId} (฿{order.GrandTotal:N2}) และส่งเข้าคิวฝ่ายจัดเตรียมสินค้าแล้ว";
             }
-            return RedirectToAction(nameof(Index));
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+            return RedirectToAction(nameof(Index), new { role });
         }
 
         // ปฏิเสธสลิปการชำระเงิน (Req 19)
         [HttpPost]
-        public IActionResult RejectPayment(string orderId, string reason)
+        public IActionResult RejectPayment(string orderId, string reason, string? returnUrl = null, string? role = null)
         {
             var order = _repo.RejectPayment(orderId, reason);
             if (order != null)
             {
                 TempData["SuccessMessage"] = $"ปฏิเสธหลักฐานชำระเงินและยกเลิกคำสั่งซื้อ #{orderId} พร้อมคืนสต็อกสินค้าเรียบร้อยแล้ว";
             }
-            return RedirectToAction(nameof(Index));
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+            return RedirectToAction(nameof(Index), new { role });
         }
 
         // อนุมัติการคืนเงิน (Req 20)
         [HttpPost]
-        public IActionResult ApproveRefund(string orderId)
+        public IActionResult ApproveRefund(string orderId, string? returnUrl = null, string? role = null)
         {
             var order = _repo.ApproveRefund(orderId);
             if (order != null)
             {
                 TempData["SuccessMessage"] = $"อนุมัติการคืนเงินจำนวน ฿{order.RefundAmount:N2} สำหรับคำสั่งซื้อ {orderId} สำเร็จ";
             }
-            return RedirectToAction(nameof(Index));
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+            return RedirectToAction(nameof(Index), new { role });
         }
 
         // บันทึกรายจ่ายจริงรายเดือน (Req 21)

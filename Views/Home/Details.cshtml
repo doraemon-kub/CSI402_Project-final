@@ -9,7 +9,7 @@
                  : Model.AgeStage == AgeStage.Senior ? "สูงวัย" : "ทุกช่วงวัย";
 }
 
-<div class="container py-4 py-md-5">
+<div class="container pt-2 pt-md-3 pb-4 pb-md-5">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb small mb-0">
             <li class="breadcrumb-item"><a asp-action="Index" class="text-lux-muted text-decoration-none">หน้าร้านค้า</a></li>
@@ -23,11 +23,6 @@
             <!-- Left: Editorial Photography -->
             <div class="col-md-5 bg-lux-soft position-relative">
                 <img src="@Model.ImageUrl" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 400px; max-height: 540px;" alt="@Model.Name" />
-                <div class="position-absolute top-0 start-0 m-3">
-                    <span class="lux-glass-pill lux-glass-pill-hot px-3 py-2" id="cart-count-badge-@Model.Id" style="font-size: 0.78rem;">
-                        <i class="bi bi-fire"></i> มี <strong id="cart-count-val-@Model.Id">@Model.CartAddCount</strong> คนกำลังใส่ตะกร้าชิ้นนี้
-                    </span>
-                </div>
             </div>
 
             <!-- Right: Product Details -->
@@ -128,7 +123,7 @@
                     }
                     else
                     {
-                        <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex gap-3 ajax-add-to-cart">
+                        <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex gap-3 ajax-add-to-cart" data-product-name="@Model.Name">
                             <input type="hidden" name="productId" value="@Model.Id" />
                             <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
                             <div style="width: 110px;">

@@ -118,4 +118,60 @@ namespace CSI402_Project_final.Models
         [DataType(DataType.Password)]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
+
+    public static class DemoUserHelper
+    {
+        public static (string Username, string FullName, string RoleName) GetDemoUserInfo(string? roleOrUsername)
+        {
+            string r = (roleOrUsername ?? "").Trim().ToLowerInvariant();
+            return r switch
+            {
+                "owner" => ("owner", "คุณภูไพศาล", "Owner"),
+                "admin" => ("admin", "ธนพล", "Admin"),
+                "marketing" or "marketingstaff" => ("marketing", "อลิสา", "MarketingStaff"),
+                "inventory" or "inventorystaff" => ("inventory", "สมชาย", "InventoryStaff"),
+                "order" or "orderstaff" => ("order", "วิภา", "OrderStaff"),
+                "shipping" or "shippingstaff" => ("shipping", "เดชา", "ShippingStaff"),
+                "accounting" or "accountingstaff" => ("accounting", "อรวรรณ", "AccountingStaff"),
+                "support" or "itsupport" => ("support", "สมศักดิ์", "ITSupport"),
+                "guest" => ("", "ผู้เยี่ยมชม", "Guest"),
+                _ => ("customer", "คุณกิตติชัย", "Customer")
+            };
+        }
+
+        public static string GetRoleHomeUrl(string? role)
+        {
+            string r = (role ?? "").Trim().ToLowerInvariant();
+            return r switch
+            {
+                "inventorystaff" or "inventory" => "/Inventory",
+                "orderstaff" or "order" => "/Order",
+                "shippingstaff" or "shipping" => "/Shipping",
+                "marketingstaff" or "marketing" => "/Marketing",
+                "accountingstaff" or "accounting" => "/Accounting",
+                "itsupport" or "support" => "/Support",
+                "admin" => "/Admin",
+                "owner" => "/Owner",
+                _ => "/"
+            };
+        }
+
+        public static string GetDemoUserId(string? roleOrUsername)
+        {
+            string r = (roleOrUsername ?? "").Trim().ToLowerInvariant();
+            return r switch
+            {
+                "owner" => "1",
+                "admin" => "2",
+                "marketing" or "marketingstaff" => "3",
+                "inventory" or "inventorystaff" => "4",
+                "order" or "orderstaff" => "5",
+                "shipping" or "shippingstaff" => "6",
+                "accounting" or "accountingstaff" => "7",
+                "support" or "itsupport" => "8",
+                "guest" => "0",
+                _ => "9"
+            };
+        }
+    }
 }

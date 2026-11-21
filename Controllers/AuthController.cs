@@ -70,7 +70,7 @@ namespace CSI402_Project_final.Controllers
             _repo.MergeGuestCartToUser(user.Id);
             _repo.LogAudit("LOGIN", "user", user.Id.ToString(), $"เข้าสู่ระบบด้วย Username '{user.Username}'", user);
 
-            TempData["SuccessMessage"] = $"ยินดีต้อนรับคุณ {user.FullName} เข้าสู่ระบบในฐานะ {user.Role}";
+            TempData["SuccessMessage"] = FormatWelcomeMessage(user.FullName);
 
             if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             {
@@ -93,8 +93,32 @@ namespace CSI402_Project_final.Controllers
             _repo.MergeGuestCartToUser(user.Id);
             _repo.LogAudit("QUICK_LOGIN", "user", user.Id.ToString(), $"Quick Login '{user.Username}'", user);
 
-            TempData["SuccessMessage"] = $"เข้าสู่ระบบสำเร็จ: {user.FullName} ({user.Role})";
+            TempData["SuccessMessage"] = FormatWelcomeMessage(user.FullName);
             return RedirectToRoleHome(user.Role.ToString());
+        }
+
+        // Multi-Role Switcher: สลับบทบาทผู้ใช้แบบเรียลไทม์ พร้อมล็อกอินผู้ใช้ใน Session นั้นๆ ทันที
+        [HttpGet]
+        public async Task<IActionResult> SwitchRole(string role, string? returnUrl = null)
+        {
+            var info = DemoUserHelper.GetDemoUserInfo(role);
+            var user = _repo.Users.FirstOrDefault(u =>
+                u.Username.Equals(info.Username, System.StringComparison.OrdinalIgnoreCase) && u.IsActive);
+
+            if (user != null)
+            {
+                await SignInUserAsync(user, isPersistent: true);
+                _repo.MergeGuestCartToUser(user.Id);
+                _repo.LogAudit("ROLE_SWITCH", "user", user.Id.ToString(), $"สลับบทบาทเป็น '{user.Username}' ({info.RoleName})", user);
+                TempData["SuccessMessage"] = FormatWelcomeMessage(user.FullName);
+            }
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+
+            return RedirectToRoleHome(info.RoleName);
         }
 
         // หน้า Register (GET)
@@ -153,17 +177,58 @@ namespace CSI402_Project_final.Controllers
             return View();
         }
 
+        private static string CleanName(string? fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName)) return string.Empty;
+            return System.Text.RegularExpressions.Regex.Replace(fullName, @"\s*\([^)]*\)", "").Trim();
+        }
+
+        private static string FormatWelcomeMessage(string? fullName)
+        {
+            var clean = CleanName(fullName);
+            if (string.IsNullOrWhiteSpace(clean))
+            {
+                return "ยินดีต้อนรับเข้าสู่ระบบ";
+            }
+
+            if (clean.StartsWith("คุณ "))
+            {
+                clean = clean.Substring(4).Trim();
+            }
+            else if (clean.StartsWith("คุณ"))
+            {
+                clean = clean.Substring(3).Trim();
+            }
+
+            return string.IsNullOrWhiteSpace(clean) ? "ยินดีต้อนรับเข้าสู่ระบบ" : $"ยินดีต้อนรับคุณ {clean}";
+        }
+
         private async Task SignInUserAsync(SystemUser user, bool isPersistent)
         {
+            var cleanFullName = CleanName(user.FullName);
+            if (string.IsNullOrWhiteSpace(cleanFullName)) cleanFullName = user.Username;
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim("FullName", user.FullName),
+                new Claim("FullName", cleanFullName),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim("Phone", user.Phone)
             };
+
+            // Multi-Role Support: สำหรับ Owner และ Admin ให้สิทธิ์เข้าถึงทุก Role พร้อมกันได้ เพื่อให้เปิดหลายแท็บ/หลายหน้าต่างทดสอบได้ทันที
+            if (user.Role == UserRole.Owner || user.Role == UserRole.Admin)
+            {
+                foreach (UserRole r in Enum.GetValues(typeof(UserRole)))
+                {
+                    if (r != user.Role)
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, r.ToString()));
+                    }
+                }
+            }
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties
@@ -183,15 +248,15 @@ namespace CSI402_Project_final.Controllers
         {
             return role switch
             {
-                nameof(UserRole.InventoryStaff) => RedirectToAction("Index", "Inventory"),
-                nameof(UserRole.OrderStaff) => RedirectToAction("Index", "Order"),
-                nameof(UserRole.ShippingStaff) => RedirectToAction("Index", "Shipping"),
-                nameof(UserRole.MarketingStaff) => RedirectToAction("Index", "Marketing"),
-                nameof(UserRole.AccountingStaff) => RedirectToAction("Index", "Accounting"),
-                nameof(UserRole.ITSupport) => RedirectToAction("Index", "Support"),
-                nameof(UserRole.Admin) => RedirectToAction("Index", "Admin"),
-                nameof(UserRole.Owner) => RedirectToAction("Index", "Owner"),
-                _ => RedirectToAction("Index", "Home")
+                nameof(UserRole.InventoryStaff) => RedirectToAction("Index", "Inventory", new { role }),
+                nameof(UserRole.OrderStaff) => RedirectToAction("Index", "Order", new { role }),
+                nameof(UserRole.ShippingStaff) => RedirectToAction("Index", "Shipping", new { role }),
+                nameof(UserRole.MarketingStaff) => RedirectToAction("Index", "Marketing", new { role }),
+                nameof(UserRole.AccountingStaff) => RedirectToAction("Index", "Accounting", new { role }),
+                nameof(UserRole.ITSupport) => RedirectToAction("Index", "Support", new { role }),
+                nameof(UserRole.Admin) => RedirectToAction("Index", "Admin", new { role }),
+                nameof(UserRole.Owner) => RedirectToAction("Index", "Owner", new { role = "Owner" }),
+                _ => RedirectToAction("Index", "Home", new { role = "Customer" })
             };
         }
     }

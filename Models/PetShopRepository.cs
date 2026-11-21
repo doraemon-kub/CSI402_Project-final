@@ -30,20 +30,126 @@ namespace CSI402_Project_final.Models
         }
 
         // ==========================================
-        // Queryable / Data Accessors (ดึงจาก MySQL csi402db)
+        // In-Memory Fast Cache with Smart Auto-Invalidation (ลด Latency จาก Cloud MySQL ให้โหลดทันใจ)
         // ==========================================
+        private static List<Product>? _cachedProducts;
+        private static DateTime _productsCacheTime = DateTime.MinValue;
 
-        public List<Product> Products => _db.Products.AsNoTracking().ToList();
-        public List<Promotion> Promotions => _db.Promotions.AsNoTracking().ToList();
-        public List<Order> Orders => _db.Orders.Include(o => o.Items).AsNoTracking().OrderByDescending(o => o.OrderDate).ToList();
-        public List<SystemUser> Users => _db.Users.Include(u => u.Addresses).AsNoTracking().ToList();
+        private static List<Promotion>? _cachedPromotions;
+        private static DateTime _promotionsCacheTime = DateTime.MinValue;
+
+        private static List<Order>? _cachedOrders;
+        private static DateTime _ordersCacheTime = DateTime.MinValue;
+
+        private static List<SystemUser>? _cachedUsers;
+        private static DateTime _usersCacheTime = DateTime.MinValue;
+
+        private static FinancialSummary? _cachedFinancialSummary;
+        private static DateTime _financialCacheTime = DateTime.MinValue;
+
+        private static readonly object _repoCacheLock = new();
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _userIdCache = new(StringComparer.OrdinalIgnoreCase);
+
+        public static void InvalidateProductCache() => _cachedProducts = null;
+        public static void InvalidatePromotionCache() => _cachedPromotions = null;
+        public static void InvalidateOrderCache()
+        {
+            _cachedOrders = null;
+            _cachedFinancialSummary = null;
+        }
+        public static void InvalidateUserCache() => _cachedUsers = null;
+        public static void InvalidateFinancialCache() => _cachedFinancialSummary = null;
+
+        public List<Product> Products
+        {
+            get
+            {
+                if (_cachedProducts != null && (DateTime.UtcNow - _productsCacheTime).TotalSeconds < 30)
+                {
+                    return _cachedProducts;
+                }
+                lock (_repoCacheLock)
+                {
+                    if (_cachedProducts != null && (DateTime.UtcNow - _productsCacheTime).TotalSeconds < 30)
+                    {
+                        return _cachedProducts;
+                    }
+                    _cachedProducts = _db.Products.AsNoTracking().ToList();
+                    _productsCacheTime = DateTime.UtcNow;
+                    return _cachedProducts;
+                }
+            }
+        }
+
+        public List<Promotion> Promotions
+        {
+            get
+            {
+                if (_cachedPromotions != null && (DateTime.UtcNow - _promotionsCacheTime).TotalSeconds < 60)
+                {
+                    return _cachedPromotions;
+                }
+                lock (_repoCacheLock)
+                {
+                    if (_cachedPromotions != null && (DateTime.UtcNow - _promotionsCacheTime).TotalSeconds < 60)
+                    {
+                        return _cachedPromotions;
+                    }
+                    _cachedPromotions = _db.Promotions.AsNoTracking().ToList();
+                    _promotionsCacheTime = DateTime.UtcNow;
+                    return _cachedPromotions;
+                }
+            }
+        }
+
+        public List<Order> Orders
+        {
+            get
+            {
+                if (_cachedOrders != null && (DateTime.UtcNow - _ordersCacheTime).TotalSeconds < 10)
+                {
+                    return _cachedOrders;
+                }
+                lock (_repoCacheLock)
+                {
+                    if (_cachedOrders != null && (DateTime.UtcNow - _ordersCacheTime).TotalSeconds < 10)
+                    {
+                        return _cachedOrders;
+                    }
+                    _cachedOrders = _db.Orders.Include(o => o.Items).AsNoTracking().OrderByDescending(o => o.OrderDate).ToList();
+                    _ordersCacheTime = DateTime.UtcNow;
+                    return _cachedOrders;
+                }
+            }
+        }
+
+        public List<SystemUser> Users
+        {
+            get
+            {
+                if (_cachedUsers != null && (DateTime.UtcNow - _usersCacheTime).TotalSeconds < 60)
+                {
+                    return _cachedUsers;
+                }
+                lock (_repoCacheLock)
+                {
+                    if (_cachedUsers != null && (DateTime.UtcNow - _usersCacheTime).TotalSeconds < 60)
+                    {
+                        return _cachedUsers;
+                    }
+                    _cachedUsers = _db.Users.Include(u => u.Addresses).AsNoTracking().ToList();
+                    _usersCacheTime = DateTime.UtcNow;
+                    return _cachedUsers;
+                }
+            }
+        }
 
         public IQueryable<Product> QueryProducts() => _db.Products.AsNoTracking();
-        public Product? GetProductById(int id) => _db.Products.AsNoTracking().FirstOrDefault(p => p.Id == id);
+        public Product? GetProductById(int id) => Products.FirstOrDefault(p => p.Id == id);
 
         public List<Promotion> GetValidPromotions()
         {
-            return _db.Promotions.AsNoTracking().ToList().Where(p => p.IsValidNow).ToList();
+            return Promotions.Where(p => p.IsValidNow).ToList();
         }
 
         public UserRole CurrentSimulatedRole
@@ -77,7 +183,16 @@ namespace CSI402_Project_final.Models
             var username = principal.Identity.Name;
             if (!string.IsNullOrWhiteSpace(username))
             {
-                return _db.Users.Where(u => u.Username == username).Select(u => (int?)u.Id).FirstOrDefault();
+                if (_userIdCache.TryGetValue(username, out int cachedId))
+                {
+                    return cachedId;
+                }
+                var found = _db.Users.Where(u => u.Username == username).Select(u => (int?)u.Id).FirstOrDefault();
+                if (found.HasValue)
+                {
+                    _userIdCache[username] = found.Value;
+                }
+                return found;
             }
 
             return null;
@@ -311,9 +426,7 @@ namespace CSI402_Project_final.Models
         public SystemUser? GetUserByUsername(string username)
         {
             if (string.IsNullOrWhiteSpace(username)) return null;
-            return _db.Users
-                .Include(u => u.Addresses)
-                .FirstOrDefault(u => u.Username == username);
+            return Users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
         }
 
         public void UpdateUserProfile(string username, string fullName, string email, string phone)
@@ -326,6 +439,7 @@ namespace CSI402_Project_final.Models
             user.Phone = phone.Trim();
             user.UpdatedAt = DateTime.Now;
             _db.SaveChanges();
+            InvalidateUserCache();
 
             LogAudit("UPDATE_PROFILE", "user", user.Id.ToString(), $"อัปเดตโปรไฟล์ของ {user.Username}");
         }
@@ -372,6 +486,7 @@ namespace CSI402_Project_final.Models
             }
 
             _db.SaveChanges();
+            InvalidateUserCache();
             LogAudit("SAVE_ADDRESS", "useraddress", address.Id.ToString(), $"บันทึกที่อยู่ '{address.Title}' ของ {username}");
         }
 
@@ -394,6 +509,7 @@ namespace CSI402_Project_final.Models
             }
 
             _db.SaveChanges();
+            InvalidateUserCache();
             LogAudit("DELETE_ADDRESS", "useraddress", addressId.ToString(), $"ลบที่อยู่ ID {addressId} ของ {username}");
         }
 
@@ -410,6 +526,7 @@ namespace CSI402_Project_final.Models
             }
 
             _db.SaveChanges();
+            InvalidateUserCache();
             LogAudit("SET_DEFAULT_ADDRESS", "useraddress", addressId.ToString(), $"ตั้งที่อยู่หลัก ID {addressId}");
         }
 
@@ -437,6 +554,7 @@ namespace CSI402_Project_final.Models
 
             _db.Users.Add(newUser);
             _db.SaveChanges();
+            InvalidateUserCache();
 
             LogAudit("REGISTER", "user", newUser.Id.ToString(), $"สมัครสมาชิกใหม่ {newUser.Username}", newUser);
             return newUser;
@@ -452,6 +570,7 @@ namespace CSI402_Project_final.Models
             user.IsActive = isActive;
             user.UpdatedAt = DateTime.Now;
             _db.SaveChanges();
+            InvalidateUserCache();
 
             LogAudit("UPDATE_USER_ROLE", "user", user.Id.ToString(), $"เปลี่ยนสิทธิ์ {user.Username} จาก {oldRole} เป็น {newRole} (Active={isActive})");
             return true;
@@ -478,6 +597,7 @@ namespace CSI402_Project_final.Models
 
             _db.Users.Add(user);
             _db.SaveChanges();
+            InvalidateUserCache();
 
             LogAudit("CREATE_USER", "user", user.Id.ToString(), $"สร้างบัญชีผู้ใช้ {user.Username} ({user.Role})");
             return (true, $"เพิ่มผู้ใช้งาน '{user.FullName}' ในระบบเรียบร้อยแล้ว");
@@ -530,7 +650,17 @@ namespace CSI402_Project_final.Models
             SyncCartPromotionsAndTotals(dbCart);
             _db.SaveChanges();
 
-            _cachedCart = null;
+            if (_cachedProducts != null)
+            {
+                var cp = _cachedProducts.FirstOrDefault(p => p.Id == productId);
+                if (cp != null)
+                {
+                    cp.StockQuantity = product.StockQuantity;
+                    cp.CartAddCount = product.CartAddCount;
+                }
+            }
+
+            _cachedCart = dbCart;
             return product.CartAddCount;
         }
 
@@ -628,6 +758,15 @@ namespace CSI402_Project_final.Models
                 }
             }
 
+            if (_cachedProducts != null && product != null)
+            {
+                var cp = _cachedProducts.FirstOrDefault(p => p.Id == productId);
+                if (cp != null)
+                {
+                    cp.StockQuantity = product.StockQuantity;
+                }
+            }
+
             _cachedCart = null;
         }
 
@@ -661,134 +800,141 @@ namespace CSI402_Project_final.Models
                 return (null, "ไม่มีสินค้าในตะกร้า");
             }
 
-            using var tx = _db.Database.BeginTransaction();
-            try
+            var strategy = _db.Database.CreateExecutionStrategy();
+            return strategy.Execute<(Order? Order, string? ErrorMessage)>(() =>
             {
-                var trackedOldPromos = dbCart.AppliedPromotions.ToList();
-                var trackedOldItems = dbCart.Items.ToList();
-
-                var activePromos = GetValidPromotions();
-                dbCart.Recalculate(activePromos);
-                var computedPromos = dbCart.AppliedPromotions.ToList();
-
-                // ตรวจสอบความถูกต้องของสินค้าในตะกร้า
-                foreach (var item in trackedOldItems)
+                using var tx = _db.Database.BeginTransaction();
+                try
                 {
-                    var prod = _db.Products.FirstOrDefault(p => p.Id == item.ProductId);
-                    if (prod == null)
+                    var trackedOldPromos = dbCart.AppliedPromotions.ToList();
+                    var trackedOldItems = dbCart.Items.ToList();
+
+                    var activePromos = GetValidPromotions();
+                    dbCart.Recalculate(activePromos);
+                    var computedPromos = dbCart.AppliedPromotions.ToList();
+
+                    // ตรวจสอบความถูกต้องของสินค้าในตะกร้า
+                    foreach (var item in trackedOldItems)
                     {
-                        return (null, $"ไม่พบสินค้า #{item.ProductId} ในระบบ");
+                        var prod = _db.Products.FirstOrDefault(p => p.Id == item.ProductId);
+                        if (prod == null)
+                        {
+                            return (null, $"ไม่พบสินค้า #{item.ProductId} ในระบบ");
+                        }
                     }
-                }
 
-                string datePrefix = $"ORD-{DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}-";
-                int todaySeq = _db.Orders.Count(o => o.OrderId.StartsWith(datePrefix)) + 1;
-                string newOrderId = $"{datePrefix}{todaySeq:D3}";
-                while (_db.Orders.Any(o => o.OrderId == newOrderId))
-                {
-                    todaySeq++;
-                    newOrderId = $"{datePrefix}{todaySeq:D3}";
-                }
+                    string datePrefix = $"ORD-{DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}-";
+                    int todaySeq = _db.Orders.Count(o => o.OrderId.StartsWith(datePrefix)) + 1;
+                    string newOrderId = $"{datePrefix}{todaySeq:D3}";
+                    while (_db.Orders.Any(o => o.OrderId == newOrderId))
+                    {
+                        todaySeq++;
+                        newOrderId = $"{datePrefix}{todaySeq:D3}";
+                    }
 
-                string cleanMethod = string.IsNullOrWhiteSpace(paymentMethod) ? "โอนผ่านธนาคาร / PromptPay" : paymentMethod.Trim();
-                bool isCod = cleanMethod.Contains("COD", StringComparison.OrdinalIgnoreCase);
+                    string cleanMethod = string.IsNullOrWhiteSpace(paymentMethod) ? "โอนผ่านธนาคาร / PromptPay" : paymentMethod.Trim();
+                    bool isCod = cleanMethod.Contains("COD", StringComparison.OrdinalIgnoreCase);
 
-                var now = DateTime.Now;
-                var newOrder = new Order
-                {
-                    OrderId = newOrderId,
-                    UserId = user.Id,
-                    CustomerName = string.IsNullOrWhiteSpace(name) ? user.FullName : name.Trim(),
-                    CustomerPhone = string.IsNullOrWhiteSpace(phone) ? user.Phone : phone.Trim(),
-                    ShippingAddress = string.IsNullOrWhiteSpace(address) ? "กรุงเทพมหานคร 10100" : address.Trim(),
-                    OrderDate = now,
-                    EstimatedWeightKg = dbCart.TotalWeightKg,
-                    ItemsTotal = dbCart.ProductPriceBeforePromo,
-                    DiscountTotal = dbCart.TotalPromotionDiscount,
-                    ShippingFee = dbCart.ShippingFee,
-                    GrandTotal = dbCart.GrandTotal,
-                    FreeGiftItem = dbCart.FreeGiftItem,
-                    Status = isCod ? OrderStatus.PaymentVerified : OrderStatus.PendingPayment,
-                    PaymentMethod = cleanMethod,
-                    PaymentSlipUrl = paymentSlipUrl,
-                    IsPaymentApproved = false,
-                    CreatedAt = now,
-                    UpdatedAt = now,
-                    Items = trackedOldItems.Select(i => new OrderItem
+                    var now = DateTime.Now;
+                    var newOrder = new Order
                     {
                         OrderId = newOrderId,
-                        ProductId = i.ProductId,
-                        ProductName = i.Product.Name,
-                        UnitPrice = i.Product.EffectivePrice,
-                        Quantity = i.Quantity,
-                        UnitWeightKg = i.Product.WeightKg
-                    }).ToList()
-                };
+                        UserId = user.Id,
+                        CustomerName = string.IsNullOrWhiteSpace(name) ? user.FullName : name.Trim(),
+                        CustomerPhone = string.IsNullOrWhiteSpace(phone) ? user.Phone : phone.Trim(),
+                        ShippingAddress = string.IsNullOrWhiteSpace(address) ? "กรุงเทพมหานคร 10100" : address.Trim(),
+                        OrderDate = now,
+                        EstimatedWeightKg = dbCart.TotalWeightKg,
+                        ItemsTotal = dbCart.ProductPriceBeforePromo,
+                        DiscountTotal = dbCart.TotalPromotionDiscount,
+                        ShippingFee = dbCart.ShippingFee,
+                        GrandTotal = dbCart.GrandTotal,
+                        FreeGiftItem = dbCart.FreeGiftItem,
+                        Status = isCod ? OrderStatus.PaymentVerified : OrderStatus.PendingPayment,
+                        PaymentMethod = cleanMethod,
+                        PaymentSlipUrl = paymentSlipUrl,
+                        IsPaymentApproved = false,
+                        CreatedAt = now,
+                        UpdatedAt = now,
+                        Items = trackedOldItems.Select(i => new OrderItem
+                        {
+                            OrderId = newOrderId,
+                            ProductId = i.ProductId,
+                            ProductName = i.Product.Name,
+                            UnitPrice = i.Product.EffectivePrice,
+                            Quantity = i.Quantity,
+                            UnitWeightKg = i.Product.WeightKg
+                        }).ToList()
+                    };
 
-                _db.Orders.Add(newOrder);
+                    _db.Orders.Add(newOrder);
 
-                // บันทึก Snapshot โปรโมชั่นที่ใช้เข้ากับ OrderId
-                var promoEntities = _db.Promotions.ToList();
-                foreach (var applied in computedPromos)
-                {
-                    _db.AppliedPromotionSummaries.Add(new AppliedPromotionSummary
+                    // บันทึก Snapshot โปรโมชั่นที่ใช้เข้ากับ OrderId
+                    var promoEntities = _db.Promotions.ToList();
+                    foreach (var applied in computedPromos)
                     {
-                        CartId = null,
-                        OrderId = newOrderId,
-                        PromotionTitle = applied.PromotionTitle,
-                        DiscountAmount = applied.DiscountAmount,
-                        Note = applied.Note
-                    });
+                        _db.AppliedPromotionSummaries.Add(new AppliedPromotionSummary
+                        {
+                            CartId = null,
+                            OrderId = newOrderId,
+                            PromotionTitle = applied.PromotionTitle,
+                            DiscountAmount = applied.DiscountAmount,
+                            Note = applied.Note
+                        });
 
-                    var promo = promoEntities.FirstOrDefault(p =>
-                        applied.PromotionTitle.Equals(p.Title, StringComparison.Ordinal) ||
-                        applied.PromotionTitle.StartsWith(p.Title + " (", StringComparison.Ordinal));
-                    if (promo != null)
-                    {
-                        promo.IncrementUsage();
-                        promo.UpdatedAt = now;
+                        var promo = promoEntities.FirstOrDefault(p =>
+                            applied.PromotionTitle.Equals(p.Title, StringComparison.Ordinal) ||
+                            applied.PromotionTitle.StartsWith(p.Title + " (", StringComparison.Ordinal));
+                        if (promo != null)
+                        {
+                            promo.IncrementUsage();
+                            promo.UpdatedAt = now;
+                        }
                     }
-                }
 
-                // สต็อกสินค้าถูกตัดตั้งแต่ตอนเพิ่มลงตะกร้าแล้ว จึงเพียงบันทึกเวลาอัปเดต
-                foreach (var item in trackedOldItems)
-                {
-                    var prod = _db.Products.FirstOrDefault(p => p.Id == item.ProductId);
-                    if (prod != null)
+                    // สต็อกสินค้าถูกตัดตั้งแต่ตอนเพิ่มลงตะกร้าแล้ว จึงเพียงบันทึกเวลาอัปเดต
+                    foreach (var item in trackedOldItems)
                     {
-                        prod.UpdatedAt = now;
+                        var prod = _db.Products.FirstOrDefault(p => p.Id == item.ProductId);
+                        if (prod != null)
+                        {
+                            prod.UpdatedAt = now;
+                        }
                     }
-                }
 
-                // ล้างตะกร้าใน DB (ลบรายการเก่าที่ถูก Track ไว้)
-                dbCart.AppliedPromotions.Clear();
-                if (trackedOldPromos.Any())
+                    // ล้างตะกร้าใน DB (ลบรายการเก่าที่ถูก Track ไว้)
+                    dbCart.AppliedPromotions.Clear();
+                    if (trackedOldPromos.Any())
+                    {
+                        _db.AppliedPromotionSummaries.RemoveRange(trackedOldPromos);
+                    }
+                    dbCart.Items.Clear();
+                    if (trackedOldItems.Any())
+                    {
+                        _db.CartItems.RemoveRange(trackedOldItems);
+                    }
+                    dbCart.FreeGiftItem = null;
+                    dbCart.ShippingFee = 0;
+                    dbCart.IsFreeShippingQualified = false;
+                    dbCart.ShippingCalculationDetail = "ไม่มีสินค้าในตะกร้า";
+
+                    _db.SaveChanges();
+                    SyncFinancialSummaryInternal();
+                    tx.Commit();
+
+                    _cachedCart = null;
+                    InvalidateOrderCache();
+                    InvalidateProductCache();
+                    InvalidatePromotionCache();
+                    LogAudit("CHECKOUT_ORDER", "orders", newOrder.OrderId, $"สร้างคำสั่งซื้อ {newOrder.OrderId} ยอดสุทธิ ฿{newOrder.GrandTotal:N2}", user);
+                    return (newOrder, null);
+                }
+                catch (Exception ex)
                 {
-                    _db.AppliedPromotionSummaries.RemoveRange(trackedOldPromos);
+                    tx.Rollback();
+                    return (null, $"เกิดข้อผิดพลาดในการบันทึกคำสั่งซื้อ: {ex.Message}");
                 }
-                dbCart.Items.Clear();
-                if (trackedOldItems.Any())
-                {
-                    _db.CartItems.RemoveRange(trackedOldItems);
-                }
-                dbCart.FreeGiftItem = null;
-                dbCart.ShippingFee = 0;
-                dbCart.IsFreeShippingQualified = false;
-                dbCart.ShippingCalculationDetail = "ไม่มีสินค้าในตะกร้า";
-
-                _db.SaveChanges();
-                SyncFinancialSummaryInternal();
-                tx.Commit();
-
-                _cachedCart = null;
-                LogAudit("CHECKOUT_ORDER", "orders", newOrder.OrderId, $"สร้างคำสั่งซื้อ {newOrder.OrderId} ยอดสุทธิ ฿{newOrder.GrandTotal:N2}", user);
-                return (newOrder, null);
-            }
-            catch (Exception ex)
-            {
-                tx.Rollback();
-                return (null, $"เกิดข้อผิดพลาดในการบันทึกคำสั่งซื้อ: {ex.Message}");
-            }
+            });
         }
 
         // ==========================================
@@ -797,14 +943,11 @@ namespace CSI402_Project_final.Models
 
         public List<Order> GetOrdersForUser(string username)
         {
-            var user = _db.Users.AsNoTracking().FirstOrDefault(u => u.Username == username);
+            var user = GetUserByUsername(username);
             if (user == null) return new List<Order>();
 
-            return _db.Orders
-                .Include(o => o.Items)
-                .AsNoTracking()
+            return Orders
                 .Where(o => o.UserId == user.Id)
-                .OrderByDescending(o => o.OrderDate)
                 .ToList();
         }
 
@@ -871,6 +1014,7 @@ namespace CSI402_Project_final.Models
             }
             order.UpdatedAt = DateTime.Now;
             _db.SaveChanges();
+            InvalidateOrderCache();
 
             SyncFinancialSummaryInternal();
             LogAudit("APPROVE_PAYMENT", "orders", orderId, $"อนุมัติการชำระเงินออเดอร์ {orderId} ยอด ฿{order.GrandTotal:N2}");
@@ -888,6 +1032,8 @@ namespace CSI402_Project_final.Models
             order.UpdatedAt = DateTime.Now;
             RestoreStockForOrder(order);
             _db.SaveChanges();
+            InvalidateOrderCache();
+            InvalidateProductCache();
 
             SyncFinancialSummaryInternal();
             LogAudit("REJECT_PAYMENT", "orders", orderId, $"ปฏิเสธสลิปออเดอร์ {orderId} เหตุผล: {order.RefundReason}");
@@ -917,6 +1063,7 @@ namespace CSI402_Project_final.Models
             order.Status = newStatus;
             order.UpdatedAt = DateTime.Now;
             _db.SaveChanges();
+            InvalidateOrderCache();
 
             LogAudit("UPDATE_ORDER_STATUS", "orders", orderId, $"เปลี่ยนสถานะ {orderId}: {oldStatus} -> {newStatus}");
             return true;
@@ -934,6 +1081,7 @@ namespace CSI402_Project_final.Models
             order.ShippedDate = DateTime.Now;
             order.UpdatedAt = DateTime.Now;
             _db.SaveChanges();
+            InvalidateOrderCache();
 
             LogAudit("DISPATCH_ORDER", "orders", orderId, $"จัดส่งโดย {courier} เลขพัสดุ {trackingNumber} นน.จริง {actualWeightKg}kg");
             return true;
@@ -952,6 +1100,8 @@ namespace CSI402_Project_final.Models
                 RestoreStockForOrder(order);
             }
             _db.SaveChanges();
+            InvalidateOrderCache();
+            InvalidateProductCache();
 
             SyncFinancialSummaryInternal();
             LogAudit("APPROVE_REFUND", "orders", orderId, $"อนุมัติคืนเงิน ฿{order.RefundAmount:N2}");
@@ -971,6 +1121,7 @@ namespace CSI402_Project_final.Models
             product.StockQuantity = Math.Max(0, product.StockQuantity + adjustment);
             product.UpdatedAt = DateTime.Now;
             _db.SaveChanges();
+            InvalidateProductCache();
 
             LogAudit("UPDATE_STOCK", "product", id.ToString(), $"ปรับสต็อก '{product.Name}' จาก {oldStock} เป็น {product.StockQuantity}");
             return product;
@@ -989,6 +1140,7 @@ namespace CSI402_Project_final.Models
                 model.UpdatedAt = now;
                 _db.Products.Add(model);
                 _db.SaveChanges();
+                InvalidateProductCache();
 
                 LogAudit("CREATE_PRODUCT", "product", model.Id.ToString(), $"เพิ่มสินค้าใหม่ '{model.Name}'");
                 message = $"เพิ่มสินค้า '{model.Name}' สำเร็จ";
@@ -1022,6 +1174,7 @@ namespace CSI402_Project_final.Models
                 existing.UpdatedAt = now;
 
                 _db.SaveChanges();
+                InvalidateProductCache();
                 LogAudit("UPDATE_PRODUCT", "product", existing.Id.ToString(), $"แก้ไขสินค้า '{existing.Name}'");
                 message = $"แก้ไขข้อมูลสินค้า '{model.Name}' สำเร็จ";
                 return true;
@@ -1040,6 +1193,7 @@ namespace CSI402_Project_final.Models
 
             _db.Products.Remove(existing);
             _db.SaveChanges();
+            InvalidateProductCache();
             LogAudit("DELETE_PRODUCT", "product", id.ToString(), $"ลบสินค้า '{existing.Name}'");
             return (true, $"ลบสินค้า '{existing.Name}' เรียบร้อยแล้ว");
         }
@@ -1272,13 +1426,13 @@ namespace CSI402_Project_final.Models
             }
 
             _db.SaveChanges();
-            SyncFinancialSummaryInternal();
+            InvalidateFinancialCache();
             LogAudit("SAVE_MONTHLY_EXPENSE", "monthlyfinancialentry", cleanMonth, $"บันทึกรายจ่ายประจำเดือน {cleanMonth} จำนวน ฿{cleanExp:N2}");
         }
 
         private void SyncFinancialSummaryInternal()
         {
-            var allOrders = _db.Orders.AsNoTracking().ToList();
+            var allOrders = this.Orders;
             decimal totalRev = allOrders.Where(IsPaidOrder).Sum(o => o.GrandTotal);
             decimal totalRefund = allOrders.Where(o => o.Status == OrderStatus.Refunded).Sum(o => o.RefundAmount ?? 0m);
 
@@ -1334,34 +1488,54 @@ namespace CSI402_Project_final.Models
             summary.UpdatedAt = now;
 
             _db.SaveChanges();
+            InvalidateFinancialCache();
         }
 
         public FinancialSummary GetFinancialSummary()
         {
-            SyncFinancialSummaryInternal();
-            var allOrders = _db.Orders.AsNoTracking().ToList();
-            decimal totalRefund = allOrders.Where(o => o.Status == OrderStatus.Refunded).Sum(o => o.RefundAmount ?? 0m);
-            decimal totalShipIncome = allOrders.Where(IsPaidOrder).Sum(o => o.ShippingFee);
-
-            var dbSummary = _db.FinancialSummaries.Include(f => f.MonthlyBreakdown).AsNoTracking().FirstOrDefault();
-            var breakdown = dbSummary?.MonthlyBreakdown
-                .OrderByDescending(m => m.Month)
-                .ToList() ?? new List<MonthlyFinancialEntry>();
-
-            return new FinancialSummary
+            if (_cachedFinancialSummary != null && (DateTime.UtcNow - _financialCacheTime).TotalSeconds < 30)
             {
-                Id = dbSummary?.Id ?? 0,
-                TotalRevenue = dbSummary?.TotalRevenue ?? 0m,
-                TotalExpenses = dbSummary?.TotalExpenses ?? 0m,
-                NetProfit = dbSummary?.NetProfit ?? 0m,
-                TotalRefunds = totalRefund,
-                ShippingCollected = totalShipIncome,
-                ShippingCarrierCost = totalShipIncome,
-                TotalOrdersCount = dbSummary?.TotalOrdersCount ?? 0,
-                SuccessfulOrdersCount = dbSummary?.SuccessfulOrdersCount ?? 0,
-                RefundedOrdersCount = dbSummary?.RefundedOrdersCount ?? 0,
-                MonthlyBreakdown = breakdown
-            };
+                return _cachedFinancialSummary;
+            }
+
+            lock (_repoCacheLock)
+            {
+                if (_cachedFinancialSummary != null && (DateTime.UtcNow - _financialCacheTime).TotalSeconds < 30)
+                {
+                    return _cachedFinancialSummary;
+                }
+
+                var allOrders = this.Orders;
+                decimal totalRev = allOrders.Where(IsPaidOrder).Sum(o => o.GrandTotal);
+                decimal totalRefund = allOrders.Where(o => o.Status == OrderStatus.Refunded).Sum(o => o.RefundAmount ?? 0m);
+                decimal totalShipIncome = allOrders.Where(IsPaidOrder).Sum(o => o.ShippingFee);
+
+                var dbSummary = _db.FinancialSummaries.Include(f => f.MonthlyBreakdown).AsNoTracking().FirstOrDefault();
+                var breakdown = dbSummary?.MonthlyBreakdown
+                    .OrderByDescending(m => m.Month)
+                    .ToList() ?? new List<MonthlyFinancialEntry>();
+
+                decimal totalRecordedExp = breakdown.Sum(m => m.Expenses);
+
+                _cachedFinancialSummary = new FinancialSummary
+                {
+                    Id = dbSummary?.Id ?? 0,
+                    TotalRevenue = totalRev,
+                    TotalExpenses = totalRecordedExp,
+                    NetProfit = totalRev - totalRecordedExp - totalRefund,
+                    TotalRefunds = totalRefund,
+                    ShippingCollected = totalShipIncome,
+                    ShippingCarrierCost = totalShipIncome,
+                    TotalOrdersCount = allOrders.Count,
+                    SuccessfulOrdersCount = allOrders.Count(IsPaidOrder),
+                    RefundedOrdersCount = allOrders.Count(o => o.Status == OrderStatus.Refunded),
+                    MonthlyBreakdown = breakdown,
+                    UpdatedAt = DateTime.Now
+                };
+                _financialCacheTime = DateTime.UtcNow;
+
+                return _cachedFinancialSummary;
+            }
         }
     }
 }

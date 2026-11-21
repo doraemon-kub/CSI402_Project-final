@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>CSI402_Project_final</RootNamespace>
     <NoWarn>$(NoWarn);NU1902;MA0006</NoWarn>
+    <EnableHotReload>false</EnableHotReload>
   </PropertyGroup>
 
   <ItemGroup>

@@ -2,9 +2,32 @@
 @using System.Security.Claims
 @inject CSI402_Project_final.Models.PetShopRepository Repo
 @{
+    var roleParam = ViewContext.HttpContext.Request.Query["role"].FirstOrDefault() 
+                    ?? ViewContext.HttpContext.Request.Query["asRole"].FirstOrDefault();
+
     var currentRole = User.FindFirstValue(ClaimTypes.Role) ?? "Guest";
     var username = User.Identity?.Name ?? "พนักงาน";
-    var fullName = User.FindFirst("FullName")?.Value ?? username;
+    var rawFullName = User.FindFirst("FullName")?.Value ?? username;
+
+    if (!string.IsNullOrEmpty(roleParam))
+    {
+        if (string.Equals(roleParam, "guest", StringComparison.OrdinalIgnoreCase))
+        {
+            currentRole = "Guest";
+            username = "ผู้เยี่ยมชม";
+            rawFullName = "ผู้เยี่ยมชม";
+        }
+        else
+        {
+            var demo = DemoUserHelper.GetDemoUserInfo(roleParam);
+            currentRole = demo.RoleName;
+            username = demo.Username;
+            rawFullName = demo.FullName;
+        }
+    }
+
+    var fullName = System.Text.RegularExpressions.Regex.Replace(rawFullName ?? "", @"\s*\([^)]*\)", "").Trim();
+    if (string.IsNullOrEmpty(fullName)) fullName = username;
     string activeCtrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
 
     bool HasRole(string role) => string.Equals(currentRole, role, StringComparison.OrdinalIgnoreCase);
@@ -18,6 +41,39 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - PetStore Back-Office</title>
+
+    <!-- Tab-Isolated Session Enforcer (รองรับการเปิดหลายแท็บ/แยกบทบาทอิสระในบราวเซอร์เดียวกันเหมือน React/sessionStorage) -->
+    <script>
+        (function () {
+            try {
+                var path = window.location.pathname.toLowerCase();
+                var url = new URL(window.location.href);
+                var urlRole = url.searchParams.get('role') || url.searchParams.get('asRole');
+                var tabRole = sessionStorage.getItem('petshop_tab_role');
+
+                if (urlRole) {
+                    sessionStorage.setItem('petshop_tab_role', urlRole);
+                } else if (tabRole && tabRole !== 'Guest') {
+                    url.searchParams.set('role', tabRole);
+                    window.location.replace(url.toString());
+                } else {
+                    var defaultRole = 'Owner';
+                    if (path.startsWith('/admin')) defaultRole = 'Admin';
+                    else if (path.startsWith('/inventory')) defaultRole = 'InventoryStaff';
+                    else if (path.startsWith('/order')) defaultRole = 'OrderStaff';
+                    else if (path.startsWith('/shipping')) defaultRole = 'ShippingStaff';
+                    else if (path.startsWith('/marketing')) defaultRole = 'MarketingStaff';
+                    else if (path.startsWith('/accounting')) defaultRole = 'AccountingStaff';
+                    else if (path.startsWith('/support')) defaultRole = 'ITSupport';
+                    else if (path.startsWith('/owner')) defaultRole = 'Owner';
+
+                    sessionStorage.setItem('petshop_tab_role', defaultRole);
+                    url.searchParams.set('role', defaultRole);
+                    window.location.replace(url.toString());
+                }
+            } catch (e) { }
+        })();
+    </script>
     <!-- Google Fonts: Playfair Display + Prompt -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -107,56 +163,56 @@
                 
                 @if (isOwner || HasRole("InventoryStaff"))
                 {
-                    <a asp-controller="Inventory" asp-action="Index"
+                    <a asp-controller="Inventory" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                        class="sidebar-link @(IsActive("Inventory") ? "active" : "")">
                         <i class="bi bi-boxes"></i> คลังสินค้า (Inventory)
                     </a>
                 }
                 @if (isOwner || HasRole("OrderStaff"))
                 {
-                    <a asp-controller="Order" asp-action="Index"
+                    <a asp-controller="Order" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                        class="sidebar-link @(IsActive("Order") ? "active" : "")">
                         <i class="bi bi-card-checklist"></i> คำสั่งซื้อ (Order)
                     </a>
                 }
                 @if (isOwner || HasRole("ShippingStaff"))
                 {
-                    <a asp-controller="Shipping" asp-action="Index"
+                    <a asp-controller="Shipping" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                        class="sidebar-link @(IsActive("Shipping") ? "active" : "")">
                         <i class="bi bi-truck"></i> จัดการจัดส่ง (Shipping)
                     </a>
                 }
                 @if (isOwner || HasRole("MarketingStaff"))
                 {
-                    <a asp-controller="Marketing" asp-action="Index"
+                    <a asp-controller="Marketing" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                        class="sidebar-link @(IsActive("Marketing") ? "active" : "")">
                         <i class="bi bi-tags"></i> แคมเปญโปรโมชั่น (MKT)
                     </a>
                 }
                 @if (isOwner || HasRole("AccountingStaff"))
                 {
-                    <a asp-controller="Accounting" asp-action="Index"
+                    <a asp-controller="Accounting" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                        class="sidebar-link @(IsActive("Accounting") ? "active" : "")">
                         <i class="bi bi-cash-coin"></i> การเงินและบัญชี (ACC)
                     </a>
                 }
                 @if (isOwner || HasRole("ITSupport"))
                 {
-                    <a asp-controller="Support" asp-action="Index"
+                    <a asp-controller="Support" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                        class="sidebar-link @(IsActive("Support") ? "active" : "")">
                         <i class="bi bi-headset"></i> IT Support Helpdesk
                     </a>
                 }
                 @if (isOwner || HasRole("Admin"))
                 {
-                    <a asp-controller="Admin" asp-action="Index"
+                    <a asp-controller="Admin" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                        class="sidebar-link @(IsActive("Admin") ? "active" : "")">
                         <i class="bi bi-person-gear"></i> สิทธิ์และผู้ใช้ (Admin)
                     </a>
                 }
                 @if (isOwner)
                 {
-                    <a asp-controller="Owner" asp-action="Index"
+                    <a asp-controller="Owner" asp-action="Index" asp-route-role="Owner"
                        class="sidebar-link @(IsActive("Owner") ? "active" : "")">
                         <i class="bi bi-graph-up-arrow"></i> ภาพรวมธุรกิจ (Owner)
                     </a>
@@ -167,7 +223,7 @@
                 <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light w-100 btn-sm mb-2">
                     <i class="bi bi-shop me-1"></i> ไปหน้าร้านค้า
                 </a>
-                <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0" onsubmit="sessionStorage.setItem('petshop_tab_role', 'Guest');">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-outline-danger w-100 btn-sm">
                         <i class="bi bi-box-arrow-right me-1"></i> ออกจากระบบ
@@ -193,53 +249,53 @@
                 <div class="py-2 flex-grow-1">
                     @if (isOwner || HasRole("InventoryStaff"))
                     {
-                        <a asp-controller="Inventory" asp-action="Index"
+                        <a asp-controller="Inventory" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                            class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-boxes me-2 text-warning"></i> คลังสินค้า (Inventory)
                         </a>
                     }
                     @if (isOwner || HasRole("OrderStaff"))
                     {
-                        <a asp-controller="Order" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                        <a asp-controller="Order" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))" class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-card-checklist me-2 text-warning"></i> คำสั่งซื้อ (Order)
                         </a>
                     }
                     @if (isOwner || HasRole("ShippingStaff"))
                     {
-                        <a asp-controller="Shipping" asp-action="Index"
+                        <a asp-controller="Shipping" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                            class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-truck me-2 text-warning"></i> จัดการจัดส่ง (Shipping)
                         </a>
                     }
                     @if (isOwner || HasRole("MarketingStaff"))
                     {
-                        <a asp-controller="Marketing" asp-action="Index"
+                        <a asp-controller="Marketing" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                            class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-tags me-2 text-warning"></i> แคมเปญโปรโมชั่น (MKT)
                         </a>
                     }
                     @if (isOwner || HasRole("AccountingStaff"))
                     {
-                        <a asp-controller="Accounting" asp-action="Index"
+                        <a asp-controller="Accounting" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
                            class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-cash-coin me-2 text-warning"></i> การเงินและบัญชี (ACC)
                         </a>
                     }
                     @if (isOwner || HasRole("ITSupport"))
                     {
-                        <a asp-controller="Support" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                        <a asp-controller="Support" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))" class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-headset me-2 text-warning"></i> IT Support Helpdesk
                         </a>
                     }
                     @if (isOwner || HasRole("Admin"))
                     {
-                        <a asp-controller="Admin" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                        <a asp-controller="Admin" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))" class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-person-gear me-2 text-warning"></i> สิทธิ์และผู้ใช้ (Admin)
                         </a>
                     }
                     @if (isOwner)
                     {
-                        <a asp-controller="Owner" asp-action="Index" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                        <a asp-controller="Owner" asp-action="Index" asp-route-role="Owner" class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-graph-up-arrow me-2 text-warning"></i> ภาพรวมธุรกิจ (Owner)
                         </a>
                     }
@@ -248,7 +304,7 @@
                     <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light w-100 btn-sm mb-2">
                         <i class="bi bi-shop me-1"></i> หน้าร้านค้า
                     </a>
-                    <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                    <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0" onsubmit="sessionStorage.setItem('petshop_tab_role', 'Guest');">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn btn-danger w-100 btn-sm">
                             <i class="bi bi-box-arrow-right me-1"></i> ออกจากระบบ
@@ -270,11 +326,33 @@
                     <h6 class="m-0 fw-bold text-lux-espresso text-truncate" style="max-width: 340px;">@ViewData["Title"]</h6>
                 </div>
                 <div class="d-flex align-items-center gap-3">
+                    <!-- Multi-Role Switcher: สลับบทบาทผู้ใช้งานทันที -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-lux-outline py-1 px-2 rounded-pill d-flex align-items-center gap-1" data-bs-toggle="dropdown" style="font-size: 0.72rem;" title="สลับบทบาทผู้ใช้งาน (Multi-Role)">
+                            <i class="bi bi-layers-half text-warning"></i>
+                            <span class="d-none d-md-inline">Multi-Role</span>
+                            <i class="bi bi-chevron-down" style="font-size: 0.6rem;"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm small p-2" style="min-width: 240px; font-size: 0.8rem;">
+                            <li class="dropdown-header text-uppercase text-lux-muted" style="font-size: 0.65rem;">สลับบทบาทเฉพาะแท็บนี้ (Multi-Role)</li>
+                            <li><a class="dropdown-item py-1 rounded" href="/?role=Guest"><i class="bi bi-globe me-2 text-muted"></i> 🌐 ผู้เยี่ยมชม (Guest)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" href="/?role=Customer"><i class="bi bi-person me-2 text-success"></i> 👤 ลูกค้า (Customer)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" href="/Inventory?role=InventoryStaff"><i class="bi bi-boxes me-2 text-primary"></i> 📦 คลังสินค้า (Inventory)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" href="/Order?role=OrderStaff"><i class="bi bi-card-checklist me-2 text-info"></i> 📋 คำสั่งซื้อ (Order)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" href="/Shipping?role=ShippingStaff"><i class="bi bi-truck me-2 text-warning"></i> 🚚 จัดส่งสินค้า (Shipping)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" href="/Marketing?role=MarketingStaff"><i class="bi bi-tags me-2 text-danger"></i> 🏷️ โปรโมชั่น (Marketing)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" href="/Accounting?role=AccountingStaff"><i class="bi bi-cash-coin me-2 text-success"></i> 💰 การเงิน/บัญชี (ACC)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" href="/Support?role=ITSupport"><i class="bi bi-headset me-2 text-primary"></i> 🎧 IT Support (Helpdesk)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" href="/Admin?role=Admin"><i class="bi bi-person-gear me-2 text-secondary"></i> ⚙️ ผู้ดูแลระบบ (Admin)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" href="/Owner?role=Owner"><i class="bi bi-graph-up-arrow me-2 text-lux-gold"></i> 👑 เจ้าของร้าน (Owner)</a></li>
+                        </ul>
+                    </div>
+
                     <div class="text-end d-none d-sm-block">
                         <div class="small fw-semibold text-lux-espresso text-truncate" style="max-width: 180px;">@fullName</div>
                         <span class="lux-tag lux-tag-accent" style="font-size: 0.65rem;">@currentRole</span>
                     </div>
-                    <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                    <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0" onsubmit="sessionStorage.setItem('petshop_tab_role', 'Guest');">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn btn-sm btn-lux-outline px-3" title="ออกจากระบบ">
                             <i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline ms-1">ออกจากระบบ</span>
@@ -286,21 +364,27 @@
             <!-- Notifications -->
             @if (TempData["SuccessMessage"] != null)
             {
-                <div class="px-3 pt-3">
-                    <div class="alert alert-success alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 small"
+                <div class="px-3 pt-2 pb-0">
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 px-3 small d-flex align-items-center justify-content-between"
                          role="alert">
-                        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <div class="d-flex align-items-center me-2">
+                            <i class="bi bi-check-circle-fill me-2 fs-6"></i>
+                            <span>@TempData["SuccessMessage"]</span>
+                        </div>
+                        <button type="button" class="btn-close position-static p-1 m-0" data-bs-dismiss="alert" aria-label="Close" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0;"></button>
                     </div>
                 </div>
             }
             @if (TempData["ErrorMessage"] != null)
             {
-                <div class="px-3 pt-3">
-                    <div class="alert alert-danger alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 small"
+                <div class="px-3 pt-2 pb-0">
+                    <div class="alert alert-danger alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 px-3 small d-flex align-items-center justify-content-between"
                          role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <div class="d-flex align-items-center me-2">
+                            <i class="bi bi-exclamation-triangle-fill me-2 fs-6"></i>
+                            <span>@TempData["ErrorMessage"]</span>
+                        </div>
+                        <button type="button" class="btn-close position-static p-1 m-0" data-bs-dismiss="alert" aria-label="Close" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0;"></button>
                     </div>
                 </div>
             }
@@ -397,6 +481,9 @@
             }
         });
     </script>
+    <!-- Socket.io / SignalR Real-Time WebSocket Engine -->
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/petstore-socket.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 

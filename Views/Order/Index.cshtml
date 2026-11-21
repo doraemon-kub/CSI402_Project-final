@@ -1,5 +1,6 @@
 @model List<CSI402_Project_final.Models.Order>
 @using CSI402_Project_final.Models
+@using System.Security.Claims
 @{
     Layout = "_BackOfficeLayout";
     ViewData["Title"] = "4. จัดการคำสั่งซื้อและเตรียมสินค้า (Order Staff)";
@@ -37,9 +38,12 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold m-0 text-dark">คิวคำสั่งซื้อที่ต้องดำเนินการจัดเตรียม</h5>
         <div class="btn-group">
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary @(!selectedStatus.HasValue ? "active" : "")">ทั้งหมด</a>
-            <a asp-action="Index" asp-route-status="@OrderStatus.PaymentVerified" class="btn btn-sm btn-outline-secondary @(selectedStatus == OrderStatus.PaymentVerified ? "active" : "")">รอจัดของ</a>
-            <a asp-action="Index" asp-route-status="@OrderStatus.Preparing" class="btn btn-sm btn-outline-secondary @(selectedStatus == OrderStatus.Preparing ? "active" : "")">กำลังแพ็ก</a>
+            <a asp-action="Index"
+               class="btn btn-sm btn-outline-secondary @(!selectedStatus.HasValue ? "active" : "")">ทั้งหมด</a>
+            <a asp-action="Index" asp-route-status="@OrderStatus.PaymentVerified"
+               class="btn btn-sm btn-outline-secondary @(selectedStatus == OrderStatus.PaymentVerified ? "active" : "")">รอจัดของ</a>
+            <a asp-action="Index" asp-route-status="@OrderStatus.Preparing"
+               class="btn btn-sm btn-outline-secondary @(selectedStatus == OrderStatus.Preparing ? "active" : "")">กำลังแพ็ก</a>
         </div>
     </div>
 
@@ -64,7 +68,8 @@
                         <td class="fw-bold text-primary">#@order.OrderId</td>
                         <td>
                             <div class="fw-bold text-dark">@order.CustomerName</div>
-                            <small class="text-muted text-truncate d-block" style="max-width: 200px;">@order.ShippingAddress</small>
+                            <small class="text-muted text-truncate d-block"
+                                   style="max-width: 200px;">@order.ShippingAddress</small>
                             <small class="text-muted">📞 @order.CustomerPhone</small>
                         </td>
                         <td>
@@ -95,29 +100,48 @@
                             </span>
                         </td>
                         <td>
-                            <form asp-action="UpdateStatus" method="post" class="d-flex gap-1">
-                                <input type="hidden" name="orderId" value="@order.OrderId" />
-                                @if (order.Status == OrderStatus.PaymentVerified)
-                                {
-                                    <button type="submit" name="newStatus" value="@OrderStatus.Preparing" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-box"></i> เริ่มแพ็ก
-                                    </button>
-                                }
-                                else if (order.Status == OrderStatus.Preparing)
-                                {
-                                    <button type="submit" name="newStatus" value="@OrderStatus.Shipped" class="btn btn-sm btn-success">
-                                        <i class="bi bi-truck"></i> แพ็กเสร็จพร้อมส่ง
-                                    </button>
-                                }
-                                else if (order.Status == OrderStatus.PendingPayment)
-                                {
-                                    <span class="text-warning small fw-semibold">รอตรวจสลิป (บัญชี)</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted small">เรียบร้อย</span>
-                                }
-                            </form>
+                            @if (order.Status == OrderStatus.PendingPayment)
+                            {
+                                <div class="d-flex align-items-center gap-1 flex-wrap">
+                                    <a asp-controller="Accounting" asp-action="Index" asp-route-role="@(User.IsInRole("Owner") ? "Owner" : null)" class="btn btn-sm btn-outline-warning text-nowrap" title="ไปดูสลิปและอนุมัติที่หน้าฝ่ายบัญชี">
+                                        <i class="bi bi-receipt"></i> ไปตรวจสลิป (บัญชี)
+                                    </a>
+                                    @if (User.IsInRole("Owner") || User.IsInRole("Admin"))
+                                    {
+                                        <form asp-controller="Accounting" asp-action="ApprovePayment" method="post" class="m-0">
+                                            <input type="hidden" name="orderId" value="@order.OrderId" />
+                                            <input type="hidden" name="role" value="@(ViewContext.HttpContext.Request.Query["role"].FirstOrDefault() ?? User.FindFirstValue(ClaimTypes.Role))" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                            <button type="submit" class="btn btn-sm btn-success text-nowrap" title="อนุมัติการชำระเงินทันที (สิทธิ์ Owner/Admin)">
+                                                <i class="bi bi-check-circle"></i> อนุมัติทันที
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <form asp-action="UpdateStatus" method="post" class="d-flex gap-1">
+                                    <input type="hidden" name="orderId" value="@order.OrderId" />
+                                    <input type="hidden" name="role" value="@(ViewContext.HttpContext.Request.Query["role"].FirstOrDefault() ?? User.FindFirstValue(ClaimTypes.Role))" />
+                                    @if (order.Status == OrderStatus.PaymentVerified)
+                                    {
+                                        <button type="submit" name="newStatus" value="@OrderStatus.Preparing" class="btn btn-sm btn-warning text-nowrap">
+                                            <i class="bi bi-box"></i> เริ่มแพ็ก
+                                        </button>
+                                    }
+                                    else if (order.Status == OrderStatus.Preparing)
+                                    {
+                                        <button type="submit" name="newStatus" value="@OrderStatus.Shipped" class="btn btn-sm btn-success text-nowrap">
+                                            <i class="bi bi-truck"></i> แพ็กเสร็จพร้อมส่ง
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">เรียบร้อย</span>
+                                    }
+                                </form>
+                            }
                         </td>
                     </tr>
                 }

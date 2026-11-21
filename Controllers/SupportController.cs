@@ -34,14 +34,14 @@ namespace CSI402_Project_final.Controllers
 
         // บันทึกรายละเอียดการแก้ไขปัญหาและปิดงาน (Req 24)
         [HttpPost]
-        public IActionResult ResolveTicket(int ticketId, string technician, string resolutionNote, TicketStatus newStatus)
+        public IActionResult ResolveTicket(int ticketId, string technician, string resolutionNote, TicketStatus newStatus, string? role = null)
         {
             var ticket = _repo.ResolveSupportTicket(ticketId, technician, resolutionNote, newStatus);
             if (ticket != null)
             {
                 TempData["SuccessMessage"] = $"บันทึกประวัติการแก้ไขและอัปเดตสถานะ Ticket #{ticket.TicketCode} เรียบร้อยแล้ว";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { role });
         }
     }
 }
