@@ -61,22 +61,24 @@
 # 📊 ผังงานกระบวนการภาพรวม (System Flowcharts)
 
 ## ผังงานกระบวนการฝั่ง Customer (ลูกค้า)
-แสดงลำดับการทำงานของลูกค้าตั้งแต่เริ่มต้นเข้าใช้งานระบบจนถึงการสั่งซื้อสินค้าสำเร็จ โดยลูกค้าจะต้องล็อกอินก่อน หากยังไม่มีบัญชีจะต้องสมัครสมาชิก จากนั้นสามารถเลือกดูสินค้า เพิ่มลงตะกร้า ยืนยันคำสั่งซื้อ และชำระเงินได้
+แสดงลำดับการทำงานของลูกค้าตั้งแต่เริ่มต้นเข้าใช้งานระบบจนถึงการสั่งซื้อสินค้าสำเร็จ โดยใช้สัญลักษณ์ตัวเชื่อมโยงในหน้าเดียวกัน (On-page Connector `(( ))`) เมื่อมีการตรวจสอบเงื่อนไขไม่ผ่านแล้วโยงเส้นกลับมา
 
 ```mermaid
 flowchart TD
     Start([start]) --> HasAccount{มีบัญชีแล้ว?}
     
     HasAccount -- NO --> Register[Register]
-    Register --> FillReg[กรอกข้อมูลสมัคร\nชื่อ, email, เบอร์, password]
+    Register --> ConnReg(( ))
+    ConnReg --> FillReg[กรอกข้อมูลสมัคร\nชื่อ, email, เบอร์, password]
     FillReg --> CheckReg{ตรวจสอบ}
-    CheckReg -- NO --> FillReg
+    CheckReg -- NO --> ConnReg
     CheckReg -- YES --> Login
     
     HasAccount -- YES --> Login[Login]
-    Login --> FillLogin[กรอก email / password\nตรวจสอบข้อมูล]
+    Login --> ConnLogin(( ))
+    ConnLogin --> FillLogin[กรอก email / password\nตรวจสอบข้อมูล]
     FillLogin --> CheckLogin{ตรวจสอบ}
-    CheckLogin -- NO --> FillLogin
+    CheckLogin -- NO --> ConnLogin
     CheckLogin -- YES --> Home[หน้าหลัก (Home)]
     
     Home --> BrowseProduct[เลือกสินค้า / เพิ่มสินค้า]
@@ -90,14 +92,15 @@ flowchart TD
 ---
 
 ## ผังงานกระบวนการฝั่ง Admin และพนักงานหลังบ้าน
-แสดงลำดับการทำงานของผู้ดูแลระบบและพนักงานฝ่ายต่างๆ หลังจากล็อกอินสำเร็จแล้วจะเข้าสู่หน้า Dashboard ของแผนกตนเอง ซึ่งสามารถเลือกจัดการสินค้า ออเดอร์ และผู้ใช้งานได้
+แสดงลำดับการทำงานของผู้ดูแลระบบและพนักงานฝ่ายต่างๆ หลังจากล็อกอินสำเร็จแล้วจะเข้าสู่หน้า Dashboard ของแผนกตนเอง โดยมีตัวเชื่อมโยง (Connector `(( ))`) รองรับการวนซ้ำและการรวมจุดกระบวนการ
 
 ```mermaid
 flowchart TD
-    Start([start]) --> Login[Login]
+    Start([start]) --> ConnLogin(( ))
+    ConnLogin --> Login[Login]
     Login --> FillCreds[กรอก email / password\nตรวจสอบข้อมูล]
     FillCreds --> CheckCreds{ตรวจสอบ}
-    CheckCreds -- NO --> FillCreds
+    CheckCreds -- NO --> ConnLogin
     CheckCreds -- YES --> CheckRole{Role}
     
     CheckRole -- ลูกค้า --> GoStore[หน้าหลักร้านค้า]
@@ -109,8 +112,9 @@ flowchart TD
     CheckSlip --> IsSlipValid{สลิปถูกต้อง?}
     IsSlipValid -- YES --> ApprovePay[อนุมัติออเดอร์\nสถานะ = รอจัดส่ง]
     IsSlipValid -- NO --> RejectPay[ตอบกลับลูกค้า\nให้ส่งสลิปใหม่]
-    ApprovePay --> FinDone[สำเร็จ / หน้าหลัก]
-    RejectPay --> FinDone
+    ApprovePay --> ConnFinDone(( ))
+    RejectPay --> ConnFinDone
+    ConnFinDone --> FinDone[สำเร็จ / หน้าหลัก]
     
     CheckDept -- แผนกคลัง --> WhDept[จัดการสินค้า\nเพิ่ม/ลด/อัปเดตสต็อก]
     WhDept --> WhDone[สำเร็จ / หน้าหลัก]
@@ -122,12 +126,13 @@ flowchart TD
     MktDept --> MktDone[สำเร็จ / หน้าหลัก]
     
     AdminBranch --> AdminAction[จัดการพนักงาน & สิทธิ์]
-    AdminAction --> AddUserForm[กรอกข้อมูลพนักงาน\nชื่อ, email, เบอร์, ตำแหน่ง]
+    AdminAction --> ConnUser(( ))
+    ConnUser --> AddUserForm[กรอกข้อมูลพนักงาน\nชื่อ, email, เบอร์, ตำแหน่ง]
     AddUserForm --> CheckAdminRole{Role ถูกต้อง?}
     CheckAdminRole -- YES --> SaveUserDB[บันทึกข้อมูลสำเร็จ\nSuccess]
     CheckAdminRole -- NO --> AlertRoleErr[แจ้ง: ไม่มี Role ที่ถูกต้อง]
+    AlertRoleErr --> ConnUser
     SaveUserDB --> AdminDone[สำเร็จ / หน้าหลัก]
-    AlertRoleErr --> AdminDone
     
     FinDone --> End([End])
     WhDone --> End
@@ -140,36 +145,40 @@ flowchart TD
 ---
 
 # 📑 Flowchart แต่ละหน้า (Page-by-Page Flowcharts)
+> ทุกผังงานใช้สัญลักษณ์ **ตัวเชื่อมโยงในหน้าเดียวกัน (On-page Connector `(( ))`)** ตามมาตรฐาน ANSI/ISO 5807 เมื่อตรวจสอบเงื่อนไขไม่ผ่านหรือต้องการวนกลับมาทำซ้ำ
 
 ---
 
 ### 1. LOGIN (การเข้าสู่ระบบ)
-กระบวนการเข้าสู่ระบบ ระบบจะตรวจสอบ Email และ Password จากฐานข้อมูล หากถูกต้องจะบันทึก Session แล้ว Redirect ไปยังหน้าหลัก หากไม่ถูกต้องจะแสดงข้อความแจ้งเตือน
+กระบวนการเข้าสู่ระบบ ระบบจะตรวจสอบ Email และ Password จากฐานข้อมูล หากถูกต้องจะบันทึก Session แล้ว Redirect ไปยังหน้าหลัก หากไม่ถูกต้องจะแสดงข้อความแจ้งเตือนและวนกลับมาที่ตัวเชื่อมโยงเพื่อกรอกใหม่
 
 ```mermaid
 flowchart TD
-    Start([start]) --> InputLogin[กรอก email / password]
+    Start([start]) --> ConnLogin(( ))
+    ConnLogin --> InputLogin[กรอก email / password]
     InputLogin --> VerifyUser{ตรวจสอบ\nข้อมูลผู้ใช้}
     VerifyUser -- NO --> LoginRetry[Login ไม่สำเร็จ]
-    LoginRetry --> InputLogin
+    LoginRetry --> ConnLogin
     VerifyUser -- YES --> CheckRoleBranch{ตรวจสอบประเภทบัญชี}
     CheckRoleBranch -- ลูกค้า --> GoCustHome[เข้าสู่หน้าหลักลูกค้า (Home)]
     CheckRoleBranch -- พนักงาน / ผู้บริหาร --> GoStaffPortal[เข้าสู่หน้าหลักพนักงาน / Back-Office]
-    GoCustHome --> End([End])
-    GoStaffPortal --> End
+    GoCustHome --> ConnEnd(( ))
+    GoStaffPortal --> ConnEnd
+    ConnEnd --> End([End])
 ```
 
 ---
 
 ### 2. REGISTER (การสมัครสมาชิก)
-กระบวนการสมัครสมาชิก ผู้ใช้กรอกข้อมูล Email, ชื่อ, เบอร์โทร และรหัสผ่าน ระบบจะสร้าง ID อัตโนมัติแล้วบันทึกลงฐานข้อมูล จากนั้น Redirect ไปหน้า Login
+กระบวนการสมัครสมาชิก ผู้ใช้กรอกข้อมูล Email, ชื่อ, เบอร์โทร และรหัสผ่าน หากข้อมูลไม่ครบจะแจ้งเตือนและวนกลับมาที่ตัวเชื่อมโยง หากถูกต้องระบบจะสร้าง ID อัตโนมัติแล้วบันทึกลงฐานข้อมูล จากนั้น Redirect ไปหน้า Login
 
 ```mermaid
 flowchart TD
-    Start([start]) --> InputReg[กรอก ชื่อ / email / password / เบอร์โทร]
+    Start([start]) --> ConnReg(( ))
+    ConnReg --> InputReg[กรอก ชื่อ / email / password / เบอร์โทร]
     InputReg --> CheckComplete{ข้อมูลครบ?}
     CheckComplete -- NO --> AlertErr[แจ้งข้อผิดพลาด]
-    AlertErr --> InputReg
+    AlertErr --> ConnReg
     CheckComplete -- YES --> SaveCustomer[บันทึกลง Customer\nลงฐานข้อมูล]
     SaveCustomer --> GoToLogin[ไปหน้า Login]
     GoToLogin --> End([End])
@@ -193,7 +202,7 @@ flowchart TD
 ---
 
 ### 4. PRODUCT DETAIL (User) (หน้ารายละเอียดสินค้า)
-หน้ารายละเอียดสินค้า แสดงรูป ชื่อ ราคา น้ำหนัก และข้อมูลสินค้า ลูกค้าสามารถกดเพิ่มลงตะกร้าหรือซื้อเลยได้ พร้อมแสดงจำนวนคนที่ใส่สินค้านี้ลงตะกร้า (Social Proof)
+หน้ารายละเอียดสินค้า แสดงรูป ชื่อ ราคา น้ำหนัก และข้อมูลสินค้า ลูกค้าสามารถกดเพิ่มลงตะกร้าหรือซื้อเลยได้ โดยมีตัวเชื่อมโยงรวมจุดกระบวนการก่อนบันทึกออเดอร์
 
 ```mermaid
 flowchart TD
@@ -202,8 +211,9 @@ flowchart TD
     SelectQty --> CheckAction{เพิ่มตะกร้าสินค้า?}
     CheckAction -- YES --> AddCartDB[บันทึกสินค้าลงตะกร้า\n(CartItem DB)]
     CheckAction -- NO --> BuyNow[ซื้อเลย\n(ไปหน้า Checkout)]
-    AddCartDB --> MakeOrder[สั่งออเดอร์]
-    BuyNow --> MakeOrder
+    AddCartDB --> ConnAction(( ))
+    BuyNow --> ConnAction
+    ConnAction --> MakeOrder[สั่งออเดอร์]
     MakeOrder --> SaveOrderDetail[บันทึก OrderDetail ลง DB]
     SaveOrderDetail --> End([End])
 ```
@@ -211,15 +221,16 @@ flowchart TD
 ---
 
 ### 5. CART (User) (หน้าตะกร้าสินค้า)
-หน้าตะกร้าสินค้า แสดงรายการสินค้าที่เลือกไว้ สามารถปรับจำนวน ลบสินค้า ระบบคำนวณส่วนลด 5 โปรโมชั่นอัตโนมัติ และกดสั่งซื้อเพื่อไปหน้า Checkout
+หน้าตะกร้าสินค้า แสดงรายการสินค้าที่เลือกไว้ สามารถปรับจำนวน ลบสินค้า โดยหากมีการแก้ไขจะวนกลับมาที่ตัวเชื่อมโยงเพื่อคำนวณ 5 โปรโมชั่นและน้ำหนักใหม่ และกดสั่งซื้อเพื่อไปหน้า Checkout
 
 ```mermaid
 flowchart TD
     Start([start]) --> LoadCartDB[โหลดตะกร้า\nดึง CartItem จาก DB]
-    LoadCartDB --> CheckMod{เพิ่ม/ลดสินค้า?}
+    LoadCartDB --> ConnCart(( ))
+    ConnCart --> CheckMod{เพิ่ม/ลดสินค้า?}
     CheckMod -- YES --> EditCart[แก้ไขจำนวนสินค้าในตะกร้า]
     EditCart --> RecalcPromo[ระบบคำนวณ 5 โปรโมชั่น & น้ำหนัก]
-    RecalcPromo --> CheckMod
+    RecalcPromo --> ConnCart
     CheckMod -- NO --> ShowSummary[แสดงรายการ + ยอดรวมสุทธิ + ส่วนลด]
     ShowSummary --> GoCheckout[Checkout]
     GoCheckout --> End([End])
@@ -228,7 +239,7 @@ flowchart TD
 ---
 
 ### 6. CHECKOUT (User) (หน้ายืนยันคำสั่งซื้อและชำระเงิน)
-หน้ายืนยันคำสั่งซื้อ ลูกค้ากรอกที่อยู่จัดส่ง เลือกวิธีชำระเงิน (PromptPay QR) และการจัดส่ง จากนั้นแนบสลิปเพื่อยืนยันสร้างออเดอร์
+หน้ายืนยันคำสั่งซื้อ ลูกค้ากรอกที่อยู่จัดส่ง เลือกวิธีชำระเงิน (PromptPay QR) และการจัดส่ง ตรวจสอบโปรโมชั่น และรวมจุดที่ตัวเชื่อมโยงเพื่อยืนยันสร้างออเดอร์
 
 ```mermaid
 flowchart TD
@@ -237,8 +248,9 @@ flowchart TD
     SelectCourier --> HasPromo{ใช้โปรโมชั่น?}
     HasPromo -- YES --> ApplyDiscount[หักส่วนลดโปรโมชั่น]
     HasPromo -- NO --> CalcStandard[ส่งออกออเดอร์ยอดปกติ]
-    ApplyDiscount --> ConfirmCheckout[ยืนยันออเดอร์\nอัปเดต order -> 'รอชำระ/รอตรวจสลิป']
-    CalcStandard --> ConfirmCheckout
+    ApplyDiscount --> ConnCheckout(( ))
+    CalcStandard --> ConnCheckout
+    ConnCheckout --> ConfirmCheckout[ยืนยันออเดอร์\nอัปเดต order -> 'รอชำระ/รอตรวจสลิป']
     ConfirmCheckout --> OrderSuccess[ไปหน้า OrderSuccessUser]
     OrderSuccess --> End([End])
 ```
@@ -246,16 +258,17 @@ flowchart TD
 ---
 
 ### 7. ORDER (User) (หน้าติดตามสถานะออเดอร์)
-หน้าติดตามสถานะออเดอร์ แสดงรายการคำสั่งซื้อทั้งหมดของลูกค้าพร้อมสถานะปัจจุบันแบบ Step Progress (รอตรวจสลิป -> กำลังเตรียม -> จัดส่งแล้ว -> สำเร็จ)
+หน้าติดตามสถานะออเดอร์ แสดงรายการคำสั่งซื้อทั้งหมดของลูกค้าพร้อมสถานะปัจจุบันแบบ Step Progress หากยังไม่จัดส่งจะวนกลับมาที่ตัวเชื่อมโยงเพื่อรอสถานะล่าสุด
 
 ```mermaid
 flowchart TD
     Start([start]) --> LoadOrders[โหลดคลังออเดอร์ของลูกค้า]
     LoadOrders --> ShowOrderList[แสดงรายการออเดอร์\nเลข order, สถานะ, วันที่, ยอดเงิน]
-    ShowOrderList --> CheckShipped{สถานะ == จัดส่งแล้ว?}
+    ShowOrderList --> ConnOrder(( ))
+    ConnOrder --> CheckShipped{สถานะ == จัดส่งแล้ว?}
     CheckShipped -- YES --> ConfirmReceived[ลูกค้ายืนยันรับสินค้า\nสถานะ = สำเร็จ]
     CheckShipped -- NO --> WaitStatus[รออัปเดตสถานะจากร้านค้า]
-    WaitStatus --> ShowOrderList
+    WaitStatus --> ConnOrder
     ConfirmReceived --> End([End])
 ```
 
@@ -276,14 +289,15 @@ flowchart TD
 ---
 
 ### 9. AddProduct (Admin / Inventory) (การเพิ่มสินค้าใหม่)
-กระบวนการเพิ่มสินค้าใหม่เข้าระบบ พนักงานกรอกข้อมูลสินค้า น้ำหนัก ช่วงวัย และอัปโหลดรูปภาพ ระบบจะสร้าง ProductId อัตโนมัติแล้วบันทึกลงฐานข้อมูล
+กระบวนการเพิ่มสินค้าใหม่เข้าระบบ พนักงานกรอกข้อมูลสินค้า น้ำหนัก ช่วงวัย หากข้อมูลไม่ครบจะวนกลับมาที่ตัวเชื่อมโยงเพื่อกรอกใหม่ หากครบจะอัปโหลดรูปภาพและบันทึกลงฐานข้อมูล
 
 ```mermaid
 flowchart TD
-    Start([start]) --> InputBasic[กรอกข้อมูลสินค้า\nชื่อ, แบรนด์, หมวด, จำนวนสต็อก]
+    Start([start]) --> ConnAddProd(( ))
+    ConnAddProd --> InputBasic[กรอกข้อมูลสินค้า\nชื่อ, แบรนด์, หมวด, จำนวนสต็อก]
     InputBasic --> InputDetail[กรอกรายละเอียด\nราคา, รูปสินค้า, ต้นทุน, น้ำหนัก kg, ช่วงวัย]
     InputDetail --> CheckProductComplete{ข้อมูลครบ?}
-    CheckProductComplete -- NO --> InputBasic
+    CheckProductComplete -- NO --> ConnAddProd
     CheckProductComplete -- YES --> UploadImage[upload รูปภาพสินค้า]
     UploadImage --> SaveProductDB[บันทึก Product ลง DB]
     SaveProductDB --> End([End])
@@ -292,34 +306,37 @@ flowchart TD
 ---
 
 ### 10. EditProduct (Admin / Inventory) (การแก้ไขสินค้า)
-กระบวนการแก้ไขข้อมูลสินค้า พนักงานเลือกสินค้าที่ต้องการแก้ไข ระบบโหลดข้อมูลเดิมมาให้ แล้วบันทึกข้อมูลใหม่เมื่อกด Submit
+กระบวนการแก้ไขข้อมูลสินค้า พนักงานเลือกสินค้าที่ต้องการแก้ไข ระบบโหลดข้อมูลเดิมมาให้ หากกรอกข้อมูลไม่ครบจะวนกลับมาที่ตัวเชื่อมโยง หากครบจะตรวจสอบการเปลี่ยนรูปภาพและบันทึกลงฐานข้อมูล
 
 ```mermaid
 flowchart TD
-    Start([start]) --> LoadCurrentPID[โหลดข้อมูลสินค้าปัจจุบัน (PID) จาก DB]
+    Start([start]) --> ConnEditProd(( ))
+    ConnEditProd --> LoadCurrentPID[โหลดข้อมูลสินค้าปัจจุบัน (PID) จาก DB]
     LoadCurrentPID --> DisplayEditForm[แสดงฟอร์มพร้อมข้อมูลเดิม\nชื่อ, แบรนด์, หมวด, จำนวน]
     DisplayEditForm --> EditFields[แก้ไขราคา / รูปสินค้า\nต้นทุน, น้ำหนัก, จุดสั่งซื้อซ้ำ]
     EditFields --> CheckEditComplete{ข้อมูลครบ?}
-    CheckEditComplete -- NO --> DisplayEditForm
+    CheckEditComplete -- NO --> ConnEditProd
     CheckEditComplete -- YES --> ChangeImage{เปลี่ยนรูปสินค้า?}
     ChangeImage -- YES --> UploadNewImg[upload รูปใหม่]
     ChangeImage -- NO --> UseOldImg[ใช้รูปเดิม]
-    UploadNewImg --> SaveProductEdit[บันทึกการแก้ไข Product ลง DB]
-    UseOldImg --> SaveProductEdit
+    UploadNewImg --> ConnSaveProd(( ))
+    UseOldImg --> ConnSaveProd
+    ConnSaveProd --> SaveProductEdit[บันทึกการแก้ไข Product ลง DB]
     SaveProductEdit --> End([End])
 ```
 
 ---
 
 ### 11. ADD USER (Admin) (การเพิ่มพนักงานใหม่)
-กระบวนการเพิ่มข้อมูลพนักงานใหม่เข้าระบบ Admin กรอกข้อมูลและกำหนดสิทธิ์ตามบทบาทหน้าที่
+กระบวนการเพิ่มข้อมูลพนักงานใหม่เข้าระบบ Admin กรอกข้อมูลและกำหนดสิทธิ์ตามบทบาทหน้าที่ หากข้อมูลไม่ครบจะวนกลับมาที่ตัวเชื่อมโยงเพื่อแก้ไข
 
 ```mermaid
 flowchart TD
-    Start([start]) --> InputStaffInfo[กรอกข้อมูลพนักงาน\nชื่อ, email, password, เบอร์]
+    Start([start]) --> ConnAddUser(( ))
+    ConnAddUser --> InputStaffInfo[กรอกข้อมูลพนักงาน\nชื่อ, email, password, เบอร์]
     InputStaffInfo --> SelectRole[เลือก Role / ตำแหน่ง\nAdmin / การเงิน / คลัง / จัดส่ง / การตลาด / IT]
     SelectRole --> CheckUserComplete{ข้อมูลครบ?}
-    CheckUserComplete -- NO --> InputStaffInfo
+    CheckUserComplete -- NO --> ConnAddUser
     CheckUserComplete -- YES --> SaveRoleDB[บันทึก Role และข้อมูลพนักงานลง DB]
     SaveRoleDB --> End([End])
 ```
@@ -327,24 +344,26 @@ flowchart TD
 ---
 
 ### 12. EDIT / DELETE USER (Admin) (การแก้ไขหรือลบพนักงาน)
-กระบวนการแก้ไขหรือลบข้อมูลพนักงาน Admin สามารถอัปเดตข้อมูลและสิทธิ์การเข้าถึงของพนักงานแต่ละคน หรือระงับการใช้งานได้
+กระบวนการแก้ไขหรือลบข้อมูลพนักงาน Admin สามารถอัปเดตข้อมูลและสิทธิ์การเข้าถึงของพนักงานแต่ละคน หรือลบ/ระงับบัญชี โดยมีตัวเชื่อมโยงรับการวนกลับตามมาตรฐาน ANSI Flowchart
 
 ```mermaid
 flowchart TD
-    Start([start]) --> LoadUserCurrent[โหลดข้อมูลผู้ใช้ปัจจุบัน]
+    Start([start]) --> ConnUser(( ))
+    ConnUser --> LoadUserCurrent[โหลดข้อมูลผู้ใช้ปัจจุบัน]
     LoadUserCurrent --> ActionType{Edit หรือ Delete?}
     
     ActionType -- Delete --> ConfirmDelete{ยืนยันลบผู้ใช้?}
     ConfirmDelete -- YES --> DeleteUserDB[ลบจาก DB / ระงับบัญชี]
-    ConfirmDelete -- NO --> LoadUserCurrent
+    ConfirmDelete -- NO --> ConnUser
     
     ActionType -- Edit --> InputEditUser[กรอกข้อมูลแก้ไข\nชื่อ, email, เบอร์, Role]
     InputEditUser --> CheckUserEdit{ข้อมูลครบ?}
-    CheckUserEdit -- NO --> InputEditUser
+    CheckUserEdit -- NO --> ConnUser
     CheckUserEdit -- YES --> SaveUserEdit[บันทึกการแก้ไข -> AdminList]
     
-    DeleteUserDB --> End([End])
-    SaveUserEdit --> End
+    DeleteUserDB --> ConnEnd(( ))
+    SaveUserEdit --> ConnEnd
+    ConnEnd --> End([End])
 ```
 
 ---
@@ -365,7 +384,7 @@ flowchart TD
 ---
 
 ### 14. MARKETING & PROMOTIONS (Marketing Staff) (การจัดการแคมเปญโปรโมชั่น)
-กระบวนการฝ่ายการตลาด ตรวจสอบสถิติการใช้งานโปรโมชั่น ควบคุมสวิตช์เปิด/ปิดการใช้งานโปรโมชั่นแบบเรียลไทม์ และกำหนดเงื่อนไขโปรโมชั่น
+กระบวนการฝ่ายการตลาด ตรวจสอบสถิติการใช้งานโปรโมชั่น ควบคุมสวิตช์เปิด/ปิดการใช้งานโปรโมชั่นแบบเรียลไทม์ และกำหนดเงื่อนไขโปรโมชั่น โดยรวมจุดบันทึกที่ตัวเชื่อมโยง
 
 ```mermaid
 flowchart TD
@@ -374,15 +393,16 @@ flowchart TD
     ViewStats --> PromoAction{เลือกการทำงาน}
     PromoAction -- เปิด/ปิดด่วน --> ToggleActive[คลิก Toggle เปิด/ปิด IsActive]
     PromoAction -- แก้ไขเงื่อนไข --> EditRule[กำหนด: ยอดขั้นต่ำ, แบรนด์, วันหมดอายุ]
-    ToggleActive --> SavePromoDB[บันทึกลงฐานข้อมูล Promotion]
-    EditRule --> SavePromoDB
+    ToggleActive --> ConnPromoSave(( ))
+    EditRule --> ConnPromoSave
+    ConnPromoSave --> SavePromoDB[บันทึกลงฐานข้อมูล Promotion]
     SavePromoDB --> End([End])
 ```
 
 ---
 
 ### 15. ACCOUNTING & FINANCE (Accounting Staff) (การตรวจสอบการชำระเงินและคืนเงิน)
-กระบวนการฝ่ายการเงิน ตรวจสอบสลิปโอนเงินของลูกค้า อนุมัติการชำระเงิน และดำเนินการอนุมัติการขอคืนเงิน (Refund)
+กระบวนการฝ่ายการเงิน ตรวจสอบสลิปโอนเงินของลูกค้า อนุมัติการชำระเงิน และดำเนินการอนุมัติการขอคืนเงิน (Refund) โดยมีตัวเชื่อมโยงรวมผลลัพธ์สิ้นสุด
 
 ```mermaid
 flowchart TD
@@ -397,9 +417,10 @@ flowchart TD
     SelectTask -- จัดการขอคืนเงิน --> CheckRefundProof[ตรวจสอบเหตุผลและรูปถ่ายสินค้าชำรุด]
     CheckRefundProof --> ApproveRefund[อนุมัติคืนเงิน: บันทึกยอดเงินคืนลง FinancialSummary]
     
-    ApprovePay --> End([End])
-    RejectPay --> End
-    ApproveRefund --> End
+    ApprovePay --> ConnAccDone(( ))
+    RejectPay --> ConnAccDone
+    ApproveRefund --> ConnAccDone
+    ConnAccDone --> End([End])
 ```
 
 ---
