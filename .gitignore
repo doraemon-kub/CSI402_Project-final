@@ -16,7 +16,9 @@
 [Ll]og/
 [Ll]ogs/
 
-## NuGet
+## Scratch
+scratch/
+
 *.nupkg
 packages/
 
