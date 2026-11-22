@@ -10,6 +10,12 @@
     var currentRoleName = User.FindFirstValue(ClaimTypes.Role) ?? "Guest";
     var rawFullName = User.FindFirst("FullName")?.Value ?? currentUsername;
 
+    var currentPathLower = ViewContext.HttpContext.Request.Path.Value?.Trim().ToLowerInvariant() ?? "";
+    if (currentPathLower.StartsWith("/auth/login") || currentPathLower.StartsWith("/auth/register"))
+    {
+        roleParam = "guest";
+    }
+
     if (!string.IsNullOrEmpty(roleParam))
     {
         if (string.Equals(roleParam, "guest", StringComparison.OrdinalIgnoreCase))
@@ -21,11 +27,14 @@
         }
         else
         {
-            var demo = DemoUserHelper.GetDemoUserInfo(roleParam);
-            isAuthenticated = true;
-            currentRoleName = demo.RoleName;
-            currentUsername = demo.Username;
-            rawFullName = demo.FullName;
+            var resolved = Repo.ResolveTabUserInfo(roleParam);
+            if (!isAuthenticated || !string.Equals(currentUsername, resolved.Username, StringComparison.OrdinalIgnoreCase))
+            {
+                isAuthenticated = true;
+                currentRoleName = resolved.RoleName;
+                currentUsername = resolved.Username;
+                rawFullName = resolved.FullName;
+            }
         }
     }
 
@@ -33,6 +42,33 @@
     if (string.IsNullOrEmpty(fullName)) fullName = currentUsername;
     var cartCount = Repo.CurrentCart.TotalItemCount;
     var isStaffOrAdmin = isAuthenticated && currentRoleName != "Customer" && currentRoleName != "Guest";
+
+    // ดึงและลบ TempData Cookie ทันทีตั้งแต่ก่อนเริ่มเขียน HTML Stream (ป้องกัน Response Flush > 64KB ทำให้ลบ Cookie ไม่ทันแล้วข้อความค้างไปโผล่แท็บอื่น)
+    var flashSuccess = TempData["SuccessMessage"] as string;
+    var flashError = TempData["ErrorMessage"] as string;
+    var flashTargetRole = TempData["SuccessTargetRole"] as string;
+    var flashTargetUser = TempData["SuccessTargetUser"] as string;
+
+    if (TempData.Keys.Any())
+    {
+        TempData.Clear();
+        ViewContext.HttpContext.Response.Cookies.Delete(".AspNetCore.Mvc.CookieTempDataProvider");
+    }
+
+    // ตรวจสอบว่าข้อความแจ้งเตือนนี้เป็นของ Role/User ในแท็บนี้จริงหรือไม่ (ป้องกันข้อความข้ามแท็บ)
+    if (!string.IsNullOrEmpty(flashSuccess))
+    {
+        if (!string.IsNullOrEmpty(flashTargetRole) &&
+            !string.Equals(flashTargetRole, currentRoleName, StringComparison.OrdinalIgnoreCase))
+        {
+            flashSuccess = null;
+        }
+        else if (!string.IsNullOrEmpty(flashTargetUser) &&
+                 !string.Equals(flashTargetUser, currentUsername, StringComparison.OrdinalIgnoreCase))
+        {
+            flashSuccess = null;
+        }
+    }
 }
 <!DOCTYPE html>
 <html lang="th">
@@ -46,7 +82,10 @@
         (function () {
             try {
                 var path = window.location.pathname.toLowerCase();
-                if (path.startsWith('/auth/login') || path.startsWith('/auth/register')) return;
+                if (path.startsWith('/auth/login') || path.startsWith('/auth/register')) {
+                    sessionStorage.setItem('petshop_tab_role', 'Guest');
+                    return;
+                }
 
                 var url = new URL(window.location.href);
                 var urlRole = url.searchParams.get('role') || url.searchParams.get('asRole');
@@ -274,25 +313,25 @@
     </nav>
 
     <!-- 3. Global Notification Flash Message -->
-    @if (TempData["SuccessMessage"] != null)
+    @if (!string.IsNullOrEmpty(flashSuccess))
     {
         <div class="container mt-2 mb-0">
             <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3 py-2 px-3 small d-flex align-items-center justify-content-between mb-0" role="alert">
                 <div class="d-flex align-items-center me-2">
                     <i class="bi bi-check-circle-fill me-2 text-success fs-6"></i>
-                    <span>@TempData["SuccessMessage"]</span>
+                    <span>@flashSuccess</span>
                 </div>
                 <button type="button" class="btn-close position-static p-1 m-0" data-bs-dismiss="alert" aria-label="Close" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0;"></button>
             </div>
         </div>
     }
-    @if (TempData["ErrorMessage"] != null)
+    @if (!string.IsNullOrEmpty(flashError))
     {
         <div class="container mt-2 mb-0">
             <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 py-2 px-3 small d-flex align-items-center justify-content-between mb-0" role="alert">
                 <div class="d-flex align-items-center me-2">
                     <i class="bi bi-exclamation-triangle-fill me-2 text-danger fs-6"></i>
-                    <span>@TempData["ErrorMessage"]</span>
+                    <span>@flashError</span>
                 </div>
                 <button type="button" class="btn-close position-static p-1 m-0" data-bs-dismiss="alert" aria-label="Close" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0;"></button>
             </div>
@@ -480,6 +519,20 @@
         // 3. รับแจ้งเตือนเมื่อมีออเดอร์ใหม่
         petShopConnection.on("ReceiveNewOrderAlert", function (orderId, customerName, grandTotal) {
             showRealtimeToast(`🎉 มีคำสั่งซื้อใหม่ #${orderId} จาก ${customerName} (฿${grandTotal})`);
+        });
+
+        // 4. เตะผู้ใช้ออกจากระบบแบบ Real-Time ทันทีเมื่อบัญชีถูกผู้ดูแลระบบสั่งระงับระหว่างกำลังใช้งาน
+        petShopConnection.on("ReceiveAccountSuspended", function (suspendedUsername, suspendedRole, reason, untilText) {
+            const currentTabUser = "@currentUsername".toLowerCase();
+            const currentTabRole = (sessionStorage.getItem('petshop_tab_role') || "@currentRoleName").toLowerCase();
+            const targetUser = (suspendedUsername || "").toLowerCase();
+            const targetRole = (suspendedRole || "").toLowerCase();
+
+            if ((currentTabUser && currentTabUser === targetUser) ||
+                (currentTabRole !== "guest" && currentTabRole === targetRole)) {
+                sessionStorage.setItem('petshop_tab_role', 'Guest');
+                window.location.replace(`/Auth/Login?suspended=true&u=${encodeURIComponent(suspendedUsername)}&reason=${encodeURIComponent(reason)}&until=${encodeURIComponent(untilText)}`);
+            }
         });
 
         petShopConnection.start().catch(err => console.log("SignalR Connection Error: ", err));

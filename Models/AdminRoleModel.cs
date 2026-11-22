@@ -60,6 +60,108 @@ namespace CSI402_Project_final.Models
 
         [NotMapped]
         public UserAddress? DefaultAddress => Addresses.Find(a => a.IsDefault) ?? (Addresses.Count > 0 ? Addresses[0] : null);
+
+        // ==========================================
+        // ข้อมูลการระงับบัญชี (จัดเก็บใน JSON GrantedPermissions เพื่อรองรับ MySQL Table `user` ทันที)
+        // ==========================================
+        private const string PrefixReason = "__SUSPEND_REASON__:";
+        private const string PrefixUntil = "__SUSPEND_UNTIL__:";
+        private const string PrefixLabel = "__SUSPEND_LABEL__:";
+
+        [NotMapped]
+        public string? SuspensionReason
+        {
+            get
+            {
+                var entry = GrantedPermissions?.Find(p => p.StartsWith(PrefixReason, StringComparison.Ordinal));
+                return entry != null ? entry.Substring(PrefixReason.Length) : null;
+            }
+        }
+
+        [NotMapped]
+        public DateTime? SuspendedUntil
+        {
+            get
+            {
+                var entry = GrantedPermissions?.Find(p => p.StartsWith(PrefixUntil, StringComparison.Ordinal));
+                if (entry == null) return null;
+                var val = entry.Substring(PrefixUntil.Length);
+                if (val == "PERMANENT") return null;
+                return DateTime.TryParse(val, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt) ? dt : null;
+            }
+        }
+
+        [NotMapped]
+        public bool IsPermanentSuspension
+        {
+            get
+            {
+                var entry = GrantedPermissions?.Find(p => p.StartsWith(PrefixUntil, StringComparison.Ordinal));
+                return entry == null || entry.Substring(PrefixUntil.Length) == "PERMANENT";
+            }
+        }
+
+        [NotMapped]
+        public string? SuspensionDurationLabel
+        {
+            get
+            {
+                var entry = GrantedPermissions?.Find(p => p.StartsWith(PrefixLabel, StringComparison.Ordinal));
+                return entry != null ? entry.Substring(PrefixLabel.Length) : null;
+            }
+        }
+
+        [NotMapped]
+        public string SuspensionDisplayUntil
+        {
+            get
+            {
+                var label = SuspensionDurationLabel ?? "ระงับถาวร";
+                if (SuspendedUntil.HasValue)
+                {
+                    return $"{label} (สิ้นสุด {SuspendedUntil.Value:dd/MM/yyyy HH:mm} น.)";
+                }
+                return $"{label} (จนกว่าผู้ดูแลระบบจะปลดระงับ)";
+            }
+        }
+
+        public void SetSuspension(string? reason, int durationMinutes)
+        {
+            GrantedPermissions ??= new List<string>();
+            GrantedPermissions.RemoveAll(p =>
+                p.StartsWith(PrefixReason, StringComparison.Ordinal) ||
+                p.StartsWith(PrefixUntil, StringComparison.Ordinal) ||
+                p.StartsWith(PrefixLabel, StringComparison.Ordinal));
+
+            string cleanReason = string.IsNullOrWhiteSpace(reason) ? "ระงับการใช้งานโดยผู้ดูแลระบบ" : reason.Trim();
+            string label = durationMinutes switch
+            {
+                15 => "15 นาที",
+                60 => "1 ชั่วโมง",
+                360 => "6 ชั่วโมง",
+                1440 => "1 วัน",
+                4320 => "3 วัน",
+                10080 => "7 วัน",
+                43200 => "30 วัน",
+                _ => "ระงับถาวร"
+            };
+
+            string untilVal = durationMinutes > 0
+                ? DateTime.Now.AddMinutes(durationMinutes).ToString("O")
+                : "PERMANENT";
+
+            GrantedPermissions.Add(PrefixReason + cleanReason);
+            GrantedPermissions.Add(PrefixUntil + untilVal);
+            GrantedPermissions.Add(PrefixLabel + label);
+        }
+
+        public void ClearSuspension()
+        {
+            GrantedPermissions?.RemoveAll(p =>
+                p.StartsWith(PrefixReason, StringComparison.Ordinal) ||
+                p.StartsWith(PrefixUntil, StringComparison.Ordinal) ||
+                p.StartsWith(PrefixLabel, StringComparison.Ordinal));
+        }
     }
 
     public class ProfileViewModel

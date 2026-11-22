@@ -5,9 +5,11 @@
     ViewData["Title"] = "ชำระเงินและระบุที่อยู่จัดส่ง";
     var username = User.Identity?.Name ?? "";
     var user = Repo.GetUserByUsername(username);
-    var defaultName = user?.FullName ?? "คุณลูกค้าสมาชิก";
-    var defaultPhone = user?.Phone ?? "081-234-5678";
-    var defaultAddress = user?.DefaultAddress?.DisplayAddress ?? "กรุงเทพมหานคร 10100";
+    var defaultAddrObj = user?.DefaultAddress;
+    var defaultName = !string.IsNullOrWhiteSpace(defaultAddrObj?.RecipientName) ? defaultAddrObj.RecipientName : (user?.FullName ?? "คุณลูกค้าสมาชิก");
+    var defaultPhone = !string.IsNullOrWhiteSpace(defaultAddrObj?.Phone) ? defaultAddrObj.Phone : (user?.Phone ?? "081-234-5678");
+    var defaultAddress = defaultAddrObj?.DisplayAddress ?? "กรุงเทพมหานคร 10100";
+    var savedAddresses = user?.Addresses ?? new List<CSI402_Project_final.Models.UserAddress>();
     var promptPayPayload = ViewBag.PromptPayPayload as string ?? "PETSTOREPRO";
     var qrImageUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={Uri.EscapeDataString(promptPayPayload)}";
 }
@@ -28,20 +30,20 @@
                 <form asp-action="SubmitOrder" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label class="form-label small fw-medium text-lux-muted">ชื่อ-นามสกุล ผู้รับ</label>
-                        <input type="text" name="customerName" class="form-control" value="@defaultName" required />
+                        <input type="text" name="customerName" id="checkoutCustomerName" class="form-control" value="@defaultName" required />
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-medium text-lux-muted">เบอร์โทรศัพท์ติดต่อ</label>
-                        <input type="tel" name="customerPhone" class="form-control" value="@defaultPhone" required />
+                        <input type="tel" name="customerPhone" id="checkoutCustomerPhone" class="form-control" value="@defaultPhone" required />
                     </div>
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label class="form-label small fw-medium text-lux-muted mb-0">ที่อยู่จัดส่งสินค้า</label>
-                            <a asp-controller="Account" asp-action="Profile" class="small text-lux-gold text-decoration-none fw-medium">
-                                <i class="bi bi-pencil-square me-1"></i>จัดการสมุดที่อยู่
-                            </a>
+                            <button type="button" class="btn btn-link p-0 small text-lux-gold text-decoration-none fw-medium" data-bs-toggle="modal" data-bs-target="#addressBookModal">
+                                <i class="bi bi-journal-bookmark-fill me-1"></i>จัดการสมุดที่อยู่ (@savedAddresses.Count)
+                            </button>
                         </div>
-                        <textarea name="shippingAddress" class="form-control" rows="3" required>@defaultAddress</textarea>
+                        <textarea name="shippingAddress" id="checkoutShippingAddress" class="form-control" rows="3" required>@defaultAddress</textarea>
                     </div>
 
                     <hr class="my-4" style="border-color: var(--lux-border);" />
@@ -66,10 +68,10 @@
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label small fw-medium text-lux-muted">แนบหลักฐานสลิปการโอนเงิน (JPG, PNG, WEBP ไม่เกิน 5MB)</label>
-                            <input type="file" name="paymentSlip" id="paymentSlipInput" class="form-control" accept="image/*" />
+                            <label class="form-label small fw-medium text-lux-muted">แนบหลักฐานสลิปการโอนเงิน (JPG, PNG, WEBP ไม่เกิน 5MB) <span class="text-danger">*</span></label>
+                            <input type="file" name="paymentSlip" id="paymentSlipInput" class="form-control" accept="image/*" required />
                             <div class="small text-lux-muted mt-2">
-                                <i class="bi bi-shield-check text-lux-gold me-1"></i>คำสั่งซื้อจะเข้าสู่สถานะ <strong>รอฝ่ายบัญชีตรวจสอบสลิป</strong>
+                                <i class="bi bi-shield-check text-lux-gold me-1"></i>คำสั่งซื้อจะเข้าสู่สถานะ <strong>รอฝ่ายบัญชีตรวจสอบสลิป</strong> (ไม่สามารถเปลี่ยนรูปสลิปภายหลังได้)
                             </div>
                         </div>
                     </div>
@@ -132,6 +134,130 @@
     </div>
 </div>
 
+<!-- Modal สมุดที่อยู่จัดส่ง (เลือกเปลี่ยนที่อยู่ได้ทันทีไม่ต้องออกจากหน้า Checkout) -->
+<div class="modal fade" id="addressBookModal" tabindex="-1" aria-labelledby="addressBookModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom px-4 py-3" style="background: var(--lux-tint);">
+                <div>
+                    <h5 class="modal-title fw-bold text-lux-espresso m-0" id="addressBookModalLabel">
+                        <i class="bi bi-geo-alt-fill text-lux-gold me-2"></i>เลือกที่อยู่จัดส่งจากสมุดที่อยู่
+                    </h5>
+                    <div class="small text-lux-muted">คลิกเลือกที่อยู่ที่เคยบันทึกไว้เพื่อเปลี่ยนข้อมูลผู้รับและที่อยู่จัดส่งทันที</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- รายการที่อยู่ที่บันทึกไว้ -->
+                <div id="savedAddressListContainer" class="d-flex flex-column gap-3 mb-3">
+                    @if (savedAddresses.Any())
+                    {
+                        foreach (var addr in savedAddresses.OrderByDescending(a => a.IsDefault))
+                        {
+                            var rName = !string.IsNullOrWhiteSpace(addr.RecipientName) ? addr.RecipientName : defaultName;
+                            var rPhone = !string.IsNullOrWhiteSpace(addr.Phone) ? addr.Phone : defaultPhone;
+                            var rDisplay = addr.DisplayAddress;
+                            var isCurrent = rDisplay == defaultAddress;
+                            <div class="p-3 rounded-4 border address-choice-card @(isCurrent ? "border-warning bg-lux-tint" : "bg-white")"
+                                 style="cursor: pointer; transition: all 0.15s ease;"
+                                 data-recipient="@rName"
+                                 data-phone="@rPhone"
+                                 data-address="@rDisplay"
+                                 onclick="selectSavedAddress(this)">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-dark rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                                <i class="bi bi-house-door me-1"></i>@addr.Title
+                                            </span>
+                                            @if (addr.IsDefault)
+                                            {
+                                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size: 0.7rem;">ที่อยู่หลัก</span>
+                                            }
+                                            <span class="fw-bold text-lux-espresso small">@rName</span>
+                                            <span class="text-lux-muted small">(@rPhone)</span>
+                                        </div>
+                                        <div class="small text-secondary mt-1">@rDisplay</div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm @(isCurrent ? "btn-warning text-dark fw-semibold" : "btn-outline-dark") rounded-pill px-3 flex-shrink-0 select-addr-btn">
+                                        @(isCurrent ? "กำลังเลือกใช้" : "เลือกใช้ที่อยู่นี้")
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div id="emptyAddressState" class="text-center py-4 text-lux-muted small">
+                            <i class="bi bi-journal-x fs-2 d-block mb-2 text-secondary"></i>
+                            ยังไม่มีที่อยู่ที่บันทึกไว้ในสมุดที่อยู่ คุณสามารถกดเพิ่มที่อยู่ใหม่ด้านล่างได้ทันที
+                        </div>
+                    }
+                </div>
+
+                <!-- ปุ่มเปิดฟอร์มเพิ่มที่อยู่ใหม่ด่วน -->
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                    <button class="btn btn-sm btn-outline-dark rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#quickAddAddressCollapse">
+                        <i class="bi bi-plus-circle me-1"></i> เพิ่มที่อยู่จัดส่งใหม่
+                    </button>
+                    <a asp-controller="Account" asp-action="Profile" class="small text-lux-muted text-decoration-none">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>ไปหน้าจัดการข้อมูลส่วนตัวและที่อยู่ทั้งหมด
+                    </a>
+                </div>
+
+                <!-- ฟอร์มเพิ่มที่อยู่ใหม่ด่วนภายใน Modal -->
+                <div class="collapse mt-3" id="quickAddAddressCollapse">
+                    <div class="p-3 rounded-4 bg-light border">
+                        <h6 class="fw-bold text-lux-espresso mb-3 small">
+                            <i class="bi bi-plus-square-fill text-lux-gold me-1"></i> เพิ่มที่อยู่ใหม่ลงในสมุดที่อยู่
+                        </h6>
+                        <div id="quickAddrError" class="alert alert-danger py-1 px-2 small d-none mb-2"></div>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted mb-1">ป้ายกำกับที่อยู่</label>
+                                <input type="text" id="newAddrTitle" class="form-control form-control-sm" value="ที่อยู่บ้าน" placeholder="เช่น บ้าน, ที่ทำงาน" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted mb-1">ชื่อ-นามสกุล ผู้รับ</label>
+                                <input type="text" id="newAddrRecipient" class="form-control form-control-sm" value="@defaultName" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted mb-1">เบอร์โทรศัพท์ผู้รับ</label>
+                                <input type="tel" id="newAddrPhone" class="form-control form-control-sm" value="@defaultPhone" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small text-muted mb-1">บ้านเลขที่ ซอย หมู่บ้าน ถนน</label>
+                                <input type="text" id="newAddrFull" class="form-control form-control-sm" placeholder="เช่น 99/9 หมู่ 4 ถ.พหลโยธิน" />
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <label class="form-label small text-muted mb-1">แขวง/ตำบล</label>
+                                <input type="text" id="newAddrSubdistrict" class="form-control form-control-sm" placeholder="เช่น จอมพล" />
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <label class="form-label small text-muted mb-1">เขต/อำเภอ</label>
+                                <input type="text" id="newAddrDistrict" class="form-control form-control-sm" placeholder="เช่น จตุจักร" />
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <label class="form-label small text-muted mb-1">จังหวัด</label>
+                                <input type="text" id="newAddrProvince" class="form-control form-control-sm" placeholder="เช่น กรุงเทพมหานคร" />
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <label class="form-label small text-muted mb-1">รหัสไปรษณีย์</label>
+                                <input type="text" id="newAddrPostal" class="form-control form-control-sm" placeholder="เช่น 10900" />
+                            </div>
+                            <div class="col-12 mt-2 d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-sm btn-dark rounded-pill px-3" onclick="saveQuickAddress()">
+                                    <i class="bi bi-check2-circle me-1"></i> บันทึกและใช้ที่อยู่นี้ทันที
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         function togglePaymentSection() {
@@ -139,6 +265,128 @@
             const isCod = method.indexOf('COD') !== -1;
             document.getElementById('bankTransferBox').classList.toggle('d-none', isCod);
             document.getElementById('codNoticeBox').classList.toggle('d-none', !isCod);
+            const slipInput = document.getElementById('paymentSlipInput');
+            if (slipInput) {
+                slipInput.required = !isCod;
+            }
+        }
+
+        function selectSavedAddress(cardEl) {
+            const recipient = cardEl.getAttribute('data-recipient') || '';
+            const phone = cardEl.getAttribute('data-phone') || '';
+            const address = cardEl.getAttribute('data-address') || '';
+
+            const nameInput = document.getElementById('checkoutCustomerName');
+            const phoneInput = document.getElementById('checkoutCustomerPhone');
+            const addrInput = document.getElementById('checkoutShippingAddress');
+
+            if (nameInput && recipient) nameInput.value = recipient;
+            if (phoneInput && phone) phoneInput.value = phone;
+            if (addrInput && address) addrInput.value = address;
+
+            // อัปเดตสถานะการ์ดใน Modal
+            document.querySelectorAll('.address-choice-card').forEach(c => {
+                c.classList.remove('border-warning', 'bg-lux-tint');
+                c.classList.add('bg-white');
+                const btn = c.querySelector('.select-addr-btn');
+                if (btn) {
+                    btn.className = 'btn btn-sm btn-outline-dark rounded-pill px-3 flex-shrink-0 select-addr-btn';
+                    btn.textContent = 'เลือกใช้ที่อยู่นี้';
+                }
+            });
+
+            cardEl.classList.remove('bg-white');
+            cardEl.classList.add('border-warning', 'bg-lux-tint');
+            const activeBtn = cardEl.querySelector('.select-addr-btn');
+            if (activeBtn) {
+                activeBtn.className = 'btn btn-sm btn-warning text-dark fw-semibold rounded-pill px-3 flex-shrink-0 select-addr-btn';
+                activeBtn.textContent = 'กำลังเลือกใช้';
+            }
+
+            // ปิด Modal ทันที
+            const modalEl = document.getElementById('addressBookModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+            }
+        }
+
+        async function saveQuickAddress() {
+            const title = document.getElementById('newAddrTitle').value.trim() || 'ที่อยู่จัดส่ง';
+            const recipientName = document.getElementById('newAddrRecipient').value.trim();
+            const phone = document.getElementById('newAddrPhone').value.trim();
+            const fullAddress = document.getElementById('newAddrFull').value.trim();
+            const subdistrict = document.getElementById('newAddrSubdistrict').value.trim();
+            const district = document.getElementById('newAddrDistrict').value.trim();
+            const province = document.getElementById('newAddrProvince').value.trim();
+            const postalCode = document.getElementById('newAddrPostal').value.trim();
+            const errBox = document.getElementById('quickAddrError');
+
+            if (!fullAddress || !province) {
+                errBox.textContent = 'กรุณากรอกบ้านเลขที่/ที่อยู่ และจังหวัดให้ครบถ้วน';
+                errBox.classList.remove('d-none');
+                return;
+            }
+            errBox.classList.add('d-none');
+
+            const formData = new FormData();
+            formData.append('Title', title);
+            formData.append('RecipientName', recipientName);
+            formData.append('Phone', phone);
+            formData.append('FullAddress', fullAddress);
+            formData.append('Subdistrict', subdistrict);
+            formData.append('District', district);
+            formData.append('Province', province);
+            formData.append('PostalCode', postalCode);
+            formData.append('IsDefault', 'true');
+
+            try {
+                const resp = await fetch('/Account/SaveAddress', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await resp.json();
+                if (!data.success) {
+                    errBox.textContent = data.message || 'ไม่สามารถบันทึกที่อยู่ได้';
+                    errBox.classList.remove('d-none');
+                    return;
+                }
+
+                // สร้างการ์ดใหม่ในรายการแล้วเลือกใช้ทันที
+                const emptyEl = document.getElementById('emptyAddressState');
+                if (emptyEl) emptyEl.remove();
+
+                const listContainer = document.getElementById('savedAddressListContainer');
+                const newCard = document.createElement('div');
+                newCard.className = 'p-3 rounded-4 border address-choice-card bg-white';
+                newCard.style.cursor = 'pointer';
+                newCard.setAttribute('data-recipient', data.recipientName || recipientName);
+                newCard.setAttribute('data-phone', data.phone || phone);
+                newCard.setAttribute('data-address', data.displayAddress);
+                newCard.onclick = function () { selectSavedAddress(newCard); };
+                newCard.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-dark rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                    <i class="bi bi-house-door me-1"></i>${data.title || title}
+                                </span>
+                                <span class="fw-bold text-lux-espresso small">${data.recipientName || recipientName}</span>
+                                <span class="text-lux-muted small">(${data.phone || phone})</span>
+                            </div>
+                            <div class="small text-secondary mt-1">${data.displayAddress}</div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 flex-shrink-0 select-addr-btn">
+                            เลือกใช้ที่อยู่นี้
+                        </button>
+                    </div>`;
+                listContainer.prepend(newCard);
+                selectSavedAddress(newCard);
+            } catch (e) {
+                errBox.textContent = 'เกิดข้อผิดพลาดในการบันทึกที่อยู่';
+                errBox.classList.remove('d-none');
+            }
         }
     </script>
 }

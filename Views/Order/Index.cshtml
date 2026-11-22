@@ -102,22 +102,7 @@
                         <td>
                             @if (order.Status == OrderStatus.PendingPayment)
                             {
-                                <div class="d-flex align-items-center gap-1 flex-wrap">
-                                    <a asp-controller="Accounting" asp-action="Index" asp-route-role="@(User.IsInRole("Owner") ? "Owner" : null)" class="btn btn-sm btn-outline-warning text-nowrap" title="ไปดูสลิปและอนุมัติที่หน้าฝ่ายบัญชี">
-                                        <i class="bi bi-receipt"></i> ไปตรวจสลิป (บัญชี)
-                                    </a>
-                                    @if (User.IsInRole("Owner") || User.IsInRole("Admin"))
-                                    {
-                                        <form asp-controller="Accounting" asp-action="ApprovePayment" method="post" class="m-0">
-                                            <input type="hidden" name="orderId" value="@order.OrderId" />
-                                            <input type="hidden" name="role" value="@(ViewContext.HttpContext.Request.Query["role"].FirstOrDefault() ?? User.FindFirstValue(ClaimTypes.Role))" />
-                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-                                            <button type="submit" class="btn btn-sm btn-success text-nowrap" title="อนุมัติการชำระเงินทันที (สิทธิ์ Owner/Admin)">
-                                                <i class="bi bi-check-circle"></i> อนุมัติทันที
-                                            </button>
-                                        </form>
-                                    }
-                                </div>
+                                <span class="text-warning small fw-semibold"><i class="bi bi-hourglass-split me-1"></i>รอฝ่ายบัญชี (ACC) ตรวจสอบสลิป</span>
                             }
                             else
                             {

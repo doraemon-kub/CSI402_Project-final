@@ -54,19 +54,42 @@ namespace CSI402_Project_final.Controllers
 
         // เพิ่มหรือแก้ไขที่อยู่จัดส่ง
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult SaveAddress(UserAddress address)
+        public IActionResult SaveAddress(UserAddress address, string? returnUrl = null)
         {
             var username = User.Identity?.Name ?? "";
             if (string.IsNullOrWhiteSpace(address.FullAddress) || string.IsNullOrWhiteSpace(address.Province))
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "กรุณากรอกข้อมูลที่อยู่และจังหวัดให้ครบถ้วน" });
+                }
                 TempData["ErrorMessage"] = "กรุณากรอกข้อมูลที่อยู่ให้ครบถ้วน";
-                return RedirectToAction(nameof(Profile));
+                return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
+                    ? LocalRedirect(returnUrl)
+                    : RedirectToAction(nameof(Profile));
             }
 
             _repo.AddOrUpdateAddress(username, address);
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    success = true,
+                    id = address.Id,
+                    title = address.Title,
+                    recipientName = address.RecipientName,
+                    phone = address.Phone,
+                    displayAddress = address.DisplayAddress,
+                    isDefault = address.IsDefault,
+                    message = "บันทึกที่อยู่จัดส่งใหม่เรียบร้อยแล้ว"
+                });
+            }
+
             TempData["SuccessMessage"] = "บันทึกที่อยู่จัดส่งเรียบร้อยแล้ว";
-            return RedirectToAction(nameof(Profile));
+            return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? LocalRedirect(returnUrl)
+                : RedirectToAction(nameof(Profile));
         }
 
         // ลบที่อยู่จัดส่ง
@@ -125,7 +148,7 @@ namespace CSI402_Project_final.Controllers
             }
             else
             {
-                TempData["ErrorMessage"] = "ไม่สามารถแนบสลิปสำหรับคำสั่งซื้อนี้ได้";
+                TempData["ErrorMessage"] = "ไม่สามารถแก้ไขหรือเปลี่ยนรูปสลิปได้ เนื่องจากคำสั่งซื้อนี้มีการแนบหลักฐานสลิปและถูกล็อกแล้ว";
             }
 
             return RedirectToAction(nameof(Orders));

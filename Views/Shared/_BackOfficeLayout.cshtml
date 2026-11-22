@@ -19,10 +19,10 @@
         }
         else
         {
-            var demo = DemoUserHelper.GetDemoUserInfo(roleParam);
-            currentRole = demo.RoleName;
-            username = demo.Username;
-            rawFullName = demo.FullName;
+            var resolved = Repo.ResolveTabUserInfo(roleParam);
+            currentRole = resolved.RoleName;
+            username = resolved.Username;
+            rawFullName = resolved.FullName;
         }
     }
 
@@ -33,6 +33,32 @@
     bool HasRole(string role) => string.Equals(currentRole, role, StringComparison.OrdinalIgnoreCase);
     bool IsActive(string ctrl) => string.Equals(activeCtrl, ctrl, StringComparison.OrdinalIgnoreCase);
     bool isOwner = HasRole("Owner");
+
+    // ดึงและลบ TempData Cookie ทันทีก่อนเริ่มเขียน HTML Stream และตรวจสอบว่าข้อความเป็นของ Role/User ในแท็บนี้จริงหรือไม่
+    var flashSuccess = TempData["SuccessMessage"] as string;
+    var flashError = TempData["ErrorMessage"] as string;
+    var flashTargetRole = TempData["SuccessTargetRole"] as string;
+    var flashTargetUser = TempData["SuccessTargetUser"] as string;
+
+    if (TempData.Keys.Any())
+    {
+        TempData.Clear();
+        ViewContext.HttpContext.Response.Cookies.Delete(".AspNetCore.Mvc.CookieTempDataProvider");
+    }
+
+    if (!string.IsNullOrEmpty(flashSuccess))
+    {
+        if (!string.IsNullOrEmpty(flashTargetRole) &&
+            !string.Equals(flashTargetRole, currentRole, StringComparison.OrdinalIgnoreCase))
+        {
+            flashSuccess = null;
+        }
+        else if (!string.IsNullOrEmpty(flashTargetUser) &&
+                 !string.Equals(flashTargetUser, username, StringComparison.OrdinalIgnoreCase))
+        {
+            flashSuccess = null;
+        }
+    }
 }
 <!DOCTYPE html>
 <html lang="th">
@@ -365,27 +391,27 @@
             </header>
 
             <!-- Notifications -->
-            @if (TempData["SuccessMessage"] != null)
+            @if (!string.IsNullOrEmpty(flashSuccess))
             {
                 <div class="px-3 pt-2 pb-0">
                     <div class="alert alert-success alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 px-3 small d-flex align-items-center justify-content-between"
                          role="alert">
                         <div class="d-flex align-items-center me-2">
                             <i class="bi bi-check-circle-fill me-2 fs-6"></i>
-                            <span>@TempData["SuccessMessage"]</span>
+                            <span>@flashSuccess</span>
                         </div>
                         <button type="button" class="btn-close position-static p-1 m-0" data-bs-dismiss="alert" aria-label="Close" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0;"></button>
                     </div>
                 </div>
             }
-            @if (TempData["ErrorMessage"] != null)
+            @if (!string.IsNullOrEmpty(flashError))
             {
                 <div class="px-3 pt-2 pb-0">
                     <div class="alert alert-danger alert-dismissible fade show shadow-sm m-0 rounded-3 py-2 px-3 small d-flex align-items-center justify-content-between"
                          role="alert">
                         <div class="d-flex align-items-center me-2">
                             <i class="bi bi-exclamation-triangle-fill me-2 fs-6"></i>
-                            <span>@TempData["ErrorMessage"]</span>
+                            <span>@flashError</span>
                         </div>
                         <button type="button" class="btn-close position-static p-1 m-0" data-bs-dismiss="alert" aria-label="Close" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0;"></button>
                     </div>
@@ -433,6 +459,23 @@
         // 2. รับแจ้งเตือนสินค้าสต็อกต่ำกว่าเกณฑ์แบบ Real-Time (Req 18: Inventory Staff)
         staffHubConnection.on("ReceiveLowStockAlert", function (productName, currentStock) {
             showStaffToast(`⚠️ เตือนสต็อกต่ำ! สินค้า '${productName}' เหลือเพียง ${currentStock} ชิ้น`);
+        });
+
+        // 3. เตะพนักงานออกจากระบบแบบ Real-Time ทันทีเมื่อถูกผู้ดูแลระบบสั่งระงับบัญชีระหว่างล็อกอินอยู่
+        staffHubConnection.on("ReceiveAccountSuspended", function (suspendedUsername, suspendedRole, reason, untilText) {
+            const currentTabUser = "@username".toLowerCase();
+            const currentTabRole = (sessionStorage.getItem('petshop_tab_role') || "@currentRole").toLowerCase();
+            const targetUser = (suspendedUsername || "").toLowerCase();
+            const targetRole = (suspendedRole || "").toLowerCase();
+
+            // หากเป็นแท็บของ Admin/Owner ที่เป็นคนกดระงับคนอื่น ไม่ต้องเตะตัวเองออก (เว้นแต่บัญชีตัวเองโดนระงับ)
+            const isSelfSuspended = (currentTabUser && currentTabUser === targetUser) ||
+                                    (currentTabRole === targetRole && currentTabRole !== "admin" && currentTabRole !== "owner");
+
+            if (isSelfSuspended) {
+                sessionStorage.setItem('petshop_tab_role', 'Guest');
+                window.location.replace(`/Auth/Login?suspended=true&u=${encodeURIComponent(suspendedUsername)}&reason=${encodeURIComponent(reason)}&until=${encodeURIComponent(untilText)}`);
+            }
         });
 
         staffHubConnection.start().catch(err => console.log("Staff SignalR Error: ", err));

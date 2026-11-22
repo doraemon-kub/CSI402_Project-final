@@ -18,13 +18,30 @@ namespace CSI402_Project_final.Controllers
             _repo = repo;
         }
 
-        // หน้า Login (GET)
+        // หน้า Login (GET) - แสดงหน้าเข้าสู่ระบบเสมอเพื่อให้แต่ละแท็บล็อกอินแยกบทบาทได้อย่างอิสระ
         [HttpGet]
-        public IActionResult Login(string? returnUrl = null)
+        public IActionResult Login(
+            string? returnUrl = null,
+            bool suspended = false,
+            string? u = null,
+            string? reason = null,
+            string? until = null)
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            if (suspended || !string.IsNullOrEmpty(u))
             {
-                return RedirectToRoleHome(User.FindFirstValue(ClaimTypes.Role));
+                var dbUser = !string.IsNullOrEmpty(u) ? _repo.FindUserByUsernameOrEmail(u) : null;
+                if (dbUser != null && !dbUser.IsActive)
+                {
+                    ViewBag.SuspendedUser = dbUser.Username;
+                    ViewBag.SuspendedReason = dbUser.SuspensionReason ?? reason ?? "ระงับการใช้งานโดยผู้ดูแลระบบ";
+                    ViewBag.SuspendedUntil = dbUser.SuspensionDisplayUntil;
+                }
+                else if (suspended)
+                {
+                    ViewBag.SuspendedUser = u ?? "บัญชีของคุณ";
+                    ViewBag.SuspendedReason = reason ?? "ระงับการใช้งานโดยผู้ดูแลระบบ";
+                    ViewBag.SuspendedUntil = until ?? "ระงับถาวร";
+                }
             }
 
             ViewBag.ReturnUrl = returnUrl;
@@ -40,6 +57,11 @@ namespace CSI402_Project_final.Controllers
                 "shipping", "accounting", "support", "customer"
             };
             var allUsers = _repo.Users;
+            foreach (var u in allUsers)
+            {
+                _repo.CheckAndRefreshUserSuspension(u);
+            }
+            allUsers = _repo.Users;
             var prioritized = allUsers
                 .Where(u => systemUsernames.Contains(u.Username.ToLowerInvariant()))
                 .OrderByDescending(u => u.Role)
@@ -49,7 +71,7 @@ namespace CSI402_Project_final.Controllers
 
         // การประมวลผล Login (POST)
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             ViewBag.AllDemoUsers = GetDemoRoleUsers();
@@ -59,10 +81,20 @@ namespace CSI402_Project_final.Controllers
                 return View(model);
             }
 
+            var candidate = _repo.FindUserByUsernameOrEmail(model.Username);
+            if (candidate != null && candidate.Password == model.Password && !candidate.IsActive)
+            {
+                ViewBag.SuspendedUser = candidate.Username;
+                ViewBag.SuspendedReason = candidate.SuspensionReason ?? "ระงับการใช้งานโดยผู้ดูแลระบบ";
+                ViewBag.SuspendedUntil = candidate.SuspensionDisplayUntil;
+                ModelState.AddModelError(string.Empty, $"บัญชี '{candidate.Username}' ถูกระงับการใช้งาน ({candidate.SuspensionDisplayUntil}) เนื่องจาก: {ViewBag.SuspendedReason}");
+                return View(model);
+            }
+
             var user = _repo.ValidateUser(model.Username, model.Password);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือบัญชีถูกระงับ");
+                ModelState.AddModelError(string.Empty, "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
                 return View(model);
             }
 
@@ -71,39 +103,73 @@ namespace CSI402_Project_final.Controllers
             _repo.LogAudit("LOGIN", "user", user.Id.ToString(), $"เข้าสู่ระบบด้วย Username '{user.Username}'", user);
 
             TempData["SuccessMessage"] = FormatWelcomeMessage(user.FullName);
+            TempData["SuccessTargetRole"] = user.Role.ToString();
+            TempData["SuccessTargetUser"] = user.Username;
 
-            if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-            {
-                return LocalRedirect(model.ReturnUrl);
-            }
-
-            return RedirectToRoleHome(user.Role.ToString());
+            return RedirectToRoleHome(user.Role.ToString(), user.Username);
         }
 
-        // Quick Demo Login สำหรับทดสอบคลิกเดียว
+        // Quick Demo Login สำหรับทดสอบคลิกเดียว (ตรวจสอบสถานะการระงับบัญชีก่อนอนุญาตให้เข้าสู่ระบบ)
+        [HttpGet]
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> QuickLogin(string username)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> QuickLogin(string? username = null, string? returnUrl = null)
         {
-            var user = _repo.Users.FirstOrDefault(u =>
-                u.Username.Equals(username, System.StringComparison.OrdinalIgnoreCase) && u.IsActive);
+            if (string.IsNullOrWhiteSpace(username)) return RedirectToAction(nameof(Login));
+
+            var user = _repo.FindUserByUsernameOrEmail(username);
+            if (user == null)
+            {
+                var info = DemoUserHelper.GetDemoUserInfo(username);
+                user = _repo.FindUserByUsernameOrEmail(info.Username);
+            }
+
             if (user == null) return RedirectToAction(nameof(Login));
+
+            // หากบัญชีถูกระงับอยู่ ห้ามเข้าสู่ระบบเด็ดขาด และแสดงเหตุผลพร้อมระยะเวลาที่ถูกระงับ
+            if (!user.IsActive)
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction(nameof(Login), new
+                {
+                    suspended = true,
+                    u = user.Username,
+                    reason = user.SuspensionReason ?? "ระงับการใช้งานโดยผู้ดูแลระบบ",
+                    until = user.SuspensionDisplayUntil
+                });
+            }
 
             await SignInUserAsync(user, isPersistent: true);
             _repo.MergeGuestCartToUser(user.Id);
             _repo.LogAudit("QUICK_LOGIN", "user", user.Id.ToString(), $"Quick Login '{user.Username}'", user);
 
             TempData["SuccessMessage"] = FormatWelcomeMessage(user.FullName);
-            return RedirectToRoleHome(user.Role.ToString());
+            TempData["SuccessTargetRole"] = user.Role.ToString();
+            TempData["SuccessTargetUser"] = user.Username;
+
+            return RedirectToRoleHome(user.Role.ToString(), user.Username);
         }
 
-        // Multi-Role Switcher: สลับบทบาทผู้ใช้แบบเรียลไทม์ พร้อมล็อกอินผู้ใช้ใน Session นั้นๆ ทันที
+        // Multi-Role Switcher: สลับบทบาทผู้ใช้แบบเรียลไทม์ (หากบัญชีของบทบาทนั้นถูกระงับ จะไม่อนุญาตให้เข้าใช้งาน)
         [HttpGet]
         public async Task<IActionResult> SwitchRole(string role, string? returnUrl = null)
         {
             var info = DemoUserHelper.GetDemoUserInfo(role);
-            var user = _repo.Users.FirstOrDefault(u =>
-                u.Username.Equals(info.Username, System.StringComparison.OrdinalIgnoreCase) && u.IsActive);
+            var user = !string.IsNullOrEmpty(info.Username)
+                ? _repo.FindUserByUsernameOrEmail(info.Username)
+                : null;
+
+            if (user != null && !user.IsActive)
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction(nameof(Login), new
+                {
+                    suspended = true,
+                    u = user.Username,
+                    reason = user.SuspensionReason ?? "ระงับการใช้งานโดยผู้ดูแลระบบ",
+                    until = user.SuspensionDisplayUntil
+                });
+            }
 
             if (user != null)
             {
@@ -111,6 +177,8 @@ namespace CSI402_Project_final.Controllers
                 _repo.MergeGuestCartToUser(user.Id);
                 _repo.LogAudit("ROLE_SWITCH", "user", user.Id.ToString(), $"สลับบทบาทเป็น '{user.Username}' ({info.RoleName})", user);
                 TempData["SuccessMessage"] = FormatWelcomeMessage(user.FullName);
+                TempData["SuccessTargetRole"] = info.RoleName;
+                TempData["SuccessTargetUser"] = user.Username;
             }
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -121,20 +189,16 @@ namespace CSI402_Project_final.Controllers
             return RedirectToRoleHome(info.RoleName);
         }
 
-        // หน้า Register (GET)
+        // หน้า Register (GET) - แสดงหน้าสมัครสมาชิกเสมอโดยไม่เด้งกลับหน้าหลักแม้แท็บอื่นจะล็อกอินอยู่
         [HttpGet]
         public IActionResult Register()
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                return RedirectToAction("Index", "Home");
-            }
             return View(new RegisterViewModel());
         }
 
         // การประมวลผล Register (POST)
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
@@ -152,13 +216,16 @@ namespace CSI402_Project_final.Controllers
             await SignInUserAsync(newUser, isPersistent: true);
             _repo.MergeGuestCartToUser(newUser.Id);
             TempData["SuccessMessage"] = $"สมัครสมาชิกสำเร็จ! ยินดีต้อนรับคุณ {newUser.FullName}";
+            TempData["SuccessTargetRole"] = "Customer";
+            TempData["SuccessTargetUser"] = newUser.Username;
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Home", new { role = newUser.Username });
         }
 
         // Logout
         [HttpPost]
         [HttpGet]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Logout()
         {
             if (User.Identity?.IsAuthenticated == true)
@@ -167,7 +234,9 @@ namespace CSI402_Project_final.Controllers
             }
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             TempData["SuccessMessage"] = "คุณได้ออกจากระบบเรียบร้อยแล้ว";
-            return RedirectToAction("Index", "Home");
+            TempData["SuccessTargetRole"] = "Guest";
+            TempData["SuccessTargetUser"] = "";
+            return RedirectToAction("Index", "Home", new { role = "Guest" });
         }
 
         // หน้า Access Denied เมื่อไม่มีสิทธิ์
@@ -243,20 +312,26 @@ namespace CSI402_Project_final.Controllers
                 authProperties);
         }
 
-        // Helper: นำทางไปยังหน้าหลักของแต่ละ Role
-        private IActionResult RedirectToRoleHome(string? role)
+        // Helper: นำทางไปยังหน้าหลักของแต่ละ Role (รองรับแยก Username ของแต่ละแท็บอิสระ)
+        private IActionResult RedirectToRoleHome(string? role, string? username = null)
         {
+            var canonical = DemoUserHelper.GetDemoUserInfo(role);
+            string tabRoleKey = (!string.IsNullOrWhiteSpace(username) &&
+                                 !string.Equals(username, canonical.Username, System.StringComparison.OrdinalIgnoreCase))
+                ? username
+                : (role ?? "Customer");
+
             return role switch
             {
-                nameof(UserRole.InventoryStaff) => RedirectToAction("Index", "Inventory", new { role }),
-                nameof(UserRole.OrderStaff) => RedirectToAction("Index", "Order", new { role }),
-                nameof(UserRole.ShippingStaff) => RedirectToAction("Index", "Shipping", new { role }),
-                nameof(UserRole.MarketingStaff) => RedirectToAction("Index", "Marketing", new { role }),
-                nameof(UserRole.AccountingStaff) => RedirectToAction("Index", "Accounting", new { role }),
-                nameof(UserRole.ITSupport) => RedirectToAction("Index", "Support", new { role }),
-                nameof(UserRole.Admin) => RedirectToAction("Index", "Admin", new { role }),
-                nameof(UserRole.Owner) => RedirectToAction("Index", "Owner", new { role = "Owner" }),
-                _ => RedirectToAction("Index", "Home", new { role = "Customer" })
+                nameof(UserRole.InventoryStaff) => RedirectToAction("Index", "Inventory", new { role = tabRoleKey }),
+                nameof(UserRole.OrderStaff) => RedirectToAction("Index", "Order", new { role = tabRoleKey }),
+                nameof(UserRole.ShippingStaff) => RedirectToAction("Index", "Shipping", new { role = tabRoleKey }),
+                nameof(UserRole.MarketingStaff) => RedirectToAction("Index", "Marketing", new { role = tabRoleKey }),
+                nameof(UserRole.AccountingStaff) => RedirectToAction("Index", "Accounting", new { role = tabRoleKey }),
+                nameof(UserRole.ITSupport) => RedirectToAction("Index", "Support", new { role = tabRoleKey }),
+                nameof(UserRole.Admin) => RedirectToAction("Index", "Admin", new { role = tabRoleKey }),
+                nameof(UserRole.Owner) => RedirectToAction("Index", "Owner", new { role = tabRoleKey }),
+                _ => RedirectToAction("Index", "Home", new { role = tabRoleKey })
             };
         }
     }

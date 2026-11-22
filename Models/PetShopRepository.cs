@@ -410,6 +410,31 @@ namespace CSI402_Project_final.Models
         // User & Profile & Address Methods (`user`, `useraddress`)
         // ==========================================
 
+        public bool CheckAndRefreshUserSuspension(SystemUser? user)
+        {
+            if (user == null) return false;
+            if (user.IsActive) return true;
+
+            // ตรวจสอบว่าครบกำหนดระยะเวลาระงับหรือยัง
+            if (user.SuspendedUntil.HasValue && DateTime.Now >= user.SuspendedUntil.Value)
+            {
+                var dbUser = _db.Users.FirstOrDefault(u => u.Id == user.Id);
+                if (dbUser != null)
+                {
+                    dbUser.IsActive = true;
+                    dbUser.ClearSuspension();
+                    dbUser.UpdatedAt = DateTime.Now;
+                    _db.SaveChanges();
+                    InvalidateUserCache();
+                }
+                user.IsActive = true;
+                user.ClearSuspension();
+                return true;
+            }
+
+            return false;
+        }
+
         public SystemUser? ValidateUser(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password)) return null;
@@ -417,9 +442,23 @@ namespace CSI402_Project_final.Models
 
             var user = _db.Users
                 .Include(u => u.Addresses)
-                .FirstOrDefault(u => (u.Username == trimmed || u.Email == trimmed) && u.IsActive);
+                .FirstOrDefault(u => u.Username == trimmed || u.Email == trimmed);
 
             if (user == null || user.Password != password) return null;
+            if (!CheckAndRefreshUserSuspension(user)) return null;
+
+            return user;
+        }
+
+        public SystemUser? FindUserByUsernameOrEmail(string usernameOrEmail)
+        {
+            if (string.IsNullOrWhiteSpace(usernameOrEmail)) return null;
+            string trimmed = usernameOrEmail.Trim();
+            var user = _db.Users.FirstOrDefault(u => u.Username == trimmed || u.Email == trimmed);
+            if (user != null)
+            {
+                CheckAndRefreshUserSuspension(user);
+            }
             return user;
         }
 
@@ -427,6 +466,32 @@ namespace CSI402_Project_final.Models
         {
             if (string.IsNullOrWhiteSpace(username)) return null;
             return Users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public (string Username, string FullName, string RoleName, string UserId) ResolveTabUserInfo(string? roleOrUsername)
+        {
+            string key = (roleOrUsername ?? "").Trim();
+            if (string.IsNullOrEmpty(key) || string.Equals(key, "guest", StringComparison.OrdinalIgnoreCase))
+            {
+                return ("", "ผู้เยี่ยมชม", "Guest", "0");
+            }
+
+            // 1. ตรวจสอบว่าตรงกับ Username ของผู้ใช้ในฐานข้อมูลโดยตรงหรือไม่ (เช่น บัญชีที่สมัครใหม่ 'a', 'b' หรือบัญชีระบบ)
+            var directUser = Users.FirstOrDefault(u => u.Username.Equals(key, StringComparison.OrdinalIgnoreCase));
+            if (directUser != null)
+            {
+                return (directUser.Username, directUser.FullName, directUser.Role.ToString(), directUser.Id.ToString());
+            }
+
+            // 2. หากเป็นชื่อ Role มาตรฐาน (เช่น Customer, Owner, Admin, InventoryStaff) ให้ดึงจาก DemoUserHelper
+            var demo = DemoUserHelper.GetDemoUserInfo(key);
+            var demoDbUser = Users.FirstOrDefault(u => u.Username.Equals(demo.Username, StringComparison.OrdinalIgnoreCase));
+            if (demoDbUser != null)
+            {
+                return (demoDbUser.Username, demoDbUser.FullName, demoDbUser.Role.ToString(), demoDbUser.Id.ToString());
+            }
+
+            return (demo.Username, demo.FullName, demo.RoleName, DemoUserHelper.GetDemoUserId(key));
         }
 
         public void UpdateUserProfile(string username, string fullName, string email, string phone)
@@ -560,7 +625,7 @@ namespace CSI402_Project_final.Models
             return newUser;
         }
 
-        public bool UpdateUserRole(int userId, UserRole newRole, bool isActive)
+        public bool UpdateUserRole(int userId, UserRole newRole, bool isActive, string? suspendReason = null, int suspendDurationMinutes = -1)
         {
             var user = _db.Users.FirstOrDefault(u => u.Id == userId);
             if (user == null) return false;
@@ -568,11 +633,27 @@ namespace CSI402_Project_final.Models
             var oldRole = user.Role;
             user.Role = newRole;
             user.IsActive = isActive;
+
+            if (!isActive)
+            {
+                user.SetSuspension(suspendReason, suspendDurationMinutes);
+            }
+            else
+            {
+                user.ClearSuspension();
+            }
+
+            // Force EF Core change tracking on JSON list column
+            user.GrantedPermissions = user.GrantedPermissions?.ToList() ?? new List<string>();
             user.UpdatedAt = DateTime.Now;
             _db.SaveChanges();
             InvalidateUserCache();
 
-            LogAudit("UPDATE_USER_ROLE", "user", user.Id.ToString(), $"เปลี่ยนสิทธิ์ {user.Username} จาก {oldRole} เป็น {newRole} (Active={isActive})");
+            string detailMsg = isActive
+                ? $"เปลี่ยนสิทธิ์ {user.Username} จาก {oldRole} เป็น {newRole} (เปิดใช้งานปกติ)"
+                : $"ระงับบัญชี {user.Username} (เหตุผล: {user.SuspensionReason}, ระยะเวลา: {user.SuspensionDisplayUntil})";
+
+            LogAudit("UPDATE_USER_ROLE", "user", user.Id.ToString(), detailMsg);
             return true;
         }
 
@@ -992,11 +1073,14 @@ namespace CSI402_Project_final.Models
             if (user == null) return false;
 
             var order = _db.Orders.FirstOrDefault(o => o.OrderId == orderId && o.UserId == user.Id);
-            if (order == null || order.Status != OrderStatus.PendingPayment) return false;
+            // ห้ามแก้ไขหรือเปลี่ยนรูปสลิปหากเคยแนบสลิปไปแล้ว เพื่อป้องกันการทุจริตปลอมแปลงสลิปย้อนหลัง
+            if (order == null || order.Status != OrderStatus.PendingPayment || !string.IsNullOrEmpty(order.PaymentSlipUrl))
+                return false;
 
             order.PaymentSlipUrl = slipUrl;
             order.UpdatedAt = DateTime.Now;
             _db.SaveChanges();
+            InvalidateOrderCache();
 
             LogAudit("UPLOAD_PAYMENT_SLIP", "orders", orderId, $"ลูกค้าอัปโหลดหลักฐานสลิปโอนเงิน {slipUrl}", user);
             return true;

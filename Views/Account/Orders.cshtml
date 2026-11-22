@@ -108,15 +108,21 @@
                                             }
                                         </div>
 
-                                        @if (order.Status == OrderStatus.PendingPayment)
+                                        @if (order.Status == OrderStatus.PendingPayment && string.IsNullOrEmpty(order.PaymentSlipUrl))
                                         {
                                             <form asp-action="UploadSlip" method="post" enctype="multipart/form-data" class="mt-2 pt-2 border-top d-flex flex-wrap gap-2 align-items-center">
                                                 <input type="hidden" name="orderId" value="@order.OrderId" />
                                                 <input type="file" name="paymentSlip" class="form-control form-control-sm" style="max-width: 260px;" accept="image/*" required />
                                                 <button type="submit" class="btn btn-sm btn-dark">
-                                                    <i class="bi bi-upload"></i> @(string.IsNullOrEmpty(order.PaymentSlipUrl) ? "แนบสลิปโอนเงิน" : "เปลี่ยนรูปสลิป")
+                                                    <i class="bi bi-upload"></i> แนบสลิปโอนเงิน
                                                 </button>
                                             </form>
+                                        }
+                                        else if (!string.IsNullOrEmpty(order.PaymentSlipUrl))
+                                        {
+                                            <div class="small text-muted mt-2 pt-2 border-top">
+                                                <i class="bi bi-lock-fill text-secondary me-1"></i>หลักฐานสลิปถูกล็อกแล้วเพื่อป้องกันการทุจริต (ไม่สามารถแก้ไขหรือเปลี่ยนรูปสลิปหลังยืนยันได้)
+                                            </div>
                                         }
 
                                         @if (!string.IsNullOrEmpty(order.RefundReason) && order.Status == OrderStatus.Cancelled)

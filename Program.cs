@@ -7,7 +7,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add(new Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryTokenAttribute());
+});
 builder.Services.AddHttpContextAccessor();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -70,7 +73,7 @@ app.UseAuthentication();
 app.Use(async (context, next) =>
 {
     // 1. ตรวจสอบ Role จาก Query String (?role=... หรือ ?asRole=...)
-    string? roleParam = context.Request.Query["role"].FirstOrDefault() 
+    string? roleParam = context.Request.Query["role"].FirstOrDefault()
                         ?? context.Request.Query["asRole"].FirstOrDefault();
 
     // 2. ถ้าไม่มีใน Query ให้ตรวจใน Form Body (กรณี Submit Form เช่น UpdateStatus, ApprovePayment ฯลฯ)
@@ -78,7 +81,7 @@ app.Use(async (context, next) =>
     {
         try
         {
-            roleParam = context.Request.Form["role"].FirstOrDefault() 
+            roleParam = context.Request.Form["role"].FirstOrDefault()
                         ?? context.Request.Form["asRole"].FirstOrDefault();
         }
         catch { }
@@ -114,6 +117,14 @@ app.Use(async (context, next) =>
     // และสถานะ Cookie ปัจจุบันเป็น Customer (หรือ Guest) ซึ่งไม่มีสิทธิ์ใน Back-Office
     // ให้กำหนด Role ตามระบบงานที่กำลังเข้าถึงทันที เพื่อป้องกัน Access Denied ข้ามแท็บ
     string currentPath = context.Request.Path.Value?.Trim().ToLowerInvariant() ?? "";
+
+    // หากเปิดหน้า Login หรือ Register (GET) ให้แสดงสถานะเป็น Guest เสมอ ไม่ดึง Cookie ของแท็บอื่นมาแสดงปน
+    if ((currentPath.StartsWith("/auth/login") || currentPath.StartsWith("/auth/register")) &&
+        HttpMethods.IsGet(context.Request.Method))
+    {
+        roleParam = "guest";
+    }
+
     bool isBackOfficePath = currentPath.StartsWith("/inventory") ||
                             currentPath.StartsWith("/order") ||
                             currentPath.StartsWith("/shipping") ||
@@ -148,40 +159,77 @@ app.Use(async (context, next) =>
         }
     }
 
-    // 5. หากตรวจพบ Role ให้สร้าง ClaimsPrincipal จำลองสิทธิ์สำหรับ Request ของแท็บนี้ทันที (ความเร็วสูง ไม่ยิง Database ซ้ำซ้อน)
+    // 5. หากตรวจพบ Role/Username ของแท็บ ให้สร้าง ClaimsPrincipal จำลองสิทธิ์สำหรับ Request ของแท็บนี้ทันที (แยกแต่ละบัญชีออกจากกัน 100%)
     if (string.Equals(roleParam, "guest", StringComparison.OrdinalIgnoreCase))
     {
         context.User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity());
     }
     else if (!string.IsNullOrEmpty(roleParam))
     {
-        var (demoUsername, demoFullName, demoRole) = DemoUserHelper.GetDemoUserInfo(roleParam);
-        string userId = DemoUserHelper.GetDemoUserId(roleParam);
+        var repo = context.RequestServices.GetRequiredService<PetShopRepository>();
+        var (targetUsername, targetFullName, targetRole, targetUserId) = repo.ResolveTabUserInfo(roleParam);
+        string? cookieUsername = context.User?.Identity?.Name;
+        bool cookieMatchesExactUser = context.User?.Identity?.IsAuthenticated == true &&
+                                      string.Equals(cookieUsername, targetUsername, StringComparison.OrdinalIgnoreCase);
 
-        var claims = new List<System.Security.Claims.Claim>
+        if (!cookieMatchesExactUser && !string.IsNullOrEmpty(targetUsername))
         {
-            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId),
-            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, demoUsername),
-            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, demoRole),
-            new System.Security.Claims.Claim("FullName", demoFullName),
-            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, $"{demoUsername}@petshop.com"),
-            new System.Security.Claims.Claim("Phone", "081-234-5678")
-        };
-
-        // หากเป็น Owner หรือ Admin ให้สิทธิ์เข้าถึงทุก Role
-        if (demoRole == "Owner" || demoRole == "Admin")
-        {
-            foreach (UserRole r in Enum.GetValues(typeof(UserRole)))
+            var claims = new List<System.Security.Claims.Claim>
             {
-                if (r.ToString() != demoRole)
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, targetUserId),
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, targetUsername),
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, targetRole),
+                new System.Security.Claims.Claim("FullName", targetFullName),
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, $"{targetUsername}@petshop.com"),
+                new System.Security.Claims.Claim("Phone", "081-234-5678")
+            };
+
+            // หากเป็น Owner หรือ Admin ให้สิทธิ์เข้าถึงทุก Role
+            if (targetRole == "Owner" || targetRole == "Admin")
+            {
+                foreach (UserRole r in Enum.GetValues(typeof(UserRole)))
                 {
-                    claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, r.ToString()));
+                    if (r.ToString() != targetRole)
+                    {
+                        claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, r.ToString()));
+                    }
                 }
             }
-        }
 
-        var demoIdentity = new System.Security.Claims.ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        context.User = new System.Security.Claims.ClaimsPrincipal(demoIdentity);
+            var tabIdentity = new System.Security.Claims.ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            context.User = new System.Security.Claims.ClaimsPrincipal(tabIdentity);
+        }
+    }
+
+    // 6. ตรวจสอบสถานะการระงับบัญชีในทุก Request: หากผู้ใช้ที่กำลังล็อกอินอยู่โดนระงับ ให้เตะออกจากระบบไปหน้า Login ทันที
+    bool isExemptPath = currentPath.StartsWith("/auth/login") ||
+                        currentPath.StartsWith("/auth/register") ||
+                        currentPath.StartsWith("/auth/logout") ||
+                        currentPath.StartsWith("/petshophub") ||
+                        currentPath.StartsWith("/css") ||
+                        currentPath.StartsWith("/js") ||
+                        currentPath.StartsWith("/lib") ||
+                        currentPath.StartsWith("/images") ||
+                        currentPath.EndsWith(".html") ||
+                        currentPath.EndsWith(".ico");
+
+    if (!isExemptPath && context.User?.Identity?.IsAuthenticated == true)
+    {
+        string? activeUsername = context.User.Identity.Name;
+        if (!string.IsNullOrEmpty(activeUsername))
+        {
+            var repo = context.RequestServices.GetRequiredService<PetShopRepository>();
+            var dbUser = repo.FindUserByUsernameOrEmail(activeUsername);
+            if (dbUser != null && !dbUser.IsActive)
+            {
+                await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                string reason = Uri.EscapeDataString(dbUser.SuspensionReason ?? "ระงับการใช้งานโดยผู้ดูแลระบบ");
+                string until = Uri.EscapeDataString(dbUser.SuspensionDisplayUntil);
+                string u = Uri.EscapeDataString(dbUser.Username);
+                context.Response.Redirect($"/Auth/Login?suspended=true&u={u}&reason={reason}&until={until}");
+                return;
+            }
+        }
     }
 
     await next();

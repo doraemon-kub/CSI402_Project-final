@@ -52,7 +52,8 @@ namespace CSI402_Project_final.Models
                 db.SaveChanges();
             }
 
-            // ล้างชื่อผู้ใช้งานในฐานข้อมูลที่มีวงเล็บบทบาทต่อท้าย เช่น (Customer), (Owner) ให้สะอาด
+            // ล้างชื่อผู้ใช้งานในฐานข้อมูลที่มีวงเล็บบทบาทต่อท้าย และคืนค่า Role/IsActive มาตรฐานให้บัญชีทดสอบหลักทั้ง 9 บัญชี
+            var canonicalRoles = seedUsers.ToDictionary(u => u.Username.ToLowerInvariant(), u => u.Role);
             var usersInDb = db.Users.ToList();
             bool hasCleanedUsers = false;
             foreach (var u in usersInDb)
@@ -61,6 +62,15 @@ namespace CSI402_Project_final.Models
                 {
                     u.FullName = System.Text.RegularExpressions.Regex.Replace(u.FullName, @"\s*\([^)]+\)", "").Trim();
                     hasCleanedUsers = true;
+                }
+
+                if (canonicalRoles.TryGetValue(u.Username.ToLowerInvariant(), out var expectedRole))
+                {
+                    if (u.Role != expectedRole)
+                    {
+                        u.Role = expectedRole;
+                        hasCleanedUsers = true;
+                    }
                 }
             }
             if (hasCleanedUsers)
