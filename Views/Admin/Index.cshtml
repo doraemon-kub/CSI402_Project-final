@@ -1,5 +1,6 @@
 @model List<CSI402_Project_final.Models.SystemUser>
 @using CSI402_Project_final.Models
+@inject CSI402_Project_final.Models.PetShopRepository Repo
 @{
     Layout = "_BackOfficeLayout";
     ViewData["Title"] = "9. จัดการบัญชีผู้ใช้และกำหนดสิทธิ์ (Admin)";
@@ -9,6 +10,17 @@
     string roleFilter = ViewBag.RoleFilter as string ?? "all";
     string? search = ViewBag.Search as string;
     string? currentTabRole = ViewContext.HttpContext.Request.Query["role"].FirstOrDefault();
+
+    bool isCurrentOwner = ViewBag.IsCurrentOwner is bool b ? b : false;
+    if (!isCurrentOwner && !string.IsNullOrEmpty(currentTabRole))
+    {
+        var resolved = Repo.ResolveTabUserInfo(currentTabRole);
+        isCurrentOwner = string.Equals(resolved.RoleName, "Owner", StringComparison.OrdinalIgnoreCase);
+    }
+    if (!isCurrentOwner && User.IsInRole("Owner"))
+    {
+        isCurrentOwner = true;
+    }
 }
 
 <!-- Summary Filter Cards (Clickable - Req 9) -->
@@ -200,59 +212,71 @@
                             }
                         </td>
                         <td>
-                            <form asp-action="UpdateUserRole" method="post" class="d-flex flex-column gap-2 m-0">
-                                <input type="hidden" name="userId" value="@user.Id" />
-                                <input type="hidden" name="role" value="@currentTabRole" />
-                                <input type="hidden" name="roleFilter" value="@roleFilter" />
-                                <input type="hidden" name="search" value="@search" />
-                                <div class="d-flex align-items-center gap-1">
-                                    <select name="newRole" class="form-select form-select-sm" style="font-size: 0.78rem; min-width: 125px;">
-                                        <option value="@UserRole.InventoryStaff" selected="@(user.Role == UserRole.InventoryStaff)">Inventory Staff</option>
-                                        <option value="@UserRole.OrderStaff" selected="@(user.Role == UserRole.OrderStaff)">Order Staff</option>
-                                        <option value="@UserRole.ShippingStaff" selected="@(user.Role == UserRole.ShippingStaff)">Shipping Staff</option>
-                                        <option value="@UserRole.MarketingStaff" selected="@(user.Role == UserRole.MarketingStaff)">Marketing Staff</option>
-                                        <option value="@UserRole.AccountingStaff" selected="@(user.Role == UserRole.AccountingStaff)">Accounting Staff</option>
-                                        <option value="@UserRole.ITSupport" selected="@(user.Role == UserRole.ITSupport)">IT Support</option>
-                                        <option value="@UserRole.Admin" selected="@(user.Role == UserRole.Admin)">Admin</option>
-                                        <option value="@UserRole.Owner" selected="@(user.Role == UserRole.Owner)">Owner</option>
-                                        <option value="@UserRole.Customer" selected="@(user.Role == UserRole.Customer)">Customer</option>
-                                    </select>
-                                    <select name="isActive" class="form-select form-select-sm" style="font-size: 0.78rem; width: 85px;" onchange="toggleSuspendBox(this, @user.Id)">
-                                        <option value="true" selected="@user.IsActive">ใช้งาน</option>
-                                        <option value="false" selected="@(!user.IsActive)">ระงับ</option>
-                                    </select>
-                                    <button type="submit" class="btn btn-sm btn-outline-dark px-2 text-nowrap" style="font-size: 0.78rem;">
-                                        <i class="bi bi-save me-1"></i>บันทึก
-                                    </button>
+                            @if (!isCurrentOwner && (user.Role == UserRole.Admin || user.Role == UserRole.Owner))
+                            {
+                                <div class="p-2 rounded-3 bg-light border text-muted small text-center" style="font-size: 0.74rem;">
+                                    <i class="bi bi-shield-lock-fill text-warning me-1"></i>สงวนสิทธิ์สำหรับ Owner เท่านั้น
                                 </div>
-                                <div id="suspend-box-@user.Id" class="p-2 rounded-3 bg-danger-subtle border border-danger-subtle @(user.IsActive ? "d-none" : "")" style="max-width: 270px;">
-                                    <div class="mb-1">
-                                        <label class="form-label mb-0 small fw-bold text-danger" style="font-size: 0.7rem;">
-                                            <i class="bi bi-clock me-1"></i>ระยะเวลาที่ระงับ:
-                                        </label>
-                                        <select name="suspendDurationMinutes" class="form-select form-select-sm" style="font-size: 0.74rem;">
-                                            <option value="15" selected="@(user.SuspensionDurationLabel == "15 นาที")">15 นาที</option>
-                                            <option value="60" selected="@(user.SuspensionDurationLabel == "1 ชั่วโมง")">1 ชั่วโมง</option>
-                                            <option value="360" selected="@(user.SuspensionDurationLabel == "6 ชั่วโมง")">6 ชั่วโมง</option>
-                                            <option value="1440" selected="@(user.SuspensionDurationLabel == "1 วัน")">1 วัน (24 ชั่วโมง)</option>
-                                            <option value="4320" selected="@(user.SuspensionDurationLabel == "3 วัน")">3 วัน</option>
-                                            <option value="10080" selected="@(user.SuspensionDurationLabel == "7 วัน")">7 วัน</option>
-                                            <option value="43200" selected="@(user.SuspensionDurationLabel == "30 วัน")">30 วัน</option>
-                                            <option value="-1" selected="@(string.IsNullOrEmpty(user.SuspensionDurationLabel) || user.SuspensionDurationLabel == "ระงับถาวร")">ระงับถาวร (จนกว่าจะปลด)</option>
+                            }
+                            else
+                            {
+                                <form asp-action="UpdateUserRole" method="post" class="d-flex flex-column gap-2 m-0">
+                                    <input type="hidden" name="userId" value="@user.Id" />
+                                    <input type="hidden" name="role" value="@currentTabRole" />
+                                    <input type="hidden" name="roleFilter" value="@roleFilter" />
+                                    <input type="hidden" name="search" value="@search" />
+                                    <div class="d-flex align-items-center gap-1">
+                                        <select name="newRole" class="form-select form-select-sm" style="font-size: 0.78rem; min-width: 125px;">
+                                            <option value="@UserRole.InventoryStaff" selected="@(user.Role == UserRole.InventoryStaff)">Inventory Staff</option>
+                                            <option value="@UserRole.OrderStaff" selected="@(user.Role == UserRole.OrderStaff)">Order Staff</option>
+                                            <option value="@UserRole.ShippingStaff" selected="@(user.Role == UserRole.ShippingStaff)">Shipping Staff</option>
+                                            <option value="@UserRole.MarketingStaff" selected="@(user.Role == UserRole.MarketingStaff)">Marketing Staff</option>
+                                            <option value="@UserRole.AccountingStaff" selected="@(user.Role == UserRole.AccountingStaff)">Accounting Staff</option>
+                                            <option value="@UserRole.ITSupport" selected="@(user.Role == UserRole.ITSupport)">IT Support</option>
+                                            @if (isCurrentOwner)
+                                            {
+                                                <option value="@UserRole.Admin" selected="@(user.Role == UserRole.Admin)">Admin</option>
+                                                <option value="@UserRole.Owner" selected="@(user.Role == UserRole.Owner)">Owner</option>
+                                            }
+                                            <option value="@UserRole.Customer" selected="@(user.Role == UserRole.Customer)">Customer</option>
                                         </select>
+                                        <select name="isActive" class="form-select form-select-sm" style="font-size: 0.78rem; width: 85px;" onchange="toggleSuspendBox(this, @user.Id)">
+                                            <option value="true" selected="@user.IsActive">ใช้งาน</option>
+                                            <option value="false" selected="@(!user.IsActive)">ระงับ</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-dark px-2 text-nowrap" style="font-size: 0.78rem;">
+                                            <i class="bi bi-save me-1"></i>บันทึก
+                                        </button>
                                     </div>
-                                    <div>
-                                        <label class="form-label mb-0 small fw-bold text-danger" style="font-size: 0.7rem;">
-                                            <i class="bi bi-exclamation-circle me-1"></i>เหตุผลที่ระงับ:
-                                        </label>
-                                        <input type="text" name="suspendReason" id="suspend-reason-@user.Id"
-                                               value="@(user.SuspensionReason ?? "")"
-                                               class="form-control form-control-sm"
-                                               style="font-size: 0.74rem;"
-                                               placeholder="เช่น สลิปปลอม / ละเมิดข้อตกลง..." />
+                                    <div id="suspend-box-@user.Id" class="p-2 rounded-3 bg-danger-subtle border border-danger-subtle @(user.IsActive ? "d-none" : "")" style="max-width: 270px;">
+                                        <div class="mb-1">
+                                            <label class="form-label mb-0 small fw-bold text-danger" style="font-size: 0.7rem;">
+                                                <i class="bi bi-clock me-1"></i>ระยะเวลาที่ระงับ:
+                                            </label>
+                                            <select name="suspendDurationMinutes" class="form-select form-select-sm" style="font-size: 0.74rem;">
+                                                <option value="15" selected="@(user.SuspensionDurationLabel == "15 นาที")">15 นาที</option>
+                                                <option value="60" selected="@(user.SuspensionDurationLabel == "1 ชั่วโมง")">1 ชั่วโมง</option>
+                                                <option value="360" selected="@(user.SuspensionDurationLabel == "6 ชั่วโมง")">6 ชั่วโมง</option>
+                                                <option value="1440" selected="@(user.SuspensionDurationLabel == "1 วัน")">1 วัน (24 ชั่วโมง)</option>
+                                                <option value="4320" selected="@(user.SuspensionDurationLabel == "3 วัน")">3 วัน</option>
+                                                <option value="10080" selected="@(user.SuspensionDurationLabel == "7 วัน")">7 วัน</option>
+                                                <option value="43200" selected="@(user.SuspensionDurationLabel == "30 วัน")">30 วัน</option>
+                                                <option value="-1" selected="@(string.IsNullOrEmpty(user.SuspensionDurationLabel) || user.SuspensionDurationLabel == "ระงับถาวร")">ระงับถาวร (จนกว่าจะปลด)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="form-label mb-0 small fw-bold text-danger" style="font-size: 0.7rem;">
+                                                <i class="bi bi-exclamation-circle me-1"></i>เหตุผลที่ระงับ:
+                                            </label>
+                                            <input type="text" name="suspendReason" id="suspend-reason-@user.Id"
+                                                   value="@(user.SuspensionReason ?? "")"
+                                                   class="form-control form-control-sm"
+                                                   style="font-size: 0.74rem;"
+                                                   placeholder="เช่น สลิปปลอม / ละเมิดข้อตกลง..." />
+                                        </div>
                                     </div>
-                                </div>
-                            </form>
+                                </form>
+                            }
                         </td>
                     </tr>
                 }
@@ -304,9 +328,18 @@
                             <option value="@UserRole.MarketingStaff">Marketing Staff (การตลาด)</option>
                             <option value="@UserRole.AccountingStaff">Accounting Staff (บัญชี)</option>
                             <option value="@UserRole.ITSupport">IT Support (ซัพพอร์ต)</option>
-                            <option value="@UserRole.Admin">Admin (ผู้ดูแลระบบ)</option>
+                            @if (isCurrentOwner)
+                            {
+                                <option value="@UserRole.Admin">Admin (ผู้ดูแลระบบ)</option>
+                            }
                             <option value="@UserRole.Customer">Customer (ลูกค้า)</option>
                         </select>
+                        @if (!isCurrentOwner)
+                        {
+                            <div class="form-text text-muted mt-1" style="font-size: 0.76rem;">
+                                <i class="bi bi-shield-lock-fill text-warning me-1"></i>หมายเหตุ: บทบาท <strong>Admin (ผู้ดูแลระบบ)</strong> สงวนสิทธิ์ให้ผู้บริหารสูงสุด (Owner) เป็นผู้เพิ่มเท่านั้น
+                            </div>
+                        }
                     </div>
                 </div>
                 <div class="modal-footer">

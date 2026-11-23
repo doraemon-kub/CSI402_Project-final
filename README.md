@@ -324,15 +324,18 @@ flowchart TD
 
 ---
 
-### 11. ADD USER (Admin) (การเพิ่มพนักงานใหม่)
-กระบวนการเพิ่มข้อมูลพนักงานใหม่เข้าระบบ Admin กรอกข้อมูลและกำหนดสิทธิ์ตามบทบาทหน้าที่ หากข้อมูลไม่ครบจะวนกลับมาที่ตัวเชื่อมโยงเพื่อแก้ไข
+### 11. ADD USER (Admin / Owner) (การเพิ่มพนักงานใหม่)
+กระบวนการเพิ่มข้อมูลพนักงานใหม่เข้าระบบ Admin หรือ Owner กรอกข้อมูลและกำหนดบทบาทหน้าที่ (โดยบทบาท Admin สงวนสิทธิ์ให้ Owner เป็นผู้เพิ่มเท่านั้น) หากข้อมูลไม่ครบจะวนกลับมาที่ตัวเชื่อมโยงเพื่อแก้ไข
 
 ```mermaid
 flowchart TD
     Start([start]) --> ConnAddUser(( ))
     ConnAddUser --> InputStaffInfo["กรอกข้อมูลพนักงาน\nชื่อ, email, password, เบอร์"]
-    InputStaffInfo --> SelectRole["เลือก Role / ตำแหน่ง\nAdmin / การเงิน / คลัง / จัดส่ง / การตลาด / IT"]
-    SelectRole --> CheckUserComplete{ข้อมูลครบ?}
+    InputStaffInfo --> CheckCreatorRole{ผู้สร้างคือ Owner?}
+    CheckCreatorRole -- YES --> SelectAllRole["เลือก Role ทั้งหมด\nรวมถึง Admin / พนักงาน / ลูกค้า"]
+    CheckCreatorRole -- NO --> SelectStaffRole["เลือก Role พนักงานทั่วไป\n(ไม่อนุญาตให้เลือกบทบาท Admin)"]
+    SelectAllRole --> CheckUserComplete{ข้อมูลครบ?}
+    SelectStaffRole --> CheckUserComplete
     CheckUserComplete -- NO --> ConnAddUser
     CheckUserComplete -- YES --> SaveRoleDB["บันทึก Role และข้อมูลพนักงานลง DB"]
     SaveRoleDB --> End([End])

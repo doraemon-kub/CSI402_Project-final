@@ -20,8 +20,19 @@ namespace CSI402_Project_final.Controllers
             _hubContext = hubContext;
         }
 
+        // ตรวจสอบว่าผู้ใช้งานปัจจุบันที่กำลังทำรายการมีสถานะเป็น Owner หรือไม่ (รองรับทั้ง Claims และ Multi-Role Tab Switcher)
+        private bool IsCurrentOperatorOwner(string? roleParam)
+        {
+            if (!string.IsNullOrEmpty(roleParam))
+            {
+                var resolved = _repo.ResolveTabUserInfo(roleParam);
+                return string.Equals(resolved.RoleName, "Owner", System.StringComparison.OrdinalIgnoreCase);
+            }
+            return User.IsInRole("Owner");
+        }
+
         // หน้าจัดการผู้ใช้และสิทธิ์การเข้าถึง (Admin) พร้อมระบบกรองตามบทบาท (Role Filter) & ค้นหา
-        public IActionResult Index(string? roleFilter = "all", string? search = null)
+        public IActionResult Index(string? role = null, string? roleFilter = "all", string? search = null)
         {
             var allUsers = _repo.Users;
             foreach (var u in allUsers)
@@ -30,6 +41,8 @@ namespace CSI402_Project_final.Controllers
             }
             allUsers = _repo.Users;
 
+            bool isOwner = IsCurrentOperatorOwner(role);
+            ViewBag.IsCurrentOwner = isOwner;
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
             ViewBag.TotalUsers = allUsers.Count;
             ViewBag.TotalStaff = allUsers.Count(u => u.Role != UserRole.Customer && u.Role != UserRole.Guest);
@@ -78,10 +91,32 @@ namespace CSI402_Project_final.Controllers
             string? roleFilter = null,
             string? search = null)
         {
+            bool isOwner = IsCurrentOperatorOwner(role);
+            var targetUser = _repo.Users.FirstOrDefault(u => u.Id == userId);
+            if (targetUser == null)
+            {
+                TempData["ErrorMessage"] = "ไม่พบข้อมูลผู้ใช้งานที่ต้องการแก้ไข";
+                return RedirectToAction(nameof(Index), new { role, roleFilter, search });
+            }
+
+            // กฎความปลอดภัย: Admin ไม่สามารถแก้ไข/ระงับบัญชี Admin หรือ Owner ได้ และไม่สามารถแต่งตั้งใครเป็น Admin หรือ Owner ได้ (เฉพาะ Owner เท่านั้น)
+            if (!isOwner)
+            {
+                if (targetUser.Role == UserRole.Admin || targetUser.Role == UserRole.Owner)
+                {
+                    TempData["ErrorMessage"] = "ไม่สามารถแก้ไขหรือระงับบัญชี Admin หรือ Owner ได้: สิทธิ์นี้สงวนไว้สำหรับผู้บริหารสูงสุด (Owner) เท่านั้น";
+                    return RedirectToAction(nameof(Index), new { role, roleFilter, search });
+                }
+                if (newRole == UserRole.Admin || newRole == UserRole.Owner)
+                {
+                    TempData["ErrorMessage"] = "ไม่สามารถแต่งตั้งผู้ใช้เป็น Admin หรือ Owner ได้: สิทธิ์นี้สงวนไว้สำหรับผู้บริหารสูงสุด (Owner) เท่านั้น";
+                    return RedirectToAction(nameof(Index), new { role, roleFilter, search });
+                }
+            }
+
             if (_repo.UpdateUserRole(userId, newRole, isActive, suspendReason, suspendDurationMinutes))
             {
-                var targetUser = _repo.Users.FirstOrDefault(u => u.Id == userId);
-                if (targetUser != null && !isActive)
+                if (!isActive)
                 {
                     string reasonText = targetUser.SuspensionReason ?? "ระงับการใช้งานโดยผู้ดูแลระบบ";
                     string untilText = targetUser.SuspensionDisplayUntil;
@@ -98,16 +133,23 @@ namespace CSI402_Project_final.Controllers
                 }
                 else
                 {
-                    TempData["SuccessMessage"] = $"อัปเดตบัญชีผู้ใช้งาน #{userId} ({targetUser?.Username}) เป็น '{newRole}' (สถานะ: เปิดใช้งานปกติ) สำเร็จ";
+                    TempData["SuccessMessage"] = $"อัปเดตบัญชีผู้ใช้งาน #{userId} ({targetUser.Username}) เป็น '{newRole}' (สถานะ: เปิดใช้งานปกติ) สำเร็จ";
                 }
             }
             return RedirectToAction(nameof(Index), new { role, roleFilter, search });
         }
 
-        // เพิ่มผู้ใช้งานใหม่ (บันทึกลง DB)
+        // เพิ่มผู้ใช้งานใหม่ (บันทึกลง DB) - Admin ไม่สามารถสร้าง User บทบาท Admin ได้ ต้องให้ Owner ทำเท่านั้น
         [HttpPost]
         public IActionResult CreateUser(SystemUser user, string? role = null)
         {
+            bool isOwner = IsCurrentOperatorOwner(role);
+            if ((user.Role == UserRole.Admin || user.Role == UserRole.Owner) && !isOwner)
+            {
+                TempData["ErrorMessage"] = "ไม่สามารถสร้างหรือกำหนดบทบาทผู้ดูแลระบบ (Admin) ได้: สิทธิ์นี้สงวนไว้สำหรับผู้บริหารสูงสุด (Owner) เท่านั้น";
+                return RedirectToAction(nameof(Index), new { role });
+            }
+
             var (success, message) = _repo.CreateUser(user);
             if (success)
                 TempData["SuccessMessage"] = message;
