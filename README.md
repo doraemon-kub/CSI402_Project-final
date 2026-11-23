@@ -181,7 +181,7 @@ flowchart TD
     InputReg --> CheckComplete{ข้อมูลครบ?}
     CheckComplete -- NO --> AlertErr[แจ้งข้อผิดพลาด]
     AlertErr --> ConnReg
-    CheckComplete -- YES --> SaveCustomer[บันทึกลง Customer\nลงฐานข้อมูล]
+    CheckComplete -- YES --> SaveCustomer[บันทึกลงฐานข้อมูล]
     SaveCustomer --> GoToLogin[ไปหน้า Login]
     GoToLogin --> End([End])
 ```
