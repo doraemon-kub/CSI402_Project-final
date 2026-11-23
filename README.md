@@ -108,7 +108,7 @@ flowchart TD
     CheckRole -- "ผู้ดูแลระบบ (Admin)" --> AdminDept["จัดการสิทธิ์ & เปลี่ยน Role & ระงับบัญชี"]
     CheckRole -- "คลังสินค้า (Inventory)" --> WhDept["จัดการสินค้า & ปรับสต็อก & Low Stock Alert"]
     CheckRole -- "คำสั่งซื้อ (Order)" --> OrderDept["ตรวจสอบออเดอร์ & จัดเตรียมและแพ็กสินค้า"]
-    CheckRole -- "จัดส่ง (Shipping)" --> ShipDept["ชั่งน้ำหนักจริง & เจนเลข Tracking & ส่งพัสดุ"]
+    CheckRole -- "จัดส่ง (Shipping)" --> ShipDept["ชั่งน้ำหนักจริง & บันทึกเลขพัสดุ & ส่งพัสดุ"]
     CheckRole -- "การตลาด (Marketing)" --> MktDept["จัดการ 5 แคมเปญโปรโมชั่น & Rule Builder"]
     CheckRole -- "การเงิน/บัญชี (Accounting)" --> FinDept["ตรวจสอบสลิปโอนเงิน & อนุมัติคืนเงิน"]
     CheckRole -- "บริการเทคนิค (IT Support)" --> SupportDept["รับแจ้งปัญหา Support Ticket & บันทึกแก้ไข"]
@@ -366,15 +366,15 @@ flowchart TD
 ---
 
 ### 13. SHIPPING (Shipping Staff) (การจัดส่งและบันทึกเลขพัสดุ)
-กระบวนการฝ่ายจัดส่ง รับออเดอร์ที่เตรียมสินค้าเสร็จแล้ว ชั่งน้ำหนักพัสดุจริง บันทึกเลข Tracking Number และเปลี่ยนสถานะเป็นจัดส่งแล้ว
+กระบวนการฝ่ายจัดส่ง รับออเดอร์ที่เตรียมสินค้าเสร็จแล้ว ชั่งน้ำหนักพัสดุจริง สแกนบาร์โค้ดหรือบันทึกเลขพัสดุ (Tracking Number) จากบริษัทขนส่งที่ลูกค้าเลือก และอัปเดตสถานะเป็นจัดส่งแล้ว (Shipped)
 
 ```mermaid
 flowchart TD
     Start([start]) --> LoadPreparingOrders["โหลดรายการออเดอร์ที่แพ็กเสร็จ (Preparing)"]
-    LoadPreparingOrders --> WeighBox[ชั่งน้ำหนักพัสดุจริง]
-    WeighBox --> GenTracking[ระบบเจนเลขพัสดุ Tracking No. จำลองตามขนส่งที่ลูกค้าเลือก]
-    GenTracking --> UpdateShippedDB[กดส่งพัสดุ อัปเดต OrderStatus = 'Shipped' ลง DB]
-    UpdateShippedDB --> NotifyCustomer[ลูกค้าสามารถตรวจสอบเลข Tracking ได้ทันที]
+    LoadPreparingOrders --> WeighBox["ชั่งน้ำหนักพัสดุจริง"]
+    WeighBox --> ScanTracking["สแกนบาร์โค้ด หรือบันทึกเลขพัสดุ\n(Tracking No.) จากบริษัทขนส่ง"]
+    ScanTracking --> UpdateShippedDB["กดส่งพัสดุ อัปเดต OrderStatus = 'Shipped' ลง DB"]
+    UpdateShippedDB --> NotifyCustomer["ลูกค้าสามารถตรวจสอบเลข Tracking ได้ทันที"]
     NotifyCustomer --> End([End])
 ```
 

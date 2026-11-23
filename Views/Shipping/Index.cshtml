@@ -120,12 +120,12 @@
                             <td style="min-width: 220px;">
                                 <div class="input-group input-group-sm">
                                     <input type="text" name="trackingNumber" id="trackInput_@order.OrderId" form="shipForm_@order.OrderId" class="form-control form-control-sm font-monospace fw-bold text-dark" value="@autoTracking" required />
-                                    <button type="button" class="btn btn-outline-secondary" title="สุ่มเลข Tracking ใหม่" onclick="regenerateTracking('@order.OrderId', '@selectedCourier')">
+                                    <button type="button" class="btn btn-outline-secondary" title="ดึงเลขพัสดุจากระบบขนส่ง" onclick="regenerateTracking('@order.OrderId', '@selectedCourier')">
                                         <i class="bi bi-arrow-clockwise"></i>
                                     </button>
                                 </div>
                                 <div class="text-success" style="font-size: 0.68rem; margin-top: 2px;">
-                                    <i class="bi bi-magic me-1"></i>ระบบสุ่มเจนเลขพัสดุจำลองให้แล้ว
+                                    <i class="bi bi-upc-scan me-1"></i>สแกนบาร์โค้ด หรือดึงเลขพัสดุจากขนส่งอัตโนมัติ
                                 </div>
                             </td>
                             <td class="text-nowrap">
