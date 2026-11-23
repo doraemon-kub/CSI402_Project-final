@@ -344,7 +344,7 @@ flowchart TD
 ---
 
 ### 12. ROLE & PERMISSIONS MANAGEMENT (Admin) (การจัดการสิทธิ์และระงับบัญชีผู้ใช้)
-กระบวนการจัดการสิทธิ์และสถานะบัญชีผู้ใช้โดยผู้ดูแลระบบ (Admin) สามารถเปลี่ยนบทบาท (Role) ของผู้ใช้ผ่าน Dropdown และดำเนินการระงับการใช้งาน (Suspend) หรือปลดระงับบัญชี (Reactivate) ได้โดยตรง โดยไม่มีการลบประวัติข้อมูลผู้ใช้ออกจากระบบ
+กระบวนการจัดการสิทธิ์และสถานะบัญชีผู้ใช้โดยผู้ดูแลระบบ (Admin) สามารถเปลี่ยนบทบาท (Role) ของผู้ใช้ผ่าน Dropdown (เฉพาะตำแหน่งพนักงานทั่วไปและลูกค้า โดยไม่สามารถแต่งตั้งหรือเปลี่ยนเป็น Admin/Owner ได้ ต้องให้ Owner ทำเท่านั้น) และดำเนินการระงับการใช้งาน (Suspend) หรือปลดระงับบัญชี (Reactivate) ได้โดยตรง โดยไม่มีการลบประวัติข้อมูลผู้ใช้ออกจากระบบ
 
 ```mermaid
 flowchart TD
@@ -352,7 +352,7 @@ flowchart TD
     ConnAdminUser --> LoadUserList["โหลดรายชื่อผู้ใช้ทั้งหมด (Role & Permissions Matrix)"]
     LoadUserList --> SelectAction{เลือกการดำเนินการ}
     
-    SelectAction -- "เปลี่ยนบทบาท (Role)" --> SelectNewRole["เลือกบทบาทใหม่ผ่าน Dropdown\n(Admin, Inventory, Order, Shipping, Marketing, Accounting, IT, Customer)"]
+    SelectAction -- "เปลี่ยนบทบาท (Role)" --> SelectNewRole["เลือกบทบาทใหม่ผ่าน Dropdown\n(Inventory, Order, Shipping, Marketing, Accounting, IT, Customer)"]
     SelectNewRole --> SaveRoleChange["บันทึก Role ใหม่ลงตาราง User (DB)"]
     
     SelectAction -- "ระงับ / ปลดระงับบัญชี" --> ToggleSuspend["คลิกปุ่ม ระงับการใช้งาน หรือ ปลดระงับบัญชี"]
