@@ -93,10 +93,12 @@
                         <td><strong>⚖️ @order.EstimatedWeightKg kg</strong></td>
                         <td class="fw-bold text-dark">฿@order.GrandTotal.ToString("N0")</td>
                         <td>
-                            <span class="badge @(order.Status == OrderStatus.PaymentVerified ? "bg-info" :
+                            <span class="badge @(order.Status == OrderStatus.PaymentVerified ? "bg-info text-dark" :
                                                 order.Status == OrderStatus.Preparing ? "bg-warning text-dark" :
                                                 order.Status == OrderStatus.Shipped ? "bg-success" : "bg-secondary")">
-                                @order.Status
+                                @(order.Status == OrderStatus.PaymentVerified ? "รอจัดของแพ็กสินค้า" :
+                                  order.Status == OrderStatus.Preparing ? "แพ็กเสร็จส่งต่อ Shipping" :
+                                  order.Status == OrderStatus.Shipped ? "จัดส่งสินค้าแล้ว 🚚" : order.Status.ToString())
                             </span>
                         </td>
                         <td>
@@ -111,13 +113,13 @@
                                     <input type="hidden" name="role" value="@(ViewContext.HttpContext.Request.Query["role"].FirstOrDefault() ?? User.FindFirstValue(ClaimTypes.Role))" />
                                     @if (order.Status == OrderStatus.PaymentVerified)
                                     {
-                                        <button type="submit" name="newStatus" value="@OrderStatus.Preparing" class="btn btn-sm btn-warning text-nowrap">
-                                            <i class="bi bi-box"></i> เริ่มแพ็ก
+                                        <button type="submit" name="newStatus" value="@OrderStatus.Preparing" class="btn btn-sm btn-warning fw-semibold text-nowrap">
+                                            <i class="bi bi-box-seam me-1"></i> แพ็กเสร็จแล้ว (ส่งต่อ Shipping)
                                         </button>
                                     }
                                     else if (order.Status == OrderStatus.Preparing)
                                     {
-                                        <span class="text-primary small fw-semibold"><i class="bi bi-truck me-1"></i>ส่งต่อฝ่ายจัดส่ง (Shipping) แล้ว</span>
+                                        <span class="text-success small fw-semibold"><i class="bi bi-check2-circle me-1"></i>ส่งต่องานให้ Shipping แล้ว</span>
                                     }
                                     else
                                     {

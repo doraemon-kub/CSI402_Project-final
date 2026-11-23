@@ -35,6 +35,16 @@
 <div class="card border-0 shadow-sm rounded-4 p-4">
     <h5 class="fw-bold mb-3 text-dark">บันทึกเลขพัสดุ ชั่งน้ำหนักจริง และเปลี่ยนสถานะ (Req 4, 14, 16)</h5>
     
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-box2 fs-1 text-secondary d-block mb-2"></i>
+            <h6 class="fw-bold">ยังไม่มีพัสดุที่ต้องจัดส่งในขณะนี้</h6>
+            <p class="small text-muted m-0">ออเดอร์จะปรากฏในหน้านี้เมื่อฝ่ายบัญชี (ACC) ตรวจสลิปเรียบร้อย และฝ่ายคำสั่งซื้อ (Order Staff) กดแพ็กของเสร็จแล้ว</p>
+        </div>
+    }
+    else
+    {
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">
@@ -90,6 +100,7 @@
                         else
                         {
                             string selectedCourier = string.IsNullOrWhiteSpace(order.Courier) ? "Flash Express" : order.Courier;
+                            string autoTracking = CSI402_Project_final.Helpers.TrackingHelper.GenerateTrackingNumber(selectedCourier);
                             <td style="min-width: 135px; max-width: 150px;">
                                 <form id="shipForm_@order.OrderId" asp-action="DispatchOrder" method="post" class="m-0">
                                     <input type="hidden" name="orderId" value="@order.OrderId" />
@@ -106,11 +117,19 @@
                                     <i class="bi bi-truck text-primary me-1"></i>@selectedCourier
                                 </span>
                             </td>
-                            <td style="min-width: 185px;">
-                                <input type="text" name="trackingNumber" form="shipForm_@order.OrderId" class="form-control form-control-sm" placeholder="กรอกเลขพัสดุ Tracking..." required />
+                            <td style="min-width: 220px;">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" name="trackingNumber" id="trackInput_@order.OrderId" form="shipForm_@order.OrderId" class="form-control form-control-sm font-monospace fw-bold text-dark" value="@autoTracking" required />
+                                    <button type="button" class="btn btn-outline-secondary" title="สุ่มเลข Tracking ใหม่" onclick="regenerateTracking('@order.OrderId', '@selectedCourier')">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                                <div class="text-success" style="font-size: 0.68rem; margin-top: 2px;">
+                                    <i class="bi bi-magic me-1"></i>ระบบสุ่มเจนเลขพัสดุจำลองให้แล้ว
+                                </div>
                             </td>
                             <td class="text-nowrap">
-                                <span class="badge bg-warning text-dark"><i class="bi bi-box-seam me-1"></i>รอจัดส่ง</span>
+                                <span class="badge bg-warning text-dark"><i class="bi bi-box-seam me-1"></i>พร้อมส่ง</span>
                             </td>
                             <td class="text-nowrap">
                                 <button type="submit" form="shipForm_@order.OrderId" class="btn btn-sm btn-primary fw-bold px-3">
@@ -123,4 +142,24 @@
             </tbody>
         </table>
     </div>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        function regenerateTracking(orderId, courier) {
+            const input = document.getElementById('trackInput_' + orderId);
+            if (!input) return;
+            const rndNum = Math.floor(100000000 + Math.random() * 900000000);
+            const c = (courier || '').toLowerCase();
+            if (c.includes('kerry')) {
+                input.value = 'KRY' + rndNum + 'TH';
+            } else if (c.includes('ems') || c.includes('post') || c.includes('ไปรษณีย์')) {
+                input.value = 'ED' + rndNum + 'TH';
+            } else {
+                const extra = Math.floor(10 + Math.random() * 90);
+                input.value = 'TH' + rndNum.toString() + extra + 'F';
+            }
+        }
+    </script>
+}

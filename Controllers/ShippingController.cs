@@ -21,23 +21,21 @@ namespace CSI402_Project_final.Controllers
             _hubContext = hubContext;
         }
 
-        // หน้าจัดการการจัดส่งและพัสดุ
+        // หน้าจัดการการจัดส่งและพัสดุ (เฉพาะออเดอร์ที่ฝ่ายคำสั่งซื้อแพ็กเสร็จส่งต่องานมาให้แล้ว)
         public IActionResult Index()
         {
             var allOrders = _repo.Orders;
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            ViewBag.ReadyToShipCount = allOrders.Count(o =>
-                o.Status == OrderStatus.Preparing ||
-                o.Status == OrderStatus.PaymentVerified ||
-                (o.Status == OrderStatus.Shipped && string.IsNullOrWhiteSpace(o.TrackingNumber)));
+            // พัสดุรอจัดส่ง: ออเดอร์ที่ฝ่าย Order Staff จัดเตรียม/แพ็กเสร็จแล้ว (Preparing)
+            ViewBag.ReadyToShipCount = allOrders.Count(o => o.Status == OrderStatus.Preparing);
             ViewBag.ShippedTodayCount = allOrders.Count(o =>
                 o.Status == OrderStatus.Shipped &&
                 !string.IsNullOrWhiteSpace(o.TrackingNumber) &&
                 (!o.ShippedDate.HasValue || o.ShippedDate.Value.Date == DateTime.Today));
 
             var orders = allOrders
-                .Where(o => o.Status == OrderStatus.Preparing || o.Status == OrderStatus.Shipped || o.Status == OrderStatus.PaymentVerified)
-                .OrderBy(o => (o.Status == OrderStatus.Shipped && !string.IsNullOrWhiteSpace(o.TrackingNumber)) ? 1 : 0)
+                .Where(o => o.Status == OrderStatus.Preparing || o.Status == OrderStatus.Shipped)
+                .OrderBy(o => o.Status == OrderStatus.Preparing ? 0 : 1)
                 .ThenByDescending(o => o.OrderDate)
                 .ToList();
 
