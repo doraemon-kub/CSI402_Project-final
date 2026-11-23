@@ -9,18 +9,15 @@
     int totalCustomers = ViewBag.TotalCustomers ?? 0;
     string roleFilter = ViewBag.RoleFilter as string ?? "all";
     string? search = ViewBag.Search as string;
-    string? currentTabRole = ViewContext.HttpContext.Request.Query["role"].FirstOrDefault();
+    string? currentTabRole = ViewContext.HttpContext.Request.Query["role"].FirstOrDefault()
+                           ?? ViewContext.HttpContext.Request.Query["asRole"].FirstOrDefault();
 
-    bool isCurrentOwner = ViewBag.IsCurrentOwner is bool b ? b : false;
-    if (!isCurrentOwner && !string.IsNullOrEmpty(currentTabRole))
+    var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Guest";
+    if (!string.IsNullOrEmpty(currentTabRole))
     {
-        var resolved = Repo.ResolveTabUserInfo(currentTabRole);
-        isCurrentOwner = string.Equals(resolved.RoleName, "Owner", StringComparison.OrdinalIgnoreCase);
+        currentRole = Repo.ResolveTabUserInfo(currentTabRole).RoleName;
     }
-    if (!isCurrentOwner && User.IsInRole("Owner"))
-    {
-        isCurrentOwner = true;
-    }
+    bool isCurrentOwner = string.Equals(currentRole, "Owner", StringComparison.OrdinalIgnoreCase);
 }
 
 <!-- Summary Filter Cards (Clickable - Req 9) -->
@@ -334,12 +331,9 @@
                             }
                             <option value="@UserRole.Customer">Customer (ลูกค้า)</option>
                         </select>
-                        @if (!isCurrentOwner)
-                        {
-                            <div class="form-text text-muted mt-1" style="font-size: 0.76rem;">
-                                <i class="bi bi-shield-lock-fill text-warning me-1"></i>หมายเหตุ: บทบาท <strong>Admin (ผู้ดูแลระบบ)</strong> สงวนสิทธิ์ให้ผู้บริหารสูงสุด (Owner) เป็นผู้เพิ่มเท่านั้น
-                            </div>
-                        }
+                        <div id="adminNoticeBox" class="form-text text-muted mt-1 @(isCurrentOwner ? "d-none" : "")" style="font-size: 0.76rem;">
+                            <i class="bi bi-shield-lock-fill text-warning me-1"></i>หมายเหตุ: บทบาท <strong>Admin (ผู้ดูแลระบบ)</strong> สงวนสิทธิ์ให้ผู้บริหารสูงสุด (Owner) เป็นผู้เพิ่มเท่านั้น
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -353,6 +347,26 @@
 
 @section Scripts {
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roleInUrl = urlParams.get('role') || urlParams.get('asRole');
+            const tabRole = (roleInUrl || sessionStorage.getItem('petshop_tab_role') || "@currentRole").toLowerCase();
+            const isOwnerTab = tabRole === 'owner';
+
+            const roleSelect = document.querySelector('#addUserModal select[name="Role"]');
+            const noticeBox = document.getElementById('adminNoticeBox');
+            if (roleSelect && !isOwnerTab) {
+                for (let i = 0; i < roleSelect.options.length; i++) {
+                    const optVal = roleSelect.options[i].value.toLowerCase();
+                    if (optVal === 'admin' || optVal === 'owner') {
+                        roleSelect.remove(i);
+                        i--;
+                    }
+                }
+                if (noticeBox) noticeBox.classList.remove('d-none');
+            }
+        });
+
         function toggleSuspendBox(selectEl, userId) {
             const box = document.getElementById('suspend-box-' + userId);
             const reasonInput = document.getElementById('suspend-reason-' + userId);
