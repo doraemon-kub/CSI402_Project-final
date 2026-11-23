@@ -406,6 +406,18 @@ namespace CSI402_Project_final.Models
             }
         }
 
+        public List<AuditLog> GetAuditLogs(int take = 500)
+        {
+            try
+            {
+                return _db.AuditLogs.AsNoTracking().OrderByDescending(l => l.Timestamp).Take(take).ToList();
+            }
+            catch
+            {
+                return new List<AuditLog>();
+            }
+        }
+
         // ==========================================
         // User & Profile & Address Methods (`user`, `useraddress`)
         // ==========================================

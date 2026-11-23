@@ -684,6 +684,26 @@ namespace CSI402_Project_final.Models
                 });
                 db.SaveChanges();
             }
+
+            // 5. Seed AuditLog ประวัติกิจกรรมเริ่มต้น (หากยังไม่มี)
+            if (!db.AuditLogs.Any())
+            {
+                var baseTime = DateTime.Now.AddDays(-2);
+                db.AuditLogs.AddRange(new List<AuditLog>
+                {
+                    new AuditLog { Username = "system", UserRole = "System", Action = "SYSTEM_INIT", TableName = "system", RecordId = "INIT", Details = "ระบบ PetStore Pro เริ่มต้นการทำงานและตรวจสอบฐานข้อมูล MySQL", IpAddress = "127.0.0.1", Timestamp = baseTime },
+                    new AuditLog { Username = "admin", UserRole = "Admin", Action = "CREATE_USER", TableName = "user", RecordId = "2", Details = "สร้างบัญชีผู้ใช้งานพนักงาน 'inventory' บทบาท InventoryStaff", IpAddress = "192.168.1.10", Timestamp = baseTime.AddHours(2) },
+                    new AuditLog { Username = "inventory", UserRole = "InventoryStaff", Action = "UPDATE_STOCK", TableName = "product", RecordId = "1", Details = "ตรวจนับและอัปเดตสต็อกสินค้า 'Royal Canin Hair & Skin' เป็น 25 ชิ้น", IpAddress = "192.168.1.15", Timestamp = baseTime.AddHours(5) },
+                    new AuditLog { Username = "marketing", UserRole = "MarketingStaff", Action = "TOGGLE_PROMOTION", TableName = "promotion", RecordId = "1", Details = "เปิดใช้งานแคมเปญโปรโมชั่น 'BUY3SAVE' ซื้อครบ 3 ชิ้นลด 50 บาท", IpAddress = "192.168.1.18", Timestamp = baseTime.AddHours(8) },
+                    new AuditLog { Username = "customer", UserRole = "Customer", Action = "CHECKOUT_ORDER", TableName = "orders", RecordId = "ORD-20261121-001", Details = "สร้างคำสั่งซื้อใหม่ ยอดชำระสุทธิ ฿1,250.00 ขนส่ง Flash Express", IpAddress = "171.96.120.45", Timestamp = baseTime.AddDays(1).AddHours(1) },
+                    new AuditLog { Username = "accounting", UserRole = "AccountingStaff", Action = "APPROVE_PAYMENT", TableName = "orders", RecordId = "ORD-20261121-001", Details = "ตรวจสอบสลิปโอนเงิน PromptPay ถูกต้อง อนุมัติสถานะเป็น PaymentVerified", IpAddress = "192.168.1.20", Timestamp = baseTime.AddDays(1).AddHours(2) },
+                    new AuditLog { Username = "order", UserRole = "OrderStaff", Action = "UPDATE_ORDER_STATUS", TableName = "orders", RecordId = "ORD-20261121-001", Details = "จัดเตรียมและแพ็กสินค้าเสร็จสิ้น เปลี่ยนสถานะเป็น Preparing", IpAddress = "192.168.1.22", Timestamp = baseTime.AddDays(1).AddHours(3) },
+                    new AuditLog { Username = "shipping", UserRole = "ShippingStaff", Action = "DISPATCH_ORDER", TableName = "orders", RecordId = "ORD-20261121-001", Details = "ชั่งน้ำหนักจริง 2.40 kg เจนเลขพัสดุ TH0192837465 และเปลี่ยนสถานะเป็น Shipped", IpAddress = "192.168.1.25", Timestamp = baseTime.AddDays(1).AddHours(4) },
+                    new AuditLog { Username = "support", UserRole = "ITSupport", Action = "RESOLVE_TICKET", TableName = "supportticket", RecordId = "TCK-20261122-001", Details = "ตรวจสอบและให้คำแนะนำการชำระเงินเรียบร้อย เปลี่ยนสถานะตั๋วเป็น Resolved", IpAddress = "192.168.1.30", Timestamp = baseTime.AddDays(1).AddHours(6) },
+                    new AuditLog { Username = "admin", UserRole = "Admin", Action = "UPDATE_USER_ROLE", TableName = "user", RecordId = "9", Details = "ตรวจสอบบัญชีผู้ใช้และยืนยันสิทธิ์ Role Customer สถานะปกติ", IpAddress = "192.168.1.10", Timestamp = DateTime.Now.AddHours(-1) }
+                });
+                db.SaveChanges();
+            }
         }
     }
 }

@@ -70,9 +70,14 @@
             <h5 class="fw-bold m-0 text-dark">ตารางบัญชีผู้ใช้งานและกำหนดสิทธิ์ตามบทบาท (Role & Permissions Matrix)</h5>
             <small class="text-muted">กำลังแสดง @Model.Count จากทั้งหมด @totalUsers บัญชีผู้ใช้</small>
         </div>
-        <button type="button" class="btn btn-primary px-3 py-2 flex-shrink-0" data-bs-toggle="modal" data-bs-target="#addUserModal">
-            <i class="bi bi-person-plus-fill me-1"></i> เพิ่มผู้ใช้งานใหม่
-        </button>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <a asp-action="AuditLogs" asp-route-role="@currentTabRole" class="btn btn-outline-dark px-3 py-2 flex-shrink-0 rounded-3">
+                <i class="bi bi-journal-text me-1 text-warning"></i> บันทึกกิจกรรม (Audit Log)
+            </a>
+            <button type="button" class="btn btn-primary px-3 py-2 flex-shrink-0 rounded-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="bi bi-person-plus-fill me-1"></i> เพิ่มผู้ใช้งานใหม่
+            </button>
+        </div>
     </div>
 
     <!-- Filter Pills & Search Bar -->

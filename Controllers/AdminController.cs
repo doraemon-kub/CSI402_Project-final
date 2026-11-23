@@ -116,5 +116,47 @@ namespace CSI402_Project_final.Controllers
 
             return RedirectToAction(nameof(Index), new { role });
         }
+
+        // หน้าตรวจสอบบันทึกกิจกรรมย้อนหลัง (Audit Log)
+        public IActionResult AuditLogs(string? search = null, string? roleFilter = null, string? actionFilter = null, string? role = null)
+        {
+            ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
+            var logs = _repo.GetAuditLogs(500);
+
+            ViewBag.TotalLogsCount = logs.Count;
+            ViewBag.SecurityLogsCount = logs.Count(l => l.Action == "UPDATE_USER_ROLE" || l.Action == "SUSPEND_ACCOUNT" || l.Action == "CREATE_USER");
+            ViewBag.FinanceLogsCount = logs.Count(l => l.Action.Contains("PAYMENT") || l.Action.Contains("REFUND") || l.Action.Contains("EXPENSE"));
+            ViewBag.InventoryLogsCount = logs.Count(l => l.Action.Contains("PRODUCT") || l.Action.Contains("STOCK"));
+
+            if (!string.IsNullOrWhiteSpace(roleFilter) && roleFilter != "all")
+            {
+                logs = logs.Where(l => string.Equals(l.UserRole, roleFilter, System.StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(actionFilter) && actionFilter != "all")
+            {
+                logs = logs.Where(l => string.Equals(l.Action, actionFilter, System.StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                string kw = search.Trim();
+                logs = logs.Where(l =>
+                    (!string.IsNullOrEmpty(l.Username) && l.Username.Contains(kw, System.StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(l.Action) && l.Action.Contains(kw, System.StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(l.TableName) && l.TableName.Contains(kw, System.StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(l.RecordId) && l.RecordId.Contains(kw, System.StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(l.Details) && l.Details.Contains(kw, System.StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(l.IpAddress) && l.IpAddress.Contains(kw, System.StringComparison.OrdinalIgnoreCase))
+                ).ToList();
+            }
+
+            ViewBag.Search = search;
+            ViewBag.RoleFilter = roleFilter ?? "all";
+            ViewBag.ActionFilter = actionFilter ?? "all";
+            ViewBag.FilteredCount = logs.Count;
+
+            return View(logs);
+        }
     }
 }

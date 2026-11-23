@@ -1,0 +1,276 @@
+@model List<CSI402_Project_final.Models.AuditLog>
+@using CSI402_Project_final.Models
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "บันทึกกิจกรรมย้อนหลัง (Audit Log)";
+    string roleFilter = ViewBag.RoleFilter as string ?? "all";
+    string actionFilter = ViewBag.ActionFilter as string ?? "all";
+    string? search = ViewBag.Search as string;
+    string? currentTabRole = ViewContext.HttpContext.Request.Query["role"].FirstOrDefault();
+
+    int totalLogs = ViewBag.TotalLogsCount ?? Model.Count;
+    int securityLogs = ViewBag.SecurityLogsCount ?? 0;
+    int financeLogs = ViewBag.FinanceLogsCount ?? 0;
+    int inventoryLogs = ViewBag.InventoryLogsCount ?? 0;
+}
+
+<!-- Header & Quick Nav -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h4 class="fw-bold m-0 text-dark">
+                <i class="bi bi-journal-check text-warning me-2"></i>บันทึกกิจกรรมย้อนหลัง (Audit Trail & Activity Log)
+            </h4>
+            <span class="badge bg-dark rounded-pill px-2 py-1" style="font-size: 0.75rem;">13. ตาราง AuditLog</span>
+        </div>
+        <div class="text-muted small">
+            ตรวจสอบประวัติการทำรายการทุกกิจกรรมของผู้ใช้และพนักงาน 10 แผนกย้อนหลัง (ความปลอดภัย, สิทธิ์ผู้ใช้, สต็อก, การเงิน)
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Index" asp-route-role="@currentTabRole" class="btn btn-outline-dark px-3 py-2 rounded-3">
+            <i class="bi bi-person-gear me-1"></i> หน้ารายชื่อและสิทธิ์ผู้ใช้
+        </a>
+    </div>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <a asp-action="AuditLogs" asp-route-role="@currentTabRole" asp-route-roleFilter="all" class="text-decoration-none d-block">
+            <div class="card p-3 h-100 bg-white border-0 shadow-sm rounded-4" style="transition: all 0.2s;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-lux-muted small fw-medium">กิจกรรมทั้งหมด</div>
+                        <div class="fs-4 fw-bold text-dark">@totalLogs รายการ</div>
+                        <div class="small text-muted" style="font-size: 0.72rem;">บันทึก Audit ทั้งหมดในระบบ</div>
+                    </div>
+                    <div class="p-3 rounded-3 fs-3" style="background: var(--lux-gold-soft); color: var(--lux-gold-dark);">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <a asp-action="AuditLogs" asp-route-role="@currentTabRole" asp-route-actionFilter="UPDATE_USER_ROLE" class="text-decoration-none d-block">
+            <div class="card p-3 h-100 bg-white border-0 shadow-sm rounded-4" style="transition: all 0.2s;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-warning small fw-semibold">สิทธิ์และผู้ใช้ (Security)</div>
+                        <div class="fs-4 fw-bold text-dark">@securityLogs รายการ</div>
+                        <div class="small text-muted" style="font-size: 0.72rem;">เปลี่ยน Role, ระงับบัญชี</div>
+                    </div>
+                    <div class="p-3 bg-warning-subtle text-warning rounded-3 fs-3">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <a asp-action="AuditLogs" asp-route-role="@currentTabRole" asp-route-roleFilter="AccountingStaff" class="text-decoration-none d-block">
+            <div class="card p-3 h-100 bg-white border-0 shadow-sm rounded-4" style="transition: all 0.2s;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-success small fw-semibold">การเงิน & คำสั่งซื้อ</div>
+                        <div class="fs-4 fw-bold text-dark">@financeLogs รายการ</div>
+                        <div class="small text-muted" style="font-size: 0.72rem;">ตรวจสลิป, คืนเงิน, สั่งซื้อ</div>
+                    </div>
+                    <div class="p-3 bg-success-subtle text-success rounded-3 fs-3">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <a asp-action="AuditLogs" asp-route-role="@currentTabRole" asp-route-roleFilter="InventoryStaff" class="text-decoration-none d-block">
+            <div class="card p-3 h-100 bg-white border-0 shadow-sm rounded-4" style="transition: all 0.2s;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-primary small fw-semibold">คลังสินค้า & สต็อก</div>
+                        <div class="fs-4 fw-bold text-dark">@inventoryLogs รายการ</div>
+                        <div class="small text-muted" style="font-size: 0.72rem;">ปรับสต็อก, เพิ่ม/แก้ไขสินค้า</div>
+                    </div>
+                    <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-3">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Main Filter & Table Card -->
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <!-- Filter Bar -->
+    <form method="get" asp-action="AuditLogs" class="row g-3 align-items-center mb-4">
+        <input type="hidden" name="role" value="@currentTabRole" />
+        
+        <div class="col-md-4 col-lg-3">
+            <label class="form-label small text-muted fw-medium mb-1">กรองตามบทบาท (Role)</label>
+            <select name="roleFilter" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="all" selected="@(roleFilter == "all")">ทั้งหมดทุกบทบาท</option>
+                <option value="Admin" selected="@(roleFilter == "Admin")">ผู้ดูแลระบบ (Admin)</option>
+                <option value="InventoryStaff" selected="@(roleFilter == "InventoryStaff")">คลังสินค้า (InventoryStaff)</option>
+                <option value="OrderStaff" selected="@(roleFilter == "OrderStaff")">คำสั่งซื้อ (OrderStaff)</option>
+                <option value="ShippingStaff" selected="@(roleFilter == "ShippingStaff")">จัดส่ง (ShippingStaff)</option>
+                <option value="MarketingStaff" selected="@(roleFilter == "MarketingStaff")">การตลาด (MarketingStaff)</option>
+                <option value="AccountingStaff" selected="@(roleFilter == "AccountingStaff")">การเงิน/บัญชี (AccountingStaff)</option>
+                <option value="ITSupport" selected="@(roleFilter == "ITSupport")">ฝ่ายไอที (ITSupport)</option>
+                <option value="Owner" selected="@(roleFilter == "Owner")">ผู้บริหารสูงสุด (Owner)</option>
+                <option value="Customer" selected="@(roleFilter == "Customer")">ลูกค้า (Customer)</option>
+                <option value="System" selected="@(roleFilter == "System")">ระบบอัตโนมัติ (System)</option>
+            </select>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <label class="form-label small text-muted fw-medium mb-1">กรองประเภทกิจกรรม (Action)</label>
+            <select name="actionFilter" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="all" selected="@(actionFilter == "all")">ทุกประเภทกิจกรรม</option>
+                <option value="UPDATE_USER_ROLE" selected="@(actionFilter == "UPDATE_USER_ROLE")">UPDATE_USER_ROLE (เปลี่ยน Role/ระงับบัญชี)</option>
+                <option value="CREATE_USER" selected="@(actionFilter == "CREATE_USER")">CREATE_USER (สร้างบัญชีผู้ใช้ใหม่)</option>
+                <option value="UPDATE_STOCK" selected="@(actionFilter == "UPDATE_STOCK")">UPDATE_STOCK (ปรับสต็อกสินค้า)</option>
+                <option value="CREATE_PRODUCT" selected="@(actionFilter == "CREATE_PRODUCT")">CREATE_PRODUCT (เพิ่มสินค้าใหม่)</option>
+                <option value="UPDATE_PRODUCT" selected="@(actionFilter == "UPDATE_PRODUCT")">UPDATE_PRODUCT (แก้ไขสินค้า)</option>
+                <option value="CHECKOUT_ORDER" selected="@(actionFilter == "CHECKOUT_ORDER")">CHECKOUT_ORDER (สร้างคำสั่งซื้อ)</option>
+                <option value="APPROVE_PAYMENT" selected="@(actionFilter == "APPROVE_PAYMENT")">APPROVE_PAYMENT (อนุมัติสลิปโอนเงิน)</option>
+                <option value="DISPATCH_ORDER" selected="@(actionFilter == "DISPATCH_ORDER")">DISPATCH_ORDER (จัดส่งพัสดุ/ออก Tracking)</option>
+                <option value="APPROVE_REFUND" selected="@(actionFilter == "APPROVE_REFUND")">APPROVE_REFUND (อนุมัติคืนเงิน)</option>
+                <option value="RESOLVE_TICKET" selected="@(actionFilter == "RESOLVE_TICKET")">RESOLVE_TICKET (ปิดตั๋วปัญหา Helpdesk)</option>
+                <option value="TOGGLE_PROMOTION" selected="@(actionFilter == "TOGGLE_PROMOTION")">TOGGLE_PROMOTION (เปิด/ปิดโปรโมชั่น)</option>
+            </select>
+        </div>
+
+        <div class="col-md-4 col-lg-4">
+            <label class="form-label small text-muted fw-medium mb-1">ค้นหา (ชื่อผู้ใช้, ตาราง, รายละเอียด, IP)</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="search" value="@search" class="form-control border-start-0" placeholder="พิมพ์คำค้นหา..." />
+                <button type="submit" class="btn btn-dark">ค้นหา</button>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-2 d-flex align-items-end">
+            <a asp-action="AuditLogs" asp-route-role="@currentTabRole" class="btn btn-sm btn-outline-secondary w-100">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> รีเซ็ตตัวกรอง
+            </a>
+        </div>
+    </form>
+
+    <!-- Table Header Info & Live Search Status -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="small text-muted">
+            ผลลัพธ์: พบ <strong>@Model.Count</strong> รายการ (เรียงจากล่าสุดไปเก่าสุด)
+        </span>
+        <span class="badge bg-secondary-subtle text-secondary small">
+            <i class="bi bi-database me-1"></i> MySQL Table: <code>auditlog</code>
+        </span>
+    </div>
+
+    <!-- Responsive Table with Fixed Layout -->
+    <div class="table-responsive rounded-3 border" style="max-height: 650px; overflow-y: auto;">
+        <table class="table table-hover align-middle mb-0" style="table-layout: fixed; min-width: 980px;">
+            <colgroup>
+                <col style="width: 15%;" />
+                <col style="width: 13%;" />
+                <col style="width: 15%;" />
+                <col style="width: 10%;" />
+                <col style="width: 12%;" />
+                <col style="width: 23%;" />
+                <col style="width: 12%;" />
+            </colgroup>
+            <thead class="table-light sticky-top" style="z-index: 10;">
+                <tr class="small text-uppercase text-muted">
+                    <th class="ps-3"><i class="bi bi-clock me-1"></i> วัน-เวลา</th>
+                    <th><i class="bi bi-person me-1"></i> ผู้ใช้งาน</th>
+                    <th><i class="bi bi-lightning-charge me-1"></i> กิจกรรม (Action)</th>
+                    <th><i class="bi bi-table me-1"></i> ตาราง</th>
+                    <th><i class="bi bi-hash me-1"></i> รหัสอ้างอิง</th>
+                    <th><i class="bi bi-card-text me-1"></i> รายละเอียด</th>
+                    <th class="pe-3"><i class="bi bi-globe me-1"></i> IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-clipboard-x fs-1 d-block mb-2 text-secondary"></i>
+                            ไม่พบบันทึกกิจกรรมตามเงื่อนไขที่เลือก
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model)
+                    {
+                        string badgeClass = item.Action switch
+                        {
+                            "UPDATE_USER_ROLE" or "SUSPEND_ACCOUNT" => "bg-warning text-dark",
+                            "CREATE_USER" or "REGISTER" => "bg-primary text-white",
+                            "APPROVE_PAYMENT" or "APPROVE_REFUND" => "bg-success text-white",
+                            "REJECT_PAYMENT" or "CANCEL_UNPAID_ORDER" or "DELETE_PRODUCT" => "bg-danger text-white",
+                            "UPDATE_STOCK" or "CREATE_PRODUCT" or "UPDATE_PRODUCT" => "bg-info text-dark",
+                            "DISPATCH_ORDER" => "bg-dark text-white",
+                            "RESOLVE_TICKET" => "bg-success-subtle text-success fw-bold",
+                            _ => "bg-secondary text-white"
+                        };
+
+                        string roleBadgeClass = item.UserRole switch
+                        {
+                            "Admin" => "badge bg-dark",
+                            "Owner" => "badge bg-warning text-dark fw-bold",
+                            "InventoryStaff" => "badge bg-info text-dark",
+                            "OrderStaff" => "badge bg-primary",
+                            "ShippingStaff" => "badge bg-secondary",
+                            "MarketingStaff" => "badge bg-warning text-dark",
+                            "AccountingStaff" => "badge bg-success",
+                            "ITSupport" => "badge bg-danger",
+                            "Customer" => "badge bg-light text-dark border",
+                            _ => "badge bg-secondary"
+                        };
+
+                        <tr>
+                            <td class="ps-3 text-nowrap">
+                                <span class="fw-semibold text-dark">@item.Timestamp.ToString("dd/MM/yyyy")</span>
+                                <small class="text-muted d-block" style="font-size: 0.72rem;">@item.Timestamp.ToString("HH:mm:ss")</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark text-truncate" title="@item.Username">@item.Username</div>
+                                <span class="@roleBadgeClass" style="font-size: 0.65rem;">@item.UserRole</span>
+                            </td>
+                            <td>
+                                <span class="badge @badgeClass" style="font-size: 0.72rem;">@item.Action</span>
+                            </td>
+                            <td>
+                                <code class="text-muted" style="font-size: 0.75rem;">@item.TableName</code>
+                            </td>
+                            <td class="text-truncate">
+                                @if (!string.IsNullOrEmpty(item.RecordId))
+                                {
+                                    <span class="badge bg-light text-dark border font-monospace" style="font-size: 0.7rem;">@item.RecordId</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="small text-dark" style="max-height: 48px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="@item.Details">
+                                    @(item.Details ?? "-")
+                                </div>
+                            </td>
+                            <td class="pe-3">
+                                <span class="small font-monospace text-muted" style="font-size: 0.72rem;">
+                                    @(item.IpAddress ?? "127.0.0.1")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

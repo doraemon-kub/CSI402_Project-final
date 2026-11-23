@@ -29,9 +29,12 @@
     var fullName = System.Text.RegularExpressions.Regex.Replace(rawFullName ?? "", @"\s*\([^)]*\)", "").Trim();
     if (string.IsNullOrEmpty(fullName)) fullName = username;
     string activeCtrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string activeAct = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 
     bool HasRole(string role) => string.Equals(currentRole, role, StringComparison.OrdinalIgnoreCase);
-    bool IsActive(string ctrl) => string.Equals(activeCtrl, ctrl, StringComparison.OrdinalIgnoreCase);
+    bool IsActive(string ctrl, string? act = null) =>
+        string.Equals(activeCtrl, ctrl, StringComparison.OrdinalIgnoreCase) &&
+        (act == null || string.Equals(activeAct, act, StringComparison.OrdinalIgnoreCase));
     bool isOwner = HasRole("Owner");
 
     // ดึงและลบ TempData Cookie ทันทีก่อนเริ่มเขียน HTML Stream และตรวจสอบว่าข้อความเป็นของ Role/User ในแท็บนี้จริงหรือไม่
@@ -256,8 +259,12 @@
                 @if (isOwner || HasRole("Admin"))
                 {
                     <a asp-controller="Admin" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
-                       class="sidebar-link @(IsActive("Admin") ? "active" : "")">
+                       class="sidebar-link @(IsActive("Admin", "Index") ? "active" : "")">
                         <i class="bi bi-person-gear"></i> สิทธิ์และผู้ใช้ (Admin)
+                    </a>
+                    <a asp-controller="Admin" asp-action="AuditLogs" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))"
+                       class="sidebar-link @(IsActive("Admin", "AuditLogs") ? "active" : "")">
+                        <i class="bi bi-journal-text"></i> บันทึกกิจกรรม (Audit Log)
                     </a>
                 }
                 @if (isOwner)
@@ -344,6 +351,9 @@
                     {
                         <a asp-controller="Admin" asp-action="Index" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))" class="sidebar-link text-white-50 px-3 py-2 d-block">
                             <i class="bi bi-person-gear me-2 text-warning"></i> สิทธิ์และผู้ใช้ (Admin)
+                        </a>
+                        <a asp-controller="Admin" asp-action="AuditLogs" asp-route-role="@(!string.IsNullOrEmpty(roleParam) ? roleParam : (isOwner ? "Owner" : null))" class="sidebar-link text-white-50 px-3 py-2 d-block">
+                            <i class="bi bi-journal-text me-2 text-warning"></i> บันทึกกิจกรรม (Audit Log)
                         </a>
                     }
                     @if (isOwner)
