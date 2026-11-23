@@ -447,18 +447,24 @@
             .withAutomaticReconnect()
             .build();
 
-        // 1. รับแจ้งเตือนออเดอร์ใหม่แบบ Real-Time (Order Staff / Owner)
+        window.PETSTORE_TAB_ROLE = "@currentRole";
+
+        // 1. รับแจ้งเตือนออเดอร์ใหม่แบบ Real-Time (เฉพาะ Order Staff / Accounting / Owner)
         staffHubConnection.on("ReceiveNewOrderAlert", function (orderId, customerName, grandTotal) {
-            showStaffToast(`🔔 ออเดอร์ใหม่! #${orderId} จาก ${customerName} (ยอด ฿${grandTotal})`);
-            // ถ้าอยู่ในหน้าออเดอร์ ให้รีโหลดหรือแสดงไฮไลต์
-            if (window.location.pathname.includes("/Order")) {
-                setTimeout(() => window.location.reload(), 2000);
+            const currentTabRole = (window.PETSTORE_TAB_ROLE || sessionStorage.getItem('petshop_tab_role') || "").toLowerCase();
+            if (currentTabRole === "orderstaff" || currentTabRole === "order" ||
+                currentTabRole === "accountingstaff" || currentTabRole === "accounting" ||
+                currentTabRole === "owner") {
+                // ถ้าอยู่ในหน้าออเดอร์ ให้รีโหลดอัตโนมัติ
+                if (window.location.pathname.includes("/Order")) {
+                    setTimeout(() => window.location.reload(), 2000);
+                }
             }
         });
 
-        // 2. รับแจ้งเตือนสินค้าสต็อกต่ำกว่าเกณฑ์แบบ Real-Time (Req 18: Inventory Staff)
+        // 2. รับแจ้งเตือนสินค้าสต็อกต่ำกว่าเกณฑ์แบบ Real-Time (Req 18: เฉพาะ Inventory Staff เท่านั้น)
         staffHubConnection.on("ReceiveLowStockAlert", function (productName, currentStock) {
-            showStaffToast(`⚠️ เตือนสต็อกต่ำ! สินค้า '${productName}' เหลือเพียง ${currentStock} ชิ้น`);
+            // แสดงผลผ่าน petstore-socket.js เฉพาะ role InventoryStaff เท่านั้น
         });
 
         // 3. เตะพนักงานออกจากระบบแบบ Real-Time ทันทีเมื่อถูกผู้ดูแลระบบสั่งระงับบัญชีระหว่างล็อกอินอยู่

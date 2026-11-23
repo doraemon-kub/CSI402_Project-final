@@ -149,9 +149,35 @@
         }, 6000);
     }
 
-    // 6. ลงทะเบียน Event Listeners สำหรับ Real-Time Events
-    // Event A: แจ้งเตือนคำสั่งซื้อใหม่ (Order Staff, Accounting, Owner)
+    // 6. ฟังก์ชันตรวจสอบบทบาทของแท็บปัจจุบัน เพื่อกรองแจ้งเตือนให้ตรงเฉพาะ Role ที่เกี่ยวข้อง
+    function getCurrentTabRole() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const rawRole = window.PETSTORE_TAB_ROLE
+                || urlParams.get('role')
+                || urlParams.get('asRole')
+                || sessionStorage.getItem('petshop_tab_role')
+                || 'Guest';
+            return String(rawRole).trim().toLowerCase();
+        } catch (e) {
+            return String(window.PETSTORE_TAB_ROLE || 'Guest').trim().toLowerCase();
+        }
+    }
+
+    function isInventoryRole() {
+        const role = getCurrentTabRole();
+        return role === 'inventorystaff' || role === 'inventory';
+    }
+
+    // 7. ลงทะเบียน Event Listeners สำหรับ Real-Time Events
+    // Event A: แจ้งเตือนคำสั่งซื้อใหม่ (เฉพาะ Order Staff, Accounting, Owner)
     connection.on('ReceiveNewOrderAlert', function (orderId, customerName, grandTotal) {
+        const role = getCurrentTabRole();
+        if (role !== 'orderstaff' && role !== 'order' &&
+            role !== 'accountingstaff' && role !== 'accounting' &&
+            role !== 'owner') {
+            return;
+        }
         console.log(`[Socket] New Order #${orderId} from ${customerName}: ฿${grandTotal}`);
         playNotificationSound('chime');
         showRealTimeToast(
@@ -189,8 +215,11 @@
         }
     });
 
-    // Event C: แจ้งเตือนสินค้าใกล้หมด Low Stock Alert (Req 18)
+    // Event C: แจ้งเตือนสินค้าใกล้หมด Low Stock Alert (Req 18: เฉพาะบทบาท Inventory เท่านั้น)
     connection.on('ReceiveLowStockAlert', function (productName, currentStock) {
+        if (!isInventoryRole()) {
+            return;
+        }
         console.warn(`[Socket] Low stock warning: ${productName} (Stock: ${currentStock})`);
         playNotificationSound('alert');
         showRealTimeToast(
@@ -201,8 +230,12 @@
         );
     });
 
-    // Event D: แจ้งเตือนสถานะพัสดุจัดส่งแล้ว (Shipping Staff -> Customer)
+    // Event D: แจ้งเตือนสถานะพัสดุจัดส่งแล้ว (Shipping Staff -> เฉพาะ Customer)
     connection.on('ReceiveOrderShippedAlert', function (orderId, trackingNumber, courier) {
+        const role = getCurrentTabRole();
+        if (role !== 'customer') {
+            return;
+        }
         console.log(`[Socket] Order Shipped #${orderId}: ${trackingNumber} (${courier})`);
         playNotificationSound('chime');
         showRealTimeToast(

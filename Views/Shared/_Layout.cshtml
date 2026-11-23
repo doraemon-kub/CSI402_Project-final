@@ -511,14 +511,13 @@
             }
         }
 
-        // 2. รับแจ้งเตือนเมื่อพัสดุจัดส่งแล้ว
+        // 2. รับแจ้งเตือนเมื่อพัสดุจัดส่งแล้ว (เฉพาะบทบาท Customer เท่านั้น)
+        window.PETSTORE_TAB_ROLE = "@currentRoleName";
         petShopConnection.on("ReceiveOrderShippedAlert", function (orderId, trackingNumber, courier) {
-            showRealtimeToast(`🚚 ออเดอร์ #${orderId} ถูกจัดส่งแล้ว! (${courier}: ${trackingNumber})`);
-        });
-
-        // 3. รับแจ้งเตือนเมื่อมีออเดอร์ใหม่
-        petShopConnection.on("ReceiveNewOrderAlert", function (orderId, customerName, grandTotal) {
-            showRealtimeToast(`🎉 มีคำสั่งซื้อใหม่ #${orderId} จาก ${customerName} (฿${grandTotal})`);
+            const currentTabRole = (window.PETSTORE_TAB_ROLE || sessionStorage.getItem('petshop_tab_role') || "").toLowerCase();
+            if (currentTabRole === "customer") {
+                showRealtimeToast(`🚚 ออเดอร์ #${orderId} ถูกจัดส่งแล้ว! (${courier}: ${trackingNumber})`);
+            }
         });
 
         // 4. เตะผู้ใช้ออกจากระบบแบบ Real-Time ทันทีเมื่อบัญชีถูกผู้ดูแลระบบสั่งระงับระหว่างกำลังใช้งาน

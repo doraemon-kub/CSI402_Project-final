@@ -67,6 +67,10 @@ namespace CSI402_Project_final.Controllers
                     if (product != null)
                     {
                         await _hubContext.Clients.All.SendAsync("ReceiveStockUpdate", productId, product.StockQuantity);
+                        if (product.IsLowStock)
+                        {
+                            await _hubContext.Clients.All.SendAsync("ReceiveLowStockAlert", product.Name, product.StockQuantity);
+                        }
                     }
                 }
                 catch { }
@@ -104,6 +108,10 @@ namespace CSI402_Project_final.Controllers
             if (product != null)
             {
                 await _hubContext.Clients.All.SendAsync("ReceiveStockUpdate", productId, product.StockQuantity);
+                if (product.IsLowStock)
+                {
+                    await _hubContext.Clients.All.SendAsync("ReceiveLowStockAlert", product.Name, product.StockQuantity);
+                }
             }
             return RedirectToAction(nameof(Index));
         }
