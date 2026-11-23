@@ -25,8 +25,8 @@ namespace CSI402_Project_final.Controllers
             _hubContext = hubContext;
         }
 
-        // หน้าหลักคลังสินค้า: สต็อกสินค้า & แจ้งเตือนสินค้าต่ำกว่าระดับที่กำหนด (Req 18) พร้อมตัวกรอง Low Stock / Out of Stock
-        public IActionResult Index(string? stockFilter = "all", string? search = null)
+        // หน้าหลักคลังสินค้า: สต็อกสินค้า & แจ้งเตือนสินค้าต่ำกว่าระดับที่กำหนด (Req 18) พร้อมตัวกรอง Low Stock / Out of Stock และกรองหมวดหมู่ของใช้/อาหาร
+        public IActionResult Index(string? stockFilter = "all", string? categoryFilter = "all", string? search = null)
         {
             var allProducts = _repo.Products.OrderBy(p => p.StockQuantity).ToList();
 
@@ -36,7 +36,12 @@ namespace CSI402_Project_final.Controllers
             ViewBag.OutOfStockCount = allProducts.Count(p => p.IsOutOfStock);
             ViewBag.NormalStockCount = allProducts.Count(p => !p.IsLowStock && !p.IsOutOfStock);
 
+            ViewBag.FoodCount = allProducts.Count(p => p.Category == ProductCategory.Food);
+            ViewBag.SupplyCount = allProducts.Count(p => p.Category == ProductCategory.Supply);
+            ViewBag.HygieneCount = allProducts.Count(p => p.Category == ProductCategory.Hygiene);
+
             string normalizedFilter = (stockFilter ?? "all").Trim().ToLowerInvariant();
+            string normalizedCategory = (categoryFilter ?? "all").Trim();
             IEnumerable<Product> filtered = allProducts;
 
             filtered = normalizedFilter switch
@@ -48,15 +53,23 @@ namespace CSI402_Project_final.Controllers
                 _ => filtered
             };
 
+            if (!string.Equals(normalizedCategory, "all", System.StringComparison.OrdinalIgnoreCase) &&
+                System.Enum.TryParse<ProductCategory>(normalizedCategory, true, out var parsedCat))
+            {
+                filtered = filtered.Where(p => p.Category == parsedCat);
+            }
+
             if (!string.IsNullOrWhiteSpace(search))
             {
                 string kw = search.Trim();
                 filtered = filtered.Where(p =>
                     p.Name.Contains(kw, System.StringComparison.OrdinalIgnoreCase) ||
-                    p.Brand.Contains(kw, System.StringComparison.OrdinalIgnoreCase));
+                    p.Brand.Contains(kw, System.StringComparison.OrdinalIgnoreCase) ||
+                    p.SpecialNeed.Contains(kw, System.StringComparison.OrdinalIgnoreCase));
             }
 
             ViewBag.StockFilter = normalizedFilter;
+            ViewBag.CategoryFilter = normalizedCategory;
             ViewBag.Search = search;
 
             return View(filtered.ToList());
@@ -64,7 +77,7 @@ namespace CSI402_Project_final.Controllers
 
         // อัปเดตสต็อกรวดเร็ว (คงสถานะ Filter เดิมไว้)
         [HttpPost]
-        public async Task<IActionResult> UpdateStock(int id, int adjustment, string? stockFilter = null, string? search = null, string? role = null)
+        public async Task<IActionResult> UpdateStock(int id, int adjustment, string? stockFilter = null, string? categoryFilter = null, string? search = null, string? role = null)
         {
             var product = _repo.UpdateProductStock(id, adjustment);
             if (product != null)
@@ -78,7 +91,7 @@ namespace CSI402_Project_final.Controllers
                     await _hubContext.Clients.All.SendAsync("ReceiveLowStockAlert", product.Name, product.StockQuantity);
                 }
             }
-            return RedirectToAction(nameof(Index), new { stockFilter, search, role });
+            return RedirectToAction(nameof(Index), new { stockFilter, categoryFilter, search, role });
         }
 
         // เพิ่มหรือแก้ไขสินค้า (Req 6, 17) รองรับอัปโหลดรูปภาพและลิงก์รูปภาพ

@@ -49,17 +49,24 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <!-- Demographics: สัดส่วนยอดขายตามประเภทสัตว์เลี้ยงจริง (Req 1, 9) -->
+    <!-- Demographics: สัดส่วนยอดขายตามประเภทสัตว์เลี้ยงจริง & หมวดหมู่สินค้า (Req 1, 9, FR-02) -->
     @{
         int totalPetOrders = dogOrders + catOrders + otherOrders;
         int dogPct = totalPetOrders > 0 ? (int)Math.Round((dogOrders * 100.0) / totalPetOrders) : 0;
         int catPct = totalPetOrders > 0 ? (int)Math.Round((catOrders * 100.0) / totalPetOrders) : 0;
         int otherPct = totalPetOrders > 0 ? Math.Max(0, 100 - dogPct - catPct) : 0;
+
+        int foodCatalog = ViewBag.FoodCatalogCount ?? 0;
+        int supplyCatalog = ViewBag.SupplyCatalogCount ?? 0;
+        int hygieneCatalog = ViewBag.HygieneCatalogCount ?? 0;
+        int foodOrderItems = ViewBag.FoodOrderCount ?? 0;
+        int supplyOrderItems = ViewBag.SupplyOrderCount ?? 0;
+        int hygieneOrderItems = ViewBag.HygieneOrderCount ?? 0;
     }
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
             <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-pie-chart-fill text-primary"></i>
-                สัดส่วนยอดขายตามประเภทสัตว์เลี้ยง</h5>
+                สัดส่วนยอดขายตามประเภทสัตว์เลี้ยง &amp; หมวดหมู่ของใช้</h5>
                 <div class="p-3 bg-light rounded-4 mb-3">
                     <div class="d-flex justify-content-between mb-1">
                         <span>🐶 สุนัข (@dogOrders รายการ)</span>
@@ -85,8 +92,32 @@
                         <div class="progress-bar bg-success" style="width: @(otherPct)%;"></div>
                     </div>
                 </div>
+
+                <div class="row g-2 mb-2 text-center">
+                    <div class="col-4">
+                        <div class="p-2 rounded-3 border bg-white">
+                            <div class="small text-muted">🍲 อาหารสัตว์เลี้ยง</div>
+                            <div class="fw-bold text-dark">@foodCatalog SKU</div>
+                            <small class="text-primary">ขายแล้ว @foodOrderItems ชิ้น</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded-3 border bg-white">
+                            <div class="small text-muted">🧸 ของใช้สัตว์เลี้ยง</div>
+                            <div class="fw-bold text-success">@supplyCatalog SKU</div>
+                            <small class="text-success">ขายแล้ว @supplyOrderItems ชิ้น</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded-3 border bg-white">
+                            <div class="small text-muted">🧼 สุขอนามัย</div>
+                            <div class="fw-bold text-info">@hygieneCatalog SKU</div>
+                            <small class="text-info">ขายแล้ว @hygieneOrderItems ชิ้น</small>
+                        </div>
+                    </div>
+                </div>
                 <small class="text-muted">
-                    * คำนวณสัดส่วนจริงจากจำนวนรายการสินค้าที่ถูกสั่งซื้อในตาราง OrderItem
+                    * คำนวณสัดส่วนจริงจากตาราง Product และรายการที่ถูกสั่งซื้อในตาราง OrderItem
                 </small>
             </div>
         </div>

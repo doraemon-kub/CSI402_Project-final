@@ -49,7 +49,10 @@
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-3">
                 <div class="d-flex flex-wrap gap-1">
                     <span class="lux-tag">
-                        @(Model.PetType == PetCategory.Dog ? "สุนัข" : Model.PetType == PetCategory.Cat ? "แมว" : "อื่นๆ")
+                        @(Model.PetType == PetCategory.Dog ? "🐶 สุนัข" : Model.PetType == PetCategory.Cat ? "🐱 แมว" : "🐾 อื่นๆ")
+                    </span>
+                    <span class="lux-tag" style="background: @(Model.Category == ProductCategory.Supply ? "#E8F5E9" : Model.Category == ProductCategory.Hygiene ? "#E3F2FD" : "#FFF3E0"); color: @(Model.Category == ProductCategory.Supply ? "#2E7D32" : Model.Category == ProductCategory.Hygiene ? "#1565C0" : "#E65100"); border-color: transparent;">
+                        @(Model.Category == ProductCategory.Food ? "🍲 อาหาร" : Model.Category == ProductCategory.Supply ? "🧸 ของใช้สัตว์เลี้ยง" : "🧼 สุขอนามัย")
                     </span>
                     <span class="lux-tag lux-tag-accent">@Model.SpecialNeed</span>
                 </div>

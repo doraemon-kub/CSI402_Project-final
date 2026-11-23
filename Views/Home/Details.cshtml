@@ -4,6 +4,9 @@
     ViewData["Title"] = Model.Name;
     var related = ViewBag.RelatedProducts as List<Product> ?? new();
     var petLabel = Model.PetType == PetCategory.Dog ? "สุนัข" : Model.PetType == PetCategory.Cat ? "แมว" : "สัตว์เลี้ยงอื่นๆ";
+    var categoryLabel = Model.Category == ProductCategory.Food ? "อาหารและโภชนาการ"
+                      : Model.Category == ProductCategory.Supply ? "ของใช้และอุปกรณ์สัตว์เลี้ยง"
+                      : "ผลิตภัณฑ์สุขอนามัย";
     var ageLabel = Model.AgeStage == AgeStage.PuppyOrKitten ? "วัยเด็ก"
                  : Model.AgeStage == AgeStage.Adult ? "โตเต็มวัย"
                  : Model.AgeStage == AgeStage.Senior ? "สูงวัย" : "ทุกช่วงวัย";
@@ -13,7 +16,8 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb small mb-0">
             <li class="breadcrumb-item"><a asp-action="Index" class="text-lux-muted text-decoration-none">หน้าร้านค้า</a></li>
-            <li class="breadcrumb-item text-lux-muted">@petLabel</li>
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-petType="@Model.PetType" class="text-lux-muted text-decoration-none">@petLabel</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-category="@Model.Category" class="text-lux-muted text-decoration-none">@categoryLabel</a></li>
             <li class="breadcrumb-item active text-lux-espresso fw-medium" aria-current="page">@Model.Name</li>
         </ol>
     </nav>
@@ -29,18 +33,18 @@
             <div class="col-md-7 p-4 p-lg-5 d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="lux-product-brand" style="font-size: 0.8rem;">@Model.Brand</span>
-                    <span class="lux-tag">@petLabel · @Model.Category</span>
+                    <span class="lux-tag">@petLabel · @categoryLabel</span>
                 </div>
 
                 <h2 class="fw-bold text-lux-espresso mb-3" style="letter-spacing: -0.02em;">@Model.Name</h2>
                 <p class="text-lux-muted mb-4" style="line-height: 1.7;">@Model.Description</p>
 
-                <!-- Spec Info Tiles (Req 1, 2, 7, 10) -->
+                <!-- Spec Info Tiles (Req 1, 2, 7, 10, FR-02) -->
                 <div class="row g-3 mb-4">
                     <div class="col-6 col-sm-3">
                         <div class="p-3 bg-lux-tint rounded-3 text-center h-100" style="border: 1px solid var(--lux-border);">
-                            <div class="small text-lux-muted mb-1">สัตว์เลี้ยง</div>
-                            <div class="fw-semibold text-lux-espresso">@petLabel</div>
+                            <div class="small text-lux-muted mb-1">ประเภท / หมวด</div>
+                            <div class="fw-semibold text-lux-espresso">@petLabel · @(Model.Category == ProductCategory.Food ? "อาหาร" : Model.Category == ProductCategory.Supply ? "ของใช้" : "สุขอนามัย")</div>
                         </div>
                     </div>
                     <div class="col-6 col-sm-3">
@@ -57,7 +61,7 @@
                     </div>
                     <div class="col-6 col-sm-3">
                         <div class="p-3 bg-lux-tint rounded-3 text-center h-100" style="border: 1px solid var(--lux-border);">
-                            <div class="small text-lux-muted mb-1">สูตรการดูแล</div>
+                            <div class="small text-lux-muted mb-1">@(Model.Category == ProductCategory.Supply ? "ประเภทของใช้" : "สูตรการดูแล")</div>
                             <div class="fw-semibold text-lux-espresso">@Model.SpecialNeed</div>
                         </div>
                     </div>

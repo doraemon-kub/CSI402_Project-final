@@ -73,6 +73,104 @@
         </div>
     </div>
 
+    <!-- Quick Category Filter Tabs: อาหาร / ของใช้และอุปกรณ์สัตว์เลี้ยง / สุขอนามัย (FR-02) -->
+    @{
+        int allCatCount = ViewBag.AllCategoryCount ?? Model.Count;
+        int foodCount = ViewBag.FoodCount ?? 0;
+        int supplyCount = ViewBag.SupplyCount ?? 0;
+        int hygieneCount = ViewBag.HygieneCount ?? 0;
+        var currentRoleParam = ViewContext.HttpContext.Request.Query["role"].FirstOrDefault();
+    }
+    <div class="row g-2 g-md-3 mb-3">
+        <div class="col-6 col-md-3">
+            <a asp-controller="Home" asp-action="Index"
+               asp-route-petType="@petType"
+               asp-route-ageStage="@ageStage"
+               asp-route-maxWeight="@maxWeight"
+               asp-route-search="@search"
+               asp-route-role="@currentRoleParam"
+               class="text-decoration-none d-block h-100">
+                <div class="p-3 rounded-4 h-100 d-flex align-items-center gap-3"
+                     style="background: @(category == null ? "var(--lux-espresso)" : "#FFFFFF"); color: @(category == null ? "#FAF8F5" : "var(--lux-espresso)"); border: 1px solid @(category == null ? "var(--lux-espresso)" : "var(--lux-border)"); transition: all 0.2s;">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width: 42px; height: 42px; background: @(category == null ? "rgba(255,255,255,0.15)" : "var(--lux-gold-soft)"); color: @(category == null ? "#DFC3A8" : "var(--lux-gold-dark)");">
+                        <i class="bi bi-grid-fill fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.9rem;">สินค้าทุกหมวดหมู่</div>
+                        <div class="small opacity-75" style="font-size: 0.74rem;">ทั้งหมด @allCatCount รายการ</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a asp-controller="Home" asp-action="Index"
+               asp-route-category="@ProductCategory.Food"
+               asp-route-petType="@petType"
+               asp-route-ageStage="@ageStage"
+               asp-route-maxWeight="@maxWeight"
+               asp-route-search="@search"
+               asp-route-role="@currentRoleParam"
+               class="text-decoration-none d-block h-100">
+                <div class="p-3 rounded-4 h-100 d-flex align-items-center gap-3"
+                     style="background: @(category == ProductCategory.Food ? "var(--lux-espresso)" : "#FFFFFF"); color: @(category == ProductCategory.Food ? "#FAF8F5" : "var(--lux-espresso)"); border: 1px solid @(category == ProductCategory.Food ? "var(--lux-espresso)" : "var(--lux-border)"); transition: all 0.2s;">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width: 42px; height: 42px; background: @(category == ProductCategory.Food ? "rgba(255,255,255,0.15)" : "#FFF3E0"); color: @(category == ProductCategory.Food ? "#DFC3A8" : "#E65100");">
+                        <i class="bi bi-bowl-hot-fill fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.9rem;">อาหาร &amp; ขนมสัตว์เลี้ยง</div>
+                        <div class="small opacity-75" style="font-size: 0.74rem;">โภชนาการ @foodCount รายการ</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a asp-controller="Home" asp-action="Index"
+               asp-route-category="@ProductCategory.Supply"
+               asp-route-petType="@petType"
+               asp-route-ageStage="@ageStage"
+               asp-route-maxWeight="@maxWeight"
+               asp-route-search="@search"
+               asp-route-role="@currentRoleParam"
+               class="text-decoration-none d-block h-100">
+                <div class="p-3 rounded-4 h-100 d-flex align-items-center gap-3"
+                     style="background: @(category == ProductCategory.Supply ? "var(--lux-espresso)" : "#FFFFFF"); color: @(category == ProductCategory.Supply ? "#FAF8F5" : "var(--lux-espresso)"); border: 1px solid @(category == ProductCategory.Supply ? "var(--lux-espresso)" : "var(--lux-border)"); transition: all 0.2s;">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width: 42px; height: 42px; background: @(category == ProductCategory.Supply ? "rgba(255,255,255,0.15)" : "#E8F5E9"); color: @(category == ProductCategory.Supply ? "#DFC3A8" : "#2E7D32");">
+                        <i class="bi bi-basket2-fill fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.9rem;">ของใช้ &amp; อุปกรณ์สัตว์เลี้ยง</div>
+                        <div class="small opacity-75" style="font-size: 0.74rem;">ของใช้/ของเล่น @supplyCount รายการ</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a asp-controller="Home" asp-action="Index"
+               asp-route-category="@ProductCategory.Hygiene"
+               asp-route-petType="@petType"
+               asp-route-ageStage="@ageStage"
+               asp-route-maxWeight="@maxWeight"
+               asp-route-search="@search"
+               asp-route-role="@currentRoleParam"
+               class="text-decoration-none d-block h-100">
+                <div class="p-3 rounded-4 h-100 d-flex align-items-center gap-3"
+                     style="background: @(category == ProductCategory.Hygiene ? "var(--lux-espresso)" : "#FFFFFF"); color: @(category == ProductCategory.Hygiene ? "#FAF8F5" : "var(--lux-espresso)"); border: 1px solid @(category == ProductCategory.Hygiene ? "var(--lux-espresso)" : "var(--lux-border)"); transition: all 0.2s;">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width: 42px; height: 42px; background: @(category == ProductCategory.Hygiene ? "rgba(255,255,255,0.15)" : "#E3F2FD"); color: @(category == ProductCategory.Hygiene ? "#DFC3A8" : "#1565C0");">
+                        <i class="bi bi-droplet-half fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.9rem;">สุขอนามัย &amp; ทรายแมว</div>
+                        <div class="small opacity-75" style="font-size: 0.74rem;">ดูแลความสะอาด @hygieneCount รายการ</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
     <!-- Clean Minimalist Filter & Search Bar (Req 1, 2, 7, 9, 10) -->
     <div class="lux-filter-bar p-3 p-md-4 mb-5">
         <form method="get" asp-controller="Home" asp-action="Index" class="row g-3 align-items-end">
@@ -82,9 +180,9 @@
             }
             <div class="col-12 col-md-6 col-lg-3">
                 <label class="form-label small fw-medium text-lux-muted mb-1">
-                    <i class="bi bi-search me-1"></i> ค้นหาสินค้า / แบรนด์
+                    <i class="bi bi-search me-1"></i> ค้นหาสินค้า / ของใช้ / แบรนด์
                 </label>
-                <input type="text" name="search" class="form-control" placeholder="เช่น Royal Canin, Orijen, Me-O..."
+                <input type="text" name="search" class="form-control" placeholder="เช่น น้ำพุแมว, สายจูง, คอนโดแมว, Royal Canin..."
                        value="@search" />
             </div>
 
@@ -93,23 +191,20 @@
                 <label class="form-label small fw-medium text-lux-muted mb-1">สัตว์เลี้ยง</label>
                 <select name="petType" class="form-select">
                     <option value="">ทั้งหมด</option>
-                    <option value="@PetCategory.Dog" selected="@(petType == PetCategory.Dog)">สุนัข</option>
-                    <option value="@PetCategory.Cat" selected="@(petType == PetCategory.Cat)">แมว</option>
-                    <option value="@PetCategory.Other" selected="@(petType == PetCategory.Other)">สัตว์เลี้ยงอื่นๆ
-                    </option>
+                    <option value="@PetCategory.Dog" selected="@(petType == PetCategory.Dog)">🐶 สุนัข</option>
+                    <option value="@PetCategory.Cat" selected="@(petType == PetCategory.Cat)">🐱 แมว</option>
+                    <option value="@PetCategory.Other" selected="@(petType == PetCategory.Other)">🐾 สัตว์เลี้ยงอื่นๆ</option>
                 </select>
             </div>
 
-            <!-- หมวดหมู่ (Req 9) -->
+            <!-- หมวดหมู่ (Req 9, FR-02) -->
             <div class="col-6 col-md-3 col-lg-2">
-                <label class="form-label small fw-medium text-lux-muted mb-1">หมวดหมู่</label>
+                <label class="form-label small fw-medium text-lux-muted mb-1">หมวดหมู่สินค้า</label>
                 <select name="category" class="form-select">
-                    <option value="">ทั้งหมด</option>
-                    <option value="@ProductCategory.Food" selected="@(category == ProductCategory.Food)">อาหาร</option>
-                    <option value="@ProductCategory.Supply" selected="@(category == ProductCategory.Supply)">ของใช้
-                    </option>
-                    <option value="@ProductCategory.Hygiene" selected="@(category == ProductCategory.Hygiene)">สุขอนามัย
-                    </option>
+                    <option value="">ทุกหมวดหมู่</option>
+                    <option value="@ProductCategory.Food" selected="@(category == ProductCategory.Food)">🍲 อาหารและขนม</option>
+                    <option value="@ProductCategory.Supply" selected="@(category == ProductCategory.Supply)">🧸 ของใช้และอุปกรณ์สัตว์เลี้ยง</option>
+                    <option value="@ProductCategory.Hygiene" selected="@(category == ProductCategory.Hygiene)">🧼 สุขอนามัยและทรายแมว</option>
                 </select>
             </div>
 
@@ -131,25 +226,34 @@
                 <label class="form-label small fw-medium text-lux-muted mb-1">ช่วงวัย (Age Layer)</label>
                 <select name="ageStage" class="form-select">
                     <option value="">ทุกช่วงวัย</option>
-                    <option value="@AgeStage.PuppyOrKitten" selected="@(ageStage == AgeStage.PuppyOrKitten)">วัยเด็ก
-                        (ลูกสุนัข/ลูกแมว)</option>
-                        <option value="@AgeStage.Adult" selected="@(ageStage == AgeStage.Adult)">โตเต็มวัย (Adult)</option>
-                        <option value="@AgeStage.Senior" selected="@(ageStage == AgeStage.Senior)">สูงวัย (Senior)</option>
-                    </select>
-                </div>
+                    <option value="@AgeStage.PuppyOrKitten" selected="@(ageStage == AgeStage.PuppyOrKitten)">วัยเด็ก (ลูกสุนัข/ลูกแมว)</option>
+                    <option value="@AgeStage.Adult" selected="@(ageStage == AgeStage.Adult)">โตเต็มวัย (Adult)</option>
+                    <option value="@AgeStage.Senior" selected="@(ageStage == AgeStage.Senior)">สูงวัย (Senior)</option>
+                    <option value="@AgeStage.AllAges" selected="@(ageStage == AgeStage.AllAges)">ใช้ได้ทุกช่วงวัย (ของใช้/ทั่วไป)</option>
+                </select>
+            </div>
 
-                <!-- สูตรเฉพาะ / โรคประจำตัว (Req 7) -->
-                <div class="col-8 col-md-8 col-lg-9">
-                    <label class="form-label small fw-medium text-lux-muted mb-1">สูตรดูแลเฉพาะทาง / โรคประจำตัว</label>
-                    <select name="specialNeed" class="form-select">
-                        <option value="">ทั้งหมด</option>
-                        <option value="โรคไต" selected="@(specialNeed == "โรคไต")">สูตรดูแลโรคไต</option>
-                        <option value="บำรุงขน" selected="@(specialNeed == "บำรุงขน")">สูตรบำรุงขนและผิวหนัง</option>
-                        <option value="เสริมสร้างกระดูก" selected="@(specialNeed == "เสริมสร้างกระดูก")">
-                            สูตรเสริมสร้างกระดูก</option>
-                            <option value="ทั่วไป" selected="@(specialNeed == "ทั่วไป")">สูตรทั่วไป</option>
-                        </select>
-                    </div>
+            <!-- สูตรเฉพาะ / ประเภทของใช้สัตว์เลี้ยง (Req 7, FR-02) -->
+            <div class="col-8 col-md-8 col-lg-9">
+                <label class="form-label small fw-medium text-lux-muted mb-1">ประเภทของใช้สัตว์เลี้ยง / สูตรดูแลเฉพาะทาง</label>
+                <select name="specialNeed" class="form-select">
+                    <option value="">ทั้งหมด (ทุกประเภทของใช้และสูตรอาหาร)</option>
+                    <optgroup label="🧸 ประเภทของใช้และอุปกรณ์สัตว์เลี้ยง">
+                        <option value="อุปกรณ์การกินและน้ำ" selected="@(specialNeed == "อุปกรณ์การกินและน้ำ")">ชามอาหาร / น้ำพุแมว / เครื่องให้อาหารอัตโนมัติ</option>
+                        <option value="ของเล่นเสริมพัฒนาการ" selected="@(specialNeed == "ของเล่นเสริมพัฒนาการ")">ของเล่นกัดแทะ / ไม้ตกแมว / ของเล่นเสริมทักษะ</option>
+                        <option value="สายจูงและเดินทาง" selected="@(specialNeed == "สายจูงและเดินทาง")">สายจูง / รัดอก / กระเป๋าและกรงเดินทาง</option>
+                        <option value="เสื้อผ้าและแฟชั่น" selected="@(specialNeed == "เสื้อผ้าและแฟชั่น")">เสื้อผ้าสัตว์เลี้ยง / เครื่องแต่งกาย</option>
+                        <option value="สุขอนามัย" selected="@(specialNeed == "สุขอนามัย")">กระบะทราย / แผ่นรองซับ / อุปกรณ์ทำความสะอาด</option>
+                    </optgroup>
+                    <optgroup label="🍲 สูตรอาหารและการดูแลสุขภาพเฉพาะทาง">
+                        <option value="โรคไต" selected="@(specialNeed == "โรคไต")">สูตรดูแลโรคไตและชะลอวัย</option>
+                        <option value="บำรุงขน" selected="@(specialNeed == "บำรุงขน")">สูตรบำรุงขนและผิวหนัง / แปรงขน</option>
+                        <option value="เสริมสร้างกระดูก" selected="@(specialNeed == "เสริมสร้างกระดูก")">สูตรเสริมสร้างกระดูกและข้อต่อ / เบาะสุขภาพ</option>
+                        <option value="บำรุงสมอง" selected="@(specialNeed == "บำรุงสมอง")">สูตรบำรุงสมองและสายตา</option>
+                        <option value="ทั่วไป" selected="@(specialNeed == "ทั่วไป")">สูตรทั่วไป / ของใช้ทั่วไป</option>
+                    </optgroup>
+                </select>
+            </div>
 
                     <div class="col-4 col-md-4 col-lg-3 d-flex gap-2">
                         <button type="submit"

@@ -275,7 +275,17 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link nav-link-promo fw-medium" asp-controller="Home" asp-action="Index">
+                        <a class="nav-link fw-medium" asp-controller="Home" asp-action="Index" asp-route-category="@ProductCategory.Supply" asp-route-role="@roleParam">
+                            <i class="bi bi-basket2-fill text-lux-gold me-1"></i> ของใช้สัตว์เลี้ยง
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index" asp-route-category="@ProductCategory.Hygiene" asp-route-role="@roleParam">
+                            สุขอนามัย
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-promo fw-medium" asp-controller="Home" asp-action="Index" asp-route-role="@roleParam">
                             <i class="bi bi-stars me-1"></i> โปรโมชั่น 5 แบบ
                         </a>
                     </li>
@@ -367,11 +377,11 @@
                 <div class="col-6 col-md-6 col-lg-2 footer-links">
                     <h6 class="footer-title">หมวดหมู่สินค้า</h6>
                     <ul class="list-unstyled small">
-                        <li><a asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Dog">อาหารสุนัข</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" asp-route-petType="@PetCategory.Cat">อาหารแมว</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" asp-route-category="@ProductCategory.Hygiene">ทรายแมว</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" asp-route-category="@ProductCategory.Supply">ของเล่น/เบาะนอน</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" asp-route-specialNeed="โรคไต">อาหารโรคไต</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-category="@ProductCategory.Food">อาหารสุนัข &amp; แมว</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-category="@ProductCategory.Supply">ของใช้และอุปกรณ์สัตว์เลี้ยง</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-category="@ProductCategory.Hygiene">สุขอนามัย &amp; ทรายแมว</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-specialNeed="ของเล่นเสริมพัฒนาการ">ของเล่นเสริมพัฒนาการ</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-route-specialNeed="อุปกรณ์การกินและน้ำ">ชามอาหาร &amp; น้ำพุแมว</a></li>
                     </ul>
                 </div>
 

@@ -37,6 +37,19 @@ namespace CSI402_Project_final.Controllers
             ViewBag.CatOrderCount = catProductOrders;
             ViewBag.OtherOrderCount = otherProductOrders;
 
+            // สัดส่วนสินค้าในคลังและยอดสั่งซื้อแยกตามหมวดหมู่ (อาหาร / ของใช้สัตว์เลี้ยง / สุขอนามัย)
+            ViewBag.FoodCatalogCount = products.Count(p => p.Category == ProductCategory.Food);
+            ViewBag.SupplyCatalogCount = products.Count(p => p.Category == ProductCategory.Supply);
+            ViewBag.HygieneCatalogCount = products.Count(p => p.Category == ProductCategory.Hygiene);
+
+            var productCatById = products.ToDictionary(p => p.Id, p => p.Category);
+            ViewBag.FoodOrderCount = orders.SelectMany(o => o.Items)
+                .Count(i => productCatById.TryGetValue(i.ProductId, out var cat) && cat == ProductCategory.Food);
+            ViewBag.SupplyOrderCount = orders.SelectMany(o => o.Items)
+                .Count(i => productCatById.TryGetValue(i.ProductId, out var cat) && cat == ProductCategory.Supply);
+            ViewBag.HygieneOrderCount = orders.SelectMany(o => o.Items)
+                .Count(i => productCatById.TryGetValue(i.ProductId, out var cat) && cat == ProductCategory.Hygiene);
+
             var topProducts = products
                 .OrderByDescending(p => p.CartAddCount)
                 .Take(5)
