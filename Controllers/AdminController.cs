@@ -109,7 +109,7 @@ namespace CSI402_Project_final.Controllers
                 }
                 if (newRole == UserRole.Admin || newRole == UserRole.Owner)
                 {
-                    TempData["ErrorMessage"] = "ไม่สามารถแต่งตั้งผู้ใช้เป็น Admin หรือ Owner ได้: สิทธิ์นี้สงวนไว้สำหรับผู้บริหารสูงสุด (Owner) เท่านั้น";
+
                     return RedirectToAction(nameof(Index), new { role, roleFilter, search });
                 }
             }
