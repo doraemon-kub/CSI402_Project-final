@@ -81,11 +81,11 @@ flowchart TD
     CheckLogin -- NO --> ConnLogin
     CheckLogin -- YES --> Home["หน้าหลัก (Home)"]
     
-    Home --> BrowseProduct[เลือกสินค้า / เพิ่มสินค้า]
-    BrowseProduct --> ViewCart[ตะกร้าสินค้า\nเพิ่ม/ลบสินค้า]
-    ViewCart --> Checkout[Checkout / ชำระเงิน\nที่อยู่, วิธีจัดส่ง, วิธีชำระ]
-    Checkout --> TrackOrder[ดูสถานะออเดอร์\nรอจัดส่ง / กำลังจัดส่ง / จัดส่งแล้ว]
-    TrackOrder --> ConfirmReceive[ยืนยันรับสินค้า]
+    Home --> BrowseProduct["เลือกสินค้า / เพิ่มสินค้า"]
+    BrowseProduct --> ViewCart["ตะกร้าสินค้า\nเพิ่ม/ลบสินค้า"]
+    ViewCart --> Checkout["Checkout / ชำระเงิน\nที่อยู่, วิธีจัดส่ง, วิธีชำระ"]
+    Checkout --> TrackOrder["ดูสถานะออเดอร์\nรอจัดส่ง / กำลังจัดส่ง / จัดส่งแล้ว"]
+    TrackOrder --> ConfirmReceive["ยืนยันรับสินค้า"]
     ConfirmReceive --> End([End])
 ```
 
@@ -236,12 +236,13 @@ flowchart TD
 ---
 
 ### 6. CHECKOUT (User) (หน้ายืนยันคำสั่งซื้อและชำระเงิน)
-หน้ายืนยันคำสั่งซื้อ ลูกค้ากรอกข้อมูลและที่อยู่จัดส่ง ระบบคำนวณค่าจัดส่งตามเกณฑ์น้ำหนักและคำนวณส่วนลดจาก 5 แคมเปญโปรโมชั่นให้อัตโนมัติ ลูกค้าสแกนชำระผ่าน PromptPay QR แนบสลิปโอนเงิน และกดยืนยันสั่งซื้อ
+หน้ายืนยันคำสั่งซื้อ ลูกค้ากรอกข้อมูลและที่อยู่จัดส่ง เลือกผู้ให้บริการขนส่ง (Flash Express / Kerry Express) ระบบคำนวณค่าจัดส่งตามเกณฑ์น้ำหนักและคำนวณส่วนลดจาก 5 แคมเปญโปรโมชั่นให้อัตโนมัติ ลูกค้าสแกนชำระผ่าน PromptPay QR แนบสลิปโอนเงิน และกดยืนยันสั่งซื้อ
 
 ```mermaid
 flowchart TD
     Start([start]) --> InputAddress["กรอกชื่อ, เบอร์, ที่อยู่จัดส่ง"]
-    InputAddress --> AutoCalcShipping["ระบบคำนวณค่าจัดส่งอัตโนมัติตามน้ำหนัก\n(เกณฑ์ 10 kg)"]
+    InputAddress --> SelectCourier["เลือกผู้ให้บริการขนส่ง\n(Flash Express / Kerry Express)"]
+    SelectCourier --> AutoCalcShipping["ระบบคำนวณค่าจัดส่งอัตโนมัติตามน้ำหนัก\n(เกณฑ์ 10 kg)"]
     AutoCalcShipping --> AutoApplyPromo["ระบบคำนวณส่วนลด 5 โปรโมชั่นให้อัตโนมัติ\n(บังคับใช้โปรโมชั่นที่ดีที่สุด)"]
     AutoApplyPromo --> ShowQR["แสดงยอดสุทธิ และ QR Code พร้อมเพย์"]
     ShowQR --> UploadSlip["ลูกค้าแนบหลักฐานสลิปการโอนเงิน"]
