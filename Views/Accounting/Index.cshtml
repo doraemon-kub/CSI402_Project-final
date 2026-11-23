@@ -62,6 +62,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>เลขออเดอร์</th>
+                        <th>วัน-เวลาที่สั่งซื้อ</th>
                         <th>ลูกค้า</th>
                         <th>ยอดชำระ</th>
                         <th>วิธีชำระเงิน</th>
@@ -73,7 +74,13 @@
                     @foreach (var payOrder in pendingPayments)
                     {
                         <tr>
-                            <td class="fw-bold text-primary">#@payOrder.OrderId</td>
+                            <td class="fw-bold text-primary text-nowrap">#@payOrder.OrderId</td>
+                            <td class="text-nowrap">
+                                <div class="small fw-semibold text-dark">
+                                    <i class="bi bi-calendar3 text-muted me-1"></i>@payOrder.OrderDate.ToString("dd/MM/yyyy")
+                                </div>
+                                <small class="text-muted"><i class="bi bi-clock me-1"></i>@payOrder.OrderDate.ToString("HH:mm") น.</small>
+                            </td>
                             <td>
                                 <div>@payOrder.CustomerName</div>
                                 <small class="text-muted">📞 @payOrder.CustomerPhone</small>
@@ -133,6 +140,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>เลขออเดอร์</th>
+                        <th>วัน-เวลาที่สั่งซื้อ</th>
                         <th>ลูกค้า</th>
                         <th>ยอดเงินที่ขอคืน</th>
                         <th>เหตุผลการขอยกเลิก</th>
@@ -144,7 +152,13 @@
                     @foreach (var refOrder in pendingRefunds)
                     {
                         <tr>
-                            <td class="fw-bold text-primary">#@refOrder.OrderId</td>
+                            <td class="fw-bold text-primary text-nowrap">#@refOrder.OrderId</td>
+                            <td class="text-nowrap">
+                                <div class="small fw-semibold text-dark">
+                                    <i class="bi bi-calendar3 text-muted me-1"></i>@refOrder.OrderDate.ToString("dd/MM/yyyy")
+                                </div>
+                                <small class="text-muted"><i class="bi bi-clock me-1"></i>@refOrder.OrderDate.ToString("HH:mm") น.</small>
+                            </td>
                             <td>
                                 <div>@refOrder.CustomerName</div>
                                 <small class="text-muted">📞 @refOrder.CustomerPhone</small>
@@ -229,7 +243,7 @@
             <thead class="table-light">
                 <tr>
                     <th>เลขออเดอร์</th>
-                    <th>วันที่สั่งซื้อ</th>
+                    <th>วัน-เวลาที่สั่งซื้อ</th>
                     <th>ลูกค้า</th>
                     <th>ยอดชำระ</th>
                     <th>วิธีชำระ</th>
@@ -242,8 +256,13 @@
                 @foreach (var order in Model)
                 {
                     <tr>
-                        <td class="fw-bold">#@order.OrderId</td>
-                        <td><small class="text-muted">@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</small></td>
+                        <td class="fw-bold text-nowrap">#@order.OrderId</td>
+                        <td class="text-nowrap">
+                            <div class="small fw-semibold text-dark">
+                                <i class="bi bi-calendar3 text-muted me-1"></i>@order.OrderDate.ToString("dd/MM/yyyy")
+                            </div>
+                            <small class="text-muted"><i class="bi bi-clock me-1"></i>@order.OrderDate.ToString("HH:mm") น.</small>
+                        </td>
                         <td>@order.CustomerName</td>
                         <td class="fw-bold text-dark">฿@order.GrandTotal.ToString("N2")</td>
                         <td><span class="badge bg-light text-dark border">@order.PaymentMethod</span></td>

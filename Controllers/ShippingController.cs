@@ -26,12 +26,18 @@ namespace CSI402_Project_final.Controllers
         {
             var allOrders = _repo.Orders;
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            ViewBag.ReadyToShipCount = allOrders.Count(o => o.Status == OrderStatus.Preparing || o.Status == OrderStatus.PaymentVerified);
-            ViewBag.ShippedTodayCount = allOrders.Count(o => o.Status == OrderStatus.Shipped && o.ShippedDate.HasValue && o.ShippedDate.Value.Date == DateTime.Today);
+            ViewBag.ReadyToShipCount = allOrders.Count(o =>
+                o.Status == OrderStatus.Preparing ||
+                o.Status == OrderStatus.PaymentVerified ||
+                (o.Status == OrderStatus.Shipped && string.IsNullOrWhiteSpace(o.TrackingNumber)));
+            ViewBag.ShippedTodayCount = allOrders.Count(o =>
+                o.Status == OrderStatus.Shipped &&
+                !string.IsNullOrWhiteSpace(o.TrackingNumber) &&
+                (!o.ShippedDate.HasValue || o.ShippedDate.Value.Date == DateTime.Today));
 
             var orders = allOrders
                 .Where(o => o.Status == OrderStatus.Preparing || o.Status == OrderStatus.Shipped || o.Status == OrderStatus.PaymentVerified)
-                .OrderBy(o => o.Status == OrderStatus.Shipped ? 1 : 0)
+                .OrderBy(o => (o.Status == OrderStatus.Shipped && !string.IsNullOrWhiteSpace(o.TrackingNumber)) ? 1 : 0)
                 .ThenByDescending(o => o.OrderDate)
                 .ToList();
 
