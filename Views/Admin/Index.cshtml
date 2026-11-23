@@ -318,7 +318,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">บทบาทหน้าที่ (Role)</label>
-                        <select name="Role" class="form-select">
+                        <select name="newUserRole" class="form-select">
                             <option value="@UserRole.InventoryStaff">Inventory Staff (คลังสินค้า)</option>
                             <option value="@UserRole.OrderStaff">Order Staff (คำสั่งซื้อ)</option>
                             <option value="@UserRole.ShippingStaff">Shipping Staff (จัดส่ง)</option>
@@ -353,7 +353,7 @@
             const tabRole = (roleInUrl || sessionStorage.getItem('petshop_tab_role') || "@currentRole").toLowerCase();
             const isOwnerTab = tabRole === 'owner';
 
-            const roleSelect = document.querySelector('#addUserModal select[name="Role"]');
+            const roleSelect = document.querySelector('#addUserModal select[name="newUserRole"]');
             const noticeBox = document.getElementById('adminNoticeBox');
             if (roleSelect && !isOwnerTab) {
                 for (let i = 0; i < roleSelect.options.length; i++) {

@@ -141,12 +141,20 @@ namespace CSI402_Project_final.Controllers
 
         // เพิ่มผู้ใช้งานใหม่ (บันทึกลง DB) - Admin ไม่สามารถสร้าง User บทบาท Admin ได้ ต้องให้ Owner ทำเท่านั้น
         [HttpPost]
-        public IActionResult CreateUser(SystemUser user, string? role = null)
+        public IActionResult CreateUser(SystemUser user, string? newUserRole = null, string? role = null)
         {
-            bool isOwner = IsCurrentOperatorOwner(role);
-            if ((user.Role == UserRole.Admin || user.Role == UserRole.Owner) && !isOwner)
+            // ใช้ชื่อฟิลด์ newUserRole แยกจาก role (บทบาทของแท็บผู้ทำรายการ) เพื่อไม่ให้ Model Binding ชนกัน
+            if (string.IsNullOrWhiteSpace(newUserRole) || !Enum.TryParse<UserRole>(newUserRole, true, out var requestedRole))
             {
-                TempData["ErrorMessage"] = "ไม่สามารถสร้างหรือกำหนดบทบาทผู้ดูแลระบบ (Admin) ได้: สิทธิ์นี้สงวนไว้สำหรับผู้บริหารสูงสุด (Owner) เท่านั้น";
+                TempData["ErrorMessage"] = "กรุณาเลือกบทบาทหน้าที่ (Role) ให้ถูกต้อง";
+                return RedirectToAction(nameof(Index), new { role });
+            }
+            user.Role = requestedRole;
+
+            bool isOwner = IsCurrentOperatorOwner(role);
+            if ((requestedRole == UserRole.Admin || requestedRole == UserRole.Owner) && !isOwner)
+            {
+                TempData["ErrorMessage"] = "ไม่สามารถสร้างบัญชีบทบาท Admin ได้: สิทธิ์นี้สงวนไว้สำหรับผู้บริหารสูงสุด (Owner) เท่านั้น";
                 return RedirectToAction(nameof(Index), new { role });
             }
 
