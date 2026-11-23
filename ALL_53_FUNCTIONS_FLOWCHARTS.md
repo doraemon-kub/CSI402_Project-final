@@ -922,7 +922,7 @@ flowchart TD
 flowchart TD
     Start([เข้าหน้าแรก Home/Index]) --> ReadFilters[รับค่าตัวกรองประเภทสัตว์ ช่วงวัย น้ำหนัก]
     ReadFilters --> QueryProducts[คิวรีตาราง Product]
-    QueryProducts --> CountCartUsers[นับจำนวนคนใส่ตะกร้าจาก CartItem (Req 8)]
+    QueryProducts --> CountCartUsers["นับจำนวนคนใส่ตะกร้าจาก CartItem (Req 8)"]
     CountCartUsers --> RenderStorefront[แสดงแคตตาล็อกสินค้าพร้อมป้าย Layer]
     RenderStorefront --> End([สิ้นสุด])
 ```

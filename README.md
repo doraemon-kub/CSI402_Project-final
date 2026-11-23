@@ -79,7 +79,7 @@ flowchart TD
     ConnLogin --> FillLogin[กรอก email / password\nตรวจสอบข้อมูล]
     FillLogin --> CheckLogin{ตรวจสอบ}
     CheckLogin -- NO --> ConnLogin
-    CheckLogin -- YES --> Home[หน้าหลัก (Home)]
+    CheckLogin -- YES --> Home["หน้าหลัก (Home)"]
     
     Home --> BrowseProduct[เลือกสินค้า / เพิ่มสินค้า]
     BrowseProduct --> ViewCart[ตะกร้าสินค้า\nเพิ่ม/ลบสินค้า]
@@ -160,7 +160,7 @@ flowchart TD
     VerifyUser -- NO --> LoginRetry[Login ไม่สำเร็จ]
     LoginRetry --> ConnLogin
     VerifyUser -- YES --> CheckRoleBranch{ตรวจสอบประเภทบัญชี}
-    CheckRoleBranch -- ลูกค้า --> GoCustHome[เข้าสู่หน้าหลักลูกค้า (Home)]
+    CheckRoleBranch -- ลูกค้า --> GoCustHome["เข้าสู่หน้าหลักลูกค้า (Home)"]
     CheckRoleBranch -- พนักงาน / ผู้บริหาร --> GoStaffPortal[เข้าสู่หน้าหลักพนักงาน / Back-Office]
     GoCustHome --> ConnEnd(( ))
     GoStaffPortal --> ConnEnd
@@ -209,8 +209,8 @@ flowchart TD
     Start([start]) --> LoadProductInfo[โหลดข้อมูลสินค้า\nชื่อ, ราคา, รูป, รายละเอียด, น้ำหนัก]
     LoadProductInfo --> SelectQty[เลือกจำนวนสินค้า]
     SelectQty --> CheckAction{เพิ่มตะกร้าสินค้า?}
-    CheckAction -- YES --> AddCartDB[บันทึกสินค้าลงตะกร้า\n(CartItem DB)]
-    CheckAction -- NO --> BuyNow[ซื้อเลย\n(ไปหน้า Checkout)]
+    CheckAction -- YES --> AddCartDB["บันทึกสินค้าลงตะกร้า\n(CartItem DB)"]
+    CheckAction -- NO --> BuyNow["ซื้อเลย\n(ไปหน้า Checkout)"]
     AddCartDB --> ConnAction(( ))
     BuyNow --> ConnAction
     ConnAction --> MakeOrder[สั่งออเดอร์]
@@ -311,7 +311,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     Start([start]) --> ConnEditProd(( ))
-    ConnEditProd --> LoadCurrentPID[โหลดข้อมูลสินค้าปัจจุบัน (PID) จาก DB]
+    ConnEditProd --> LoadCurrentPID["โหลดข้อมูลสินค้าปัจจุบัน (PID) จาก DB"]
     LoadCurrentPID --> DisplayEditForm[แสดงฟอร์มพร้อมข้อมูลเดิม\nชื่อ, แบรนด์, หมวด, จำนวน]
     DisplayEditForm --> EditFields[แก้ไขราคา / รูปสินค้า\nต้นทุน, น้ำหนัก, จุดสั่งซื้อซ้ำ]
     EditFields --> CheckEditComplete{ข้อมูลครบ?}
@@ -373,7 +373,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Start([start]) --> LoadPreparingOrders[โหลดรายการออเดอร์ที่แพ็กเสร็จ (Preparing)]
+    Start([start]) --> LoadPreparingOrders["โหลดรายการออเดอร์ที่แพ็กเสร็จ (Preparing)"]
     LoadPreparingOrders --> WeighBox[ชั่งน้ำหนักพัสดุจริง]
     WeighBox --> EnterTracking[กรอกเลขพัสดุ Tracking Number และเลือกบริษัทขนส่ง]
     EnterTracking --> UpdateShippedDB[อัปเดต OrderStatus = 'Shipped' ลง DB]
@@ -434,7 +434,7 @@ flowchart TD
     LoadTicketBoard --> PickTicket[เลือกตั๋วปัญหาที่ลูกค้าแจ้งเข้ามา]
     PickTicket --> StartInvestigate[เปลี่ยนสถานะเป็น InProgress ดำเนินการตรวจสอบ]
     StartInvestigate --> FixIssue[ดำเนินการแก้ไขปัญหาในระบบ]
-    FixIssue --> LogResolutionNote[บันทึกรายละเอียดและสาเหตุการแก้ไข (Resolution History)]
+    FixIssue --> LogResolutionNote["บันทึกรายละเอียดและสาเหตุการแก้ไข (Resolution History)"]
     LogResolutionNote --> CloseTicket[เปลี่ยนสถานะเป็น Resolved เรียบร้อย]
     CloseTicket --> End([End])
 ```
