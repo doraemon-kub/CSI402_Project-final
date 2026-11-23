@@ -20,21 +20,50 @@ namespace CSI402_Project_final.Controllers
             _hubContext = hubContext;
         }
 
-        // หน้าจัดการผู้ใช้และสิทธิ์การเข้าถึง (Admin)
-        public IActionResult Index()
+        // หน้าจัดการผู้ใช้และสิทธิ์การเข้าถึง (Admin) พร้อมระบบกรองตามบทบาท (Role Filter) & ค้นหา
+        public IActionResult Index(string? roleFilter = "all", string? search = null)
         {
-            var users = _repo.Users;
-            foreach (var u in users)
+            var allUsers = _repo.Users;
+            foreach (var u in allUsers)
             {
                 _repo.CheckAndRefreshUserSuspension(u);
             }
-            users = _repo.Users;
+            allUsers = _repo.Users;
 
             ViewBag.CurrentRole = _repo.CurrentSimulatedRole;
-            ViewBag.TotalStaff = users.Count(u => u.Role != UserRole.Customer && u.Role != UserRole.Guest);
-            ViewBag.TotalCustomers = users.Count(u => u.Role == UserRole.Customer);
+            ViewBag.TotalUsers = allUsers.Count;
+            ViewBag.TotalStaff = allUsers.Count(u => u.Role != UserRole.Customer && u.Role != UserRole.Guest);
+            ViewBag.TotalCustomers = allUsers.Count(u => u.Role == UserRole.Customer);
 
-            return View(users);
+            string filter = (roleFilter ?? "all").Trim().ToLowerInvariant();
+            IEnumerable<SystemUser> filtered = allUsers;
+
+            if (filter == "staff")
+            {
+                filtered = filtered.Where(u => u.Role != UserRole.Customer && u.Role != UserRole.Guest);
+            }
+            else if (filter == "customer")
+            {
+                filtered = filtered.Where(u => u.Role == UserRole.Customer);
+            }
+            else if (Enum.TryParse<UserRole>(filter, true, out var specificRole))
+            {
+                filtered = filtered.Where(u => u.Role == specificRole);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                string kw = search.Trim();
+                filtered = filtered.Where(u =>
+                    u.Username.Contains(kw, System.StringComparison.OrdinalIgnoreCase) ||
+                    u.FullName.Contains(kw, System.StringComparison.OrdinalIgnoreCase) ||
+                    u.Email.Contains(kw, System.StringComparison.OrdinalIgnoreCase));
+            }
+
+            ViewBag.RoleFilter = filter;
+            ViewBag.Search = search;
+
+            return View(filtered.ToList());
         }
 
         // ปรับเปลี่ยนบทบาทและสิทธิ์ของพนักงาน + ระงับบัญชีพร้อมเหตุผลและระยะเวลา (เตะออกทันทีผ่าน SignalR)
@@ -45,7 +74,9 @@ namespace CSI402_Project_final.Controllers
             bool isActive,
             string? suspendReason = null,
             int suspendDurationMinutes = -1,
-            string? role = null)
+            string? role = null,
+            string? roleFilter = null,
+            string? search = null)
         {
             if (_repo.UpdateUserRole(userId, newRole, isActive, suspendReason, suspendDurationMinutes))
             {
@@ -70,7 +101,7 @@ namespace CSI402_Project_final.Controllers
                     TempData["SuccessMessage"] = $"อัปเดตบัญชีผู้ใช้งาน #{userId} ({targetUser?.Username}) เป็น '{newRole}' (สถานะ: เปิดใช้งานปกติ) สำเร็จ";
                 }
             }
-            return RedirectToAction(nameof(Index), new { role });
+            return RedirectToAction(nameof(Index), new { role, roleFilter, search });
         }
 
         // เพิ่มผู้ใช้งานใหม่ (บันทึกลง DB)
