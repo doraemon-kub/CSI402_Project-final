@@ -23,15 +23,18 @@
 <!-- Summary Filter Cards (Clickable - Req 9) -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="all" asp-route-search="@search" class="text-decoration-none d-block">
-            <div class="card p-3 h-100 bg-white" style="transition: all 0.2s; @(roleFilter == "all" ? "border: 2px solid var(--lux-espresso) !important; box-shadow: 0 8px 20px rgba(35,29,25,0.12) !important;" : "")">
+        <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="all" asp-route-search="@search"
+           class="text-decoration-none d-block">
+            <div class="card p-3 h-100 bg-white"
+                 style="transition: all 0.2s; @(roleFilter == "all" ? "border: 2px solid var(--lux-espresso) !important; box-shadow: 0 8px 20px rgba(35,29,25,0.12) !important;" : "")">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="text-lux-muted small fw-medium">ผู้ใช้งานทั้งหมดในระบบ</div>
                         <div class="fs-3 fw-bold text-lux-espresso">@totalUsers บัญชี</div>
                         <div class="small text-lux-muted" style="font-size: 0.72rem;">คลิกเพื่อแสดงทุกบัญชี</div>
                     </div>
-                    <div class="p-3 rounded-3 fs-3" style="background: var(--lux-gold-soft); color: var(--lux-gold-dark);">
+                    <div class="p-3 rounded-3 fs-3"
+                         style="background: var(--lux-gold-soft); color: var(--lux-gold-dark);">
                         <i class="bi bi-people-fill"></i>
                     </div>
                 </div>
@@ -39,13 +42,16 @@
         </a>
     </div>
     <div class="col-md-4">
-        <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="staff" asp-route-search="@search" class="text-decoration-none d-block">
-            <div class="card p-3 h-100 bg-white" style="transition: all 0.2s; @(roleFilter == "staff" ? "border: 2px solid #0d6efd !important; box-shadow: 0 8px 20px rgba(13,110,253,0.15) !important;" : "")">
+        <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="staff" asp-route-search="@search"
+           class="text-decoration-none d-block">
+            <div class="card p-3 h-100 bg-white"
+                 style="transition: all 0.2s; @(roleFilter == "staff" ? "border: 2px solid #0d6efd !important; box-shadow: 0 8px 20px rgba(13,110,253,0.15) !important;" : "")">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="text-primary small fw-semibold">บัญชีพนักงานทุกแผนก (Staff Roles)</div>
                         <div class="fs-3 fw-bold text-primary">@totalStaff บัญชี</div>
-                        <div class="small text-lux-muted" style="font-size: 0.72rem;">คลิกเพื่อกรองเฉพาะพนักงานหลังบ้าน</div>
+                        <div class="small text-lux-muted" style="font-size: 0.72rem;">คลิกเพื่อกรองเฉพาะพนักงานหลังบ้าน
+                        </div>
                     </div>
                     <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-3">
                         <i class="bi bi-shield-lock-fill"></i>
@@ -55,8 +61,10 @@
         </a>
     </div>
     <div class="col-md-4">
-        <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="customer" asp-route-search="@search" class="text-decoration-none d-block">
-            <div class="card p-3 h-100 bg-white" style="transition: all 0.2s; @(roleFilter == "customer" ? "border: 2px solid #198754 !important; box-shadow: 0 8px 20px rgba(25,135,84,0.15) !important;" : "")">
+        <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="customer"
+           asp-route-search="@search" class="text-decoration-none d-block">
+            <div class="card p-3 h-100 bg-white"
+                 style="transition: all 0.2s; @(roleFilter == "customer" ? "border: 2px solid #198754 !important; box-shadow: 0 8px 20px rgba(25,135,84,0.15) !important;" : "")">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="text-success small fw-semibold">บัญชีลูกค้าสมาชิก (Customer)</div>
@@ -74,332 +82,392 @@
 
 <!-- Main Table Card with Filter Bar & Matrix -->
 <div class="card border-0 shadow-sm rounded-4 p-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
+    <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
         <div>
             <h5 class="fw-bold m-0 text-dark">ตารางบัญชีผู้ใช้งานและกำหนดสิทธิ์ตามบทบาท (Role & Permissions Matrix)</h5>
             <small class="text-muted">กำลังแสดง @Model.Count จากทั้งหมด @totalUsers บัญชีผู้ใช้</small>
         </div>
         <div class="d-flex flex-wrap align-items-center gap-2">
-            <a asp-action="AuditLogs" asp-route-role="@currentTabRole" class="btn btn-outline-dark px-3 py-2 flex-shrink-0 rounded-3">
+            <a asp-action="AuditLogs" asp-route-role="@currentTabRole"
+               class="btn btn-outline-dark px-3 py-2 flex-shrink-0 rounded-3">
                 <i class="bi bi-journal-text me-1 text-warning"></i> บันทึกกิจกรรม (Audit Log)
             </a>
-            <button type="button" class="btn btn-primary px-3 py-2 flex-shrink-0 rounded-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <button type="button" class="btn btn-primary px-3 py-2 flex-shrink-0 rounded-3" data-bs-toggle="modal"
+                    data-bs-target="#addUserModal">
                 <i class="bi bi-person-plus-fill me-1"></i> เพิ่มผู้ใช้งานใหม่
             </button>
         </div>
     </div>
 
     <!-- Filter Pills & Search Bar -->
-    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-stretch align-items-lg-center gap-3 p-3 rounded-3 mb-4 bg-lux-tint" style="border: 1px solid var(--lux-border);">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-stretch align-items-lg-center gap-3 p-3 rounded-3 mb-4 bg-lux-tint"
+         style="border: 1px solid var(--lux-border);">
         <div class="d-flex flex-wrap align-items-center gap-2">
             <span class="small fw-semibold text-lux-muted me-1"><i class="bi bi-funnel me-1"></i>กรองบทบาท:</span>
             <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="all" asp-route-search="@search"
                class="btn btn-sm rounded-pill px-3 @(roleFilter == "all" ? "btn-pet-primary" : "btn-lux-outline")">
                 ทั้งหมด (@totalUsers)
             </a>
-            <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="staff" asp-route-search="@search"
+            <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="staff"
+               asp-route-search="@search"
                class="btn btn-sm rounded-pill px-3 @(roleFilter == "staff" ? "btn-primary text-white fw-semibold" : "btn-lux-outline")">
                 <i class="bi bi-people-fill me-1"></i> พนักงาน (@totalStaff)
             </a>
-            <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="customer" asp-route-search="@search"
+            <a asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="customer"
+               asp-route-search="@search"
                class="btn btn-sm rounded-pill px-3 @(roleFilter == "customer" ? "btn-success text-white fw-semibold" : "btn-lux-outline")">
                 <i class="bi bi-person me-1"></i> ลูกค้า (@totalCustomers)
             </a>
 
             <!-- Dropdown กรองเฉพาะบทบาทย่อย -->
             <div class="dropdown d-inline-block">
-                <button class="btn btn-sm btn-lux-outline rounded-pill px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-gear me-1"></i> เจาะจงแผนก: @(roleFilter != "all" && roleFilter != "staff" && roleFilter != "customer" ? roleFilter : "ทุกแผนก")
+                <button class="btn btn-sm btn-lux-outline rounded-pill px-3 dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown">
+                    <i class="bi bi-person-gear me-1"></i> เจาะจงแผนก: @(roleFilter != "all" && roleFilter != "staff" &&
+                                                                                                    roleFilter != "customer" ? roleFilter : "ทุกแผนก")
                 </button>
                 <ul class="dropdown-menu shadow-sm small p-2" style="font-size: 0.82rem; min-width: 220px;">
-                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="Owner" asp-route-search="@search">👑 Owner (เจ้าของร้าน)</a></li>
-                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="Admin" asp-route-search="@search">⚙️ Admin (ผู้ดูแลระบบ)</a></li>
-                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="InventoryStaff" asp-route-search="@search">📦 Inventory Staff (คลังสินค้า)</a></li>
-                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="OrderStaff" asp-route-search="@search">📋 Order Staff (คำสั่งซื้อ)</a></li>
-                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="ShippingStaff" asp-route-search="@search">🚚 Shipping Staff (จัดส่ง)</a></li>
-                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="MarketingStaff" asp-route-search="@search">🏷️ Marketing Staff (การตลาด)</a></li>
-                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="AccountingStaff" asp-route-search="@search">💰 Accounting Staff (การเงิน/บัญชี)</a></li>
-                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole" asp-route-roleFilter="ITSupport" asp-route-search="@search">🎧 IT Support (Helpdesk)</a></li>
-                </ul>
-            </div>
-        </div>
+                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole"
+                               asp-route-roleFilter="Owner" asp-route-search="@search">👑 Owner (เจ้าของร้าน)</a></li>
+                        <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole"
+                                   asp-route-roleFilter="Admin" asp-route-search="@search">⚙️ Admin (ผู้ดูแลระบบ)</a></li>
+                            <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole"
+                                   asp-route-roleFilter="InventoryStaff" asp-route-search="@search">📦 Inventory Staff
+                                (คลังสินค้า)</a></li>
+                                <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole"
+                                           asp-route-roleFilter="OrderStaff" asp-route-search="@search">📋 Order Staff (คำสั่งซื้อ)</a>
+                                </li>
+                                <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole"
+                                       asp-route-roleFilter="ShippingStaff" asp-route-search="@search">🚚 Shipping Staff
+                                    (จัดส่ง)</a></li>
+                                    <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole"
+                                           asp-route-roleFilter="MarketingStaff" asp-route-search="@search">🏷️ Marketing Staff
+                                        (การตลาด)</a></li>
+                                        <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole"
+                                               asp-route-roleFilter="AccountingStaff" asp-route-search="@search">💰 Accounting Staff
+                                            (การเงิน/บัญชี)</a></li>
+                                            <li><a class="dropdown-item py-1 rounded" asp-action="Index" asp-route-role="@currentTabRole"
+                                                       asp-route-roleFilter="ITSupport" asp-route-search="@search">🎧 IT Support (Helpdesk)</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
 
-        <!-- Search Bar -->
-        <form method="get" asp-action="Index" class="d-flex gap-2" style="min-width: 260px;">
-            <input type="hidden" name="role" value="@currentTabRole" />
-            <input type="hidden" name="roleFilter" value="@roleFilter" />
-            <input type="text" name="search" id="liveSearchInput" value="@search" class="form-control form-control-sm" placeholder="ค้นหาชื่อผู้ใช้ / ชื่อ-สกุล / อีเมล..." oninput="filterTableRealtime(this.value)" />
-            <button type="submit" class="btn btn-sm btn-pet-primary px-3 flex-shrink-0">
-                <i class="bi bi-search"></i>
-            </button>
-            @if (!string.IsNullOrWhiteSpace(search) || roleFilter != "all")
-            {
-                <a asp-action="Index" asp-route-role="@currentTabRole" class="btn btn-sm btn-lux-outline px-2 flex-shrink-0" title="ล้างตัวกรองทั้งหมด">
-                    <i class="bi bi-arrow-counterclockwise"></i>
-                </a>
-            }
-        </form>
-    </div>
-
-    @if (!Model.Any())
-    {
-        <div class="text-center py-5 text-muted">
-            <i class="bi bi-person-x fs-1 text-secondary d-block mb-2"></i>
-            <h6 class="fw-bold">ไม่พบบัญชีผู้ใช้ในเงื่อนไขการค้นหา/กรอง</h6>
-            <p class="small text-muted mb-3">ลองเปลี่ยนคำค้นหาหรือเลือกกรองดูผู้ใช้ทั้งหมด</p>
-            <a asp-action="Index" asp-route-role="@currentTabRole" class="btn btn-sm btn-lux-outline px-3">แสดงผู้ใช้ทั้งหมด</a>
-        </div>
-    }
-    else
-    {
-    <!-- Zoom-Safe Proportional Table Layout -->
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="userMatrixTable" style="min-width: 960px; table-layout: fixed;">
-            <colgroup>
-                <col style="width: 70px;">   <!-- รหัส -->
-                <col style="width: 140px;">  <!-- Username -->
-                <col style="width: 160px;">  <!-- ชื่อ-นามสกุล -->
-                <col style="width: 180px;">  <!-- อีเมล -->
-                <col style="width: 130px;">  <!-- บทบาทในระบบ -->
-                <col style="width: 130px;">  <!-- สถานะบัญชี -->
-                <col style="width: 280px;">  <!-- จัดการสิทธิ์ -->
-            </colgroup>
-            <thead class="table-light">
-                <tr>
-                    <th class="text-nowrap">รหัส</th>
-                    <th class="text-nowrap">ชื่อผู้ใช้ / Username</th>
-                    <th class="text-nowrap">ชื่อ-นามสกุล</th>
-                    <th class="text-nowrap">อีเมล</th>
-                    <th class="text-nowrap">บทบาทในระบบ</th>
-                    <th class="text-nowrap">สถานะบัญชี</th>
-                    <th class="text-nowrap">จัดการสิทธิ์และสถานะ</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var user in Model)
-                {
-                    <tr class="user-row" data-username="@user.Username" data-fullname="@user.FullName" data-email="@user.Email" data-role="@user.Role">
-                        <td class="fw-bold text-nowrap">#@user.Id</td>
-                        <td class="text-nowrap"><code>@user.Username</code></td>
-                        <td><div class="fw-bold text-dark text-truncate" title="@user.FullName">@user.FullName</div></td>
-                        <td><small class="text-muted text-truncate d-block" title="@user.Email">@user.Email</small></td>
-                        <td class="text-nowrap">
-                            <span class="badge @(user.Role == UserRole.Owner ? "bg-dark" :
-                                                user.Role == UserRole.Admin ? "bg-danger" :
-                                                user.Role == UserRole.MarketingStaff ? "bg-warning text-dark" :
-                                                user.Role == UserRole.AccountingStaff ? "bg-info text-dark" :
-                                                user.Role == UserRole.Customer ? "bg-light text-dark border" : "bg-primary") px-2 py-1">
-                                @user.Role
-                            </span>
-                        </td>
-                        <td>
-                            @if (user.IsActive)
-                            {
-                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>ใช้งานปกติ</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger"><i class="bi bi-slash-circle me-1"></i>ระงับการใช้งาน</span>
-                                <div class="small text-danger mt-1 text-truncate" style="font-size: 0.72rem;" title="@(user.SuspensionReason ?? "ระงับโดยผู้ดูแลระบบ")">
-                                    <strong>เหตุผล:</strong> @(user.SuspensionReason ?? "ระงับโดยผู้ดูแลระบบ")
-                                </div>
-                                <div class="small text-muted" style="font-size: 0.7rem;">
-                                    <i class="bi bi-clock-history me-1"></i>@user.SuspensionDisplayUntil
-                                </div>
-                            }
-                        </td>
-                        <td>
-                            @if (!isCurrentOwner && (user.Role == UserRole.Admin || user.Role == UserRole.Owner))
-                            {
-                                <div class="p-2 rounded-3 bg-light border text-muted small text-center" style="font-size: 0.74rem;">
-                                    <i class="bi bi-shield-lock-fill text-warning me-1"></i>สงวนสิทธิ์สำหรับ Owner เท่านั้น
-                                </div>
-                            }
-                            else
-                            {
-                                <form asp-action="UpdateUserRole" method="post" class="d-flex flex-column gap-2 m-0">
-                                    <input type="hidden" name="userId" value="@user.Id" />
+                                <!-- Search Bar -->
+                                <form method="get" asp-action="Index" class="d-flex gap-2" style="min-width: 260px;">
                                     <input type="hidden" name="role" value="@currentTabRole" />
                                     <input type="hidden" name="roleFilter" value="@roleFilter" />
-                                    <input type="hidden" name="search" value="@search" />
-                                    <div class="d-flex align-items-center gap-1">
-                                        <select name="newRole" class="form-select form-select-sm" style="font-size: 0.78rem; min-width: 125px;">
-                                            <option value="@UserRole.InventoryStaff" selected="@(user.Role == UserRole.InventoryStaff)">Inventory Staff</option>
-                                            <option value="@UserRole.OrderStaff" selected="@(user.Role == UserRole.OrderStaff)">Order Staff</option>
-                                            <option value="@UserRole.ShippingStaff" selected="@(user.Role == UserRole.ShippingStaff)">Shipping Staff</option>
-                                            <option value="@UserRole.MarketingStaff" selected="@(user.Role == UserRole.MarketingStaff)">Marketing Staff</option>
-                                            <option value="@UserRole.AccountingStaff" selected="@(user.Role == UserRole.AccountingStaff)">Accounting Staff</option>
-                                            <option value="@UserRole.ITSupport" selected="@(user.Role == UserRole.ITSupport)">IT Support</option>
-                                            @if (isCurrentOwner)
-                                            {
-                                                <option value="@UserRole.Admin" selected="@(user.Role == UserRole.Admin)">Admin</option>
-                                                <option value="@UserRole.Owner" selected="@(user.Role == UserRole.Owner)">Owner</option>
-                                            }
-                                            <option value="@UserRole.Customer" selected="@(user.Role == UserRole.Customer)">Customer</option>
-                                        </select>
-                                        <select name="isActive" class="form-select form-select-sm" style="font-size: 0.78rem; width: 85px;" onchange="toggleSuspendBox(this, @user.Id)">
-                                            <option value="true" selected="@user.IsActive">ใช้งาน</option>
-                                            <option value="false" selected="@(!user.IsActive)">ระงับ</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-outline-dark px-2 text-nowrap" style="font-size: 0.78rem;">
-                                            <i class="bi bi-save me-1"></i>บันทึก
-                                        </button>
-                                    </div>
-                                    <div id="suspend-box-@user.Id" class="p-2 rounded-3 bg-danger-subtle border border-danger-subtle @(user.IsActive ? "d-none" : "")" style="max-width: 270px;">
-                                        <div class="mb-1">
-                                            <label class="form-label mb-0 small fw-bold text-danger" style="font-size: 0.7rem;">
-                                                <i class="bi bi-clock me-1"></i>ระยะเวลาที่ระงับ:
-                                            </label>
-                                            <select name="suspendDurationMinutes" class="form-select form-select-sm" style="font-size: 0.74rem;">
-                                                <option value="15" selected="@(user.SuspensionDurationLabel == "15 นาที")">15 นาที</option>
-                                                <option value="60" selected="@(user.SuspensionDurationLabel == "1 ชั่วโมง")">1 ชั่วโมง</option>
-                                                <option value="360" selected="@(user.SuspensionDurationLabel == "6 ชั่วโมง")">6 ชั่วโมง</option>
-                                                <option value="1440" selected="@(user.SuspensionDurationLabel == "1 วัน")">1 วัน (24 ชั่วโมง)</option>
-                                                <option value="4320" selected="@(user.SuspensionDurationLabel == "3 วัน")">3 วัน</option>
-                                                <option value="10080" selected="@(user.SuspensionDurationLabel == "7 วัน")">7 วัน</option>
-                                                <option value="43200" selected="@(user.SuspensionDurationLabel == "30 วัน")">30 วัน</option>
-                                                <option value="-1" selected="@(string.IsNullOrEmpty(user.SuspensionDurationLabel) || user.SuspensionDurationLabel == "ระงับถาวร")">ระงับถาวร (จนกว่าจะปลด)</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="form-label mb-0 small fw-bold text-danger" style="font-size: 0.7rem;">
-                                                <i class="bi bi-exclamation-circle me-1"></i>เหตุผลที่ระงับ:
-                                            </label>
-                                            <input type="text" name="suspendReason" id="suspend-reason-@user.Id"
-                                                   value="@(user.SuspensionReason ?? "")"
-                                                   class="form-control form-control-sm"
-                                                   style="font-size: 0.74rem;"
-                                                   placeholder="เช่น สลิปปลอม / ละเมิดข้อตกลง..." />
-                                        </div>
-                                    </div>
+                                    <input type="text" name="search" id="liveSearchInput" value="@search" class="form-control form-control-sm"
+                                           placeholder="ค้นหาชื่อผู้ใช้ / ชื่อ-สกุล / อีเมล..." oninput="filterTableRealtime(this.value)" />
+                                    <button type="submit" class="btn btn-sm btn-pet-primary px-3 flex-shrink-0">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                    @if (!string.IsNullOrWhiteSpace(search) || roleFilter != "all")
+                                    {
+                                        <a asp-action="Index" asp-route-role="@currentTabRole" class="btn btn-sm btn-lux-outline px-2 flex-shrink-0"
+                                           title="ล้างตัวกรองทั้งหมด">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </a>
+                                    }
                                 </form>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-    }
-</div>
+                            </div>
 
-<!-- Modal เพิ่มผู้ใช้งานใหม่ -->
-<div class="modal fade" id="addUserModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form asp-action="CreateUser" method="post">
-                <input type="hidden" name="role" value="@currentTabRole" />
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">เพิ่มผู้ใช้งานใหม่เข้าสู่ระบบ</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Username</label>
-                        <input type="text" name="Username" class="form-control" placeholder="เช่น somchai_inv" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">ชื่อ-นามสกุล</label>
-                        <input type="text" name="FullName" class="form-control" placeholder="เช่น นายสมชาย สายตรวจ" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">อีเมล</label>
-                        <input type="email" name="Email" class="form-control" placeholder="เช่น somchai@petshop.com" required />
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">เบอร์โทรศัพท์</label>
-                            <input type="tel" name="Phone" class="form-control" placeholder="081-xxx-xxxx" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">รหัสผ่านเริ่มต้น</label>
-                            <input type="password" name="Password" class="form-control" value="123456" required />
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">บทบาทหน้าที่ (Role)</label>
-                        <select name="newUserRole" class="form-select">
-                            <option value="@UserRole.InventoryStaff">Inventory Staff (คลังสินค้า)</option>
-                            <option value="@UserRole.OrderStaff">Order Staff (คำสั่งซื้อ)</option>
-                            <option value="@UserRole.ShippingStaff">Shipping Staff (จัดส่ง)</option>
-                            <option value="@UserRole.MarketingStaff">Marketing Staff (การตลาด)</option>
-                            <option value="@UserRole.AccountingStaff">Accounting Staff (บัญชี)</option>
-                            <option value="@UserRole.ITSupport">IT Support (ซัพพอร์ต)</option>
-                            @if (isCurrentOwner)
+                            @if (!Model.Any())
                             {
-                                <option value="@UserRole.Admin">Admin (ผู้ดูแลระบบ)</option>
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-person-x fs-1 text-secondary d-block mb-2"></i>
+                                    <h6 class="fw-bold">ไม่พบบัญชีผู้ใช้ในเงื่อนไขการค้นหา/กรอง</h6>
+                                    <p class="small text-muted mb-3">ลองเปลี่ยนคำค้นหาหรือเลือกกรองดูผู้ใช้ทั้งหมด</p>
+                                    <a asp-action="Index" asp-route-role="@currentTabRole"
+                                       class="btn btn-sm btn-lux-outline px-3">แสดงผู้ใช้ทั้งหมด</a>
+                                </div>
                             }
-                            <option value="@UserRole.Customer">Customer (ลูกค้า)</option>
-                        </select>
-                        <div id="adminNoticeBox" class="form-text text-muted mt-1 @(isCurrentOwner ? "d-none" : "")" style="font-size: 0.76rem;">
-                            <i class="bi bi-shield-lock-fill text-warning me-1"></i>หมายเหตุ: บทบาท <strong>Admin (ผู้ดูแลระบบ)</strong> สงวนสิทธิ์ให้ผู้บริหารสูงสุด (Owner) เป็นผู้เพิ่มเท่านั้น
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="submit" class="btn btn-primary">บันทึกผู้ใช้</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+                            else
+                            {
+                                <!-- Zoom-Safe Proportional Table Layout -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" id="userMatrixTable"
+                                           style="min-width: 960px; table-layout: fixed;">
+                                        <colgroup>
+                                            <col style="width: 70px;"> <!-- รหัส -->
+                                            <col style="width: 140px;"> <!-- Username -->
+                                            <col style="width: 160px;"> <!-- ชื่อ-นามสกุล -->
+                                            <col style="width: 180px;"> <!-- อีเมล -->
+                                            <col style="width: 130px;"> <!-- บทบาทในระบบ -->
+                                            <col style="width: 130px;"> <!-- สถานะบัญชี -->
+                                            <col style="width: 280px;"> <!-- จัดการสิทธิ์ -->
+                                        </colgroup>
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-nowrap">รหัส</th>
+                                                <th class="text-nowrap">ชื่อผู้ใช้ / Username</th>
+                                                <th class="text-nowrap">ชื่อ-นามสกุล</th>
+                                                <th class="text-nowrap">อีเมล</th>
+                                                <th class="text-nowrap">บทบาทในระบบ</th>
+                                                <th class="text-nowrap">สถานะบัญชี</th>
+                                                <th class="text-nowrap">จัดการสิทธิ์และสถานะ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var user in Model)
+                                            {
+                                                <tr class="user-row" data-username="@user.Username" data-fullname="@user.FullName"
+                                                    data-email="@user.Email" data-role="@user.Role">
+                                                    <td class="fw-bold text-nowrap">#@user.Id</td>
+                                                    <td class="text-nowrap"><code>@user.Username</code></td>
+                                                    <td>
+                                                        <div class="fw-bold text-dark text-truncate" title="@user.FullName">@user.FullName</div>
+                                                    </td>
+                                                    <td><small class="text-muted text-truncate d-block" title="@user.Email">@user.Email</small></td>
+                                                    <td class="text-nowrap">
+                                                        <span
+                                                            class="badge @(user.Role == UserRole.Owner ? "bg-dark" :
+                                                                            user.Role == UserRole.Admin ? "bg-danger" :
+                                                                            user.Role == UserRole.MarketingStaff ? "bg-warning text-dark" :
+                                                                            user.Role == UserRole.AccountingStaff ? "bg-info text-dark" :
+                                                                            user.Role == UserRole.Customer ? "bg-light text-dark border" : "bg-primary") px-2 py-1">
+                                                            @user.Role
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        @if (user.IsActive)
+                                                        {
+                                                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>ใช้งานปกติ</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-danger"><i class="bi bi-slash-circle me-1"></i>ระงับการใช้งาน</span>
+                                                            <div class="small text-danger mt-1 text-truncate" style="font-size: 0.72rem;"
+                                                                 title="@(user.SuspensionReason ?? "ระงับโดยผู้ดูแลระบบ")">
+                                                                <strong>เหตุผล:</strong> @(user.SuspensionReason ?? "ระงับโดยผู้ดูแลระบบ")
+                                                            </div>
+                                                            <div class="small text-muted" style="font-size: 0.7rem;">
+                                                                <i class="bi bi-clock-history me-1"></i>@user.SuspensionDisplayUntil
+                                                            </div>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (!isCurrentOwner && (user.Role == UserRole.Admin || user.Role == UserRole.Owner))
+                                                        {
+                                                            <div class="p-2 rounded-3 bg-light border text-muted small text-center"
+                                                                 style="font-size: 0.74rem;">
+                                                                <i class="bi bi-shield-lock-fill text-warning me-1"></i>สงวนสิทธิ์สำหรับ Owner เท่านั้น
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <form asp-action="UpdateUserRole" method="post" class="d-flex flex-column gap-2 m-0">
+                                                                <input type="hidden" name="userId" value="@user.Id" />
+                                                                <input type="hidden" name="role" value="@currentTabRole" />
+                                                                <input type="hidden" name="roleFilter" value="@roleFilter" />
+                                                                <input type="hidden" name="search" value="@search" />
+                                                                <div class="d-flex align-items-center gap-1">
+                                                                    <select name="newRole" class="form-select form-select-sm"
+                                                                            style="font-size: 0.78rem; min-width: 125px;">
+                                                                        <option value="@UserRole.InventoryStaff"
+                                                                                selected="@(user.Role == UserRole.InventoryStaff)">Inventory Staff</option>
+                                                                        <option value="@UserRole.OrderStaff" selected="@(user.Role == UserRole.OrderStaff)">
+                                                                            Order Staff</option>
+                                                                            <option value="@UserRole.ShippingStaff"
+                                                                                    selected="@(user.Role == UserRole.ShippingStaff)">Shipping Staff</option>
+                                                                            <option value="@UserRole.MarketingStaff"
+                                                                                    selected="@(user.Role == UserRole.MarketingStaff)">Marketing Staff</option>
+                                                                            <option value="@UserRole.AccountingStaff"
+                                                                                    selected="@(user.Role == UserRole.AccountingStaff)">Accounting Staff</option>
+                                                                            <option value="@UserRole.ITSupport" selected="@(user.Role == UserRole.ITSupport)">IT
+                                                                                Support</option>
+                                                                                @if (isCurrentOwner)
+                                                                                {
+                                                                                    <option value="@UserRole.Admin" selected="@(user.Role == UserRole.Admin)">Admin
+                                                                                    </option>
+                                                                                    <option value="@UserRole.Owner" selected="@(user.Role == UserRole.Owner)">Owner
+                                                                                    </option>
+                                                                                }
+                                                                                <option value="@UserRole.Customer" selected="@(user.Role == UserRole.Customer)">
+                                                                                    Customer</option>
+                                                                                </select>
+                                                                                <select name="isActive" class="form-select form-select-sm"
+                                                                                        style="font-size: 0.78rem; width: 85px;"
+                                                                                        onchange="toggleSuspendBox(this, @user.Id)">
+                                                                                    <option value="true" selected="@user.IsActive">ใช้งาน</option>
+                                                                                    <option value="false" selected="@(!user.IsActive)">ระงับ</option>
+                                                                                </select>
+                                                                                <button type="submit" class="btn btn-sm btn-outline-dark px-2 text-nowrap"
+                                                                                        style="font-size: 0.78rem;">
+                                                                                    <i class="bi bi-save me-1"></i>บันทึก
+                                                                                </button>
+                                                                            </div>
+                                                                            <div id="suspend-box-@user.Id"
+                                                                                 class="p-2 rounded-3 bg-danger-subtle border border-danger-subtle @(user.IsActive ? "d-none" : "")"
+                                                                                 style="max-width: 270px;">
+                                                                                <div class="mb-1">
+                                                                                    <label class="form-label mb-0 small fw-bold text-danger" style="font-size: 0.7rem;">
+                                                                                        <i class="bi bi-clock me-1"></i>ระยะเวลาที่ระงับ:
+                                                                                    </label>
+                                                                                    <select name="suspendDurationMinutes" class="form-select form-select-sm"
+                                                                                            style="font-size: 0.74rem;">
+                                                                                        <option value="15" selected="@(user.SuspensionDurationLabel == "15 นาที")">15
+                                                                                            นาที</option>
+                                                                                            <option value="60" selected="@(user.SuspensionDurationLabel == "1 ชั่วโมง")">1
+                                                                                                ชั่วโมง</option>
+                                                                                                <option value="360" selected="@(user.SuspensionDurationLabel == "6 ชั่วโมง")">6
+                                                                                                    ชั่วโมง</option>
+                                                                                                    <option value="1440" selected="@(user.SuspensionDurationLabel == "1 วัน")">1 วัน
+                                                                                                        (24 ชั่วโมง)</option>
+                                                                                                        <option value="4320" selected="@(user.SuspensionDurationLabel == "3 วัน")">3 วัน
+                                                                                                        </option>
+                                                                                                        <option value="10080" selected="@(user.SuspensionDurationLabel == "7 วัน")">7
+                                                                                                            วัน</option>
+                                                                                                            <option value="43200" selected="@(user.SuspensionDurationLabel == "30 วัน")">30
+                                                                                                                วัน</option>
+                                                                                                                <option value="-1"
+                                                                                                                        selected="@(string.IsNullOrEmpty(user.SuspensionDurationLabel) || user.SuspensionDurationLabel == "ระงับถาวร")">
+                                                                                                                    ระงับถาวร (จนกว่าจะปลด)</option>
+                                                                                                                </select>
+                                                                                                            </div>
+                                                                                                            <div>
+                                                                                                                <label class="form-label mb-0 small fw-bold text-danger" style="font-size: 0.7rem;">
+                                                                                                                    <i class="bi bi-exclamation-circle me-1"></i>เหตุผลที่ระงับ:
+                                                                                                                </label>
+                                                                                                                <input type="text" name="suspendReason" id="suspend-reason-@user.Id"
+                                                                                                                       value="@(user.SuspensionReason ?? "")" class="form-control form-control-sm"
+                                                                                                                       style="font-size: 0.74rem;" placeholder="เช่น สลิปปลอม / ละเมิดข้อตกลง..." />
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    </form>
+                                                                                                }
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    }
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    }
+                                                                </div>
 
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            const roleInUrl = urlParams.get('role') || urlParams.get('asRole');
-            const tabRole = (roleInUrl || sessionStorage.getItem('petshop_tab_role') || "@currentRole").toLowerCase();
-            const isOwnerTab = tabRole === 'owner';
+                                                                <!-- Modal เพิ่มผู้ใช้งานใหม่ -->
+                                                                <div class="modal fade" id="addUserModal" tabindex="-1">
+                                                                    <div class="modal-dialog">
+                                                                        <div class="modal-content">
+                                                                            <form asp-action="CreateUser" method="post">
+                                                                                <input type="hidden" name="role" value="@currentTabRole" />
+                                                                                <div class="modal-header">
+                                                                                    <h5 class="modal-title fw-bold">เพิ่มผู้ใช้งานใหม่เข้าสู่ระบบ</h5>
+                                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                                </div>
+                                                                                <div class="modal-body">
+                                                                                    <div class="mb-3">
+                                                                                        <label class="form-label small fw-bold">Username</label>
+                                                                                        <input type="text" name="Username" class="form-control" placeholder="เช่น somchai_inv"
+                                                                                               required />
+                                                                                    </div>
+                                                                                    <div class="mb-3">
+                                                                                        <label class="form-label small fw-bold">ชื่อ-นามสกุล</label>
+                                                                                        <input type="text" name="FullName" class="form-control" placeholder="เช่น นายสมชาย สายตรวจ"
+                                                                                               required />
+                                                                                    </div>
+                                                                                    <div class="mb-3">
+                                                                                        <label class="form-label small fw-bold">อีเมล</label>
+                                                                                        <input type="email" name="Email" class="form-control" placeholder="เช่น somchai@petshop.com"
+                                                                                               required />
+                                                                                    </div>
+                                                                                    <div class="row g-2 mb-3">
+                                                                                        <div class="col-md-6">
+                                                                                            <label class="form-label small fw-bold">เบอร์โทรศัพท์</label>
+                                                                                            <input type="tel" name="Phone" class="form-control" placeholder="081-xxx-xxxx" />
+                                                                                        </div>
+                                                                                        <div class="col-md-6">
+                                                                                            <label class="form-label small fw-bold">รหัสผ่านเริ่มต้น</label>
+                                                                                            <input type="password" name="Password" class="form-control" value="123456" required />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="mb-3">
+                                                                                        <label class="form-label small fw-bold">บทบาทหน้าที่ (Role)</label>
+                                                                                        <select name="newUserRole" class="form-select">
+                                                                                            <option value="@UserRole.InventoryStaff">Inventory Staff (คลังสินค้า)</option>
+                                                                                            <option value="@UserRole.OrderStaff">Order Staff (คำสั่งซื้อ)</option>
+                                                                                            <option value="@UserRole.ShippingStaff">Shipping Staff (จัดส่ง)</option>
+                                                                                            <option value="@UserRole.MarketingStaff">Marketing Staff (การตลาด)</option>
+                                                                                            <option value="@UserRole.AccountingStaff">Accounting Staff (บัญชี)</option>
+                                                                                            <option value="@UserRole.ITSupport">IT Support (ซัพพอร์ต)</option>
+                                                                                            @if (isCurrentOwner)
+                                                                                            {
+                                                                                                <option value="@UserRole.Admin">Admin (ผู้ดูแลระบบ)</option>
+                                                                                            }
+                                                                                            <option value="@UserRole.Customer">Customer (ลูกค้า)</option>
+                                                                                        </select>
+                                                                                        <div id="adminNoticeBox" class="form-text text-muted mt-1 @(isCurrentOwner ? "d-none" : "")"
+                                                                                             style="font-size: 0.76rem;">
+                                                                                            <i class="bi bi-shield-lock-fill text-warning me-1"></i>หมายเหตุ: บทบาท <strong>Admin
+                                                                                            (ผู้ดูแลระบบ)</strong> สงวนสิทธิ์ให้ผู้บริหารสูงสุด (Owner) เป็นผู้เพิ่มเท่านั้น
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="modal-footer">
+                                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                                                                                    <button type="submit" class="btn btn-primary">บันทึกผู้ใช้</button>
+                                                                                </div>
+                                                                            </form>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
 
-            const roleSelect = document.querySelector('#addUserModal select[name="newUserRole"]');
-            const noticeBox = document.getElementById('adminNoticeBox');
-            if (roleSelect && !isOwnerTab) {
-                for (let i = 0; i < roleSelect.options.length; i++) {
-                    const optVal = roleSelect.options[i].value.toLowerCase();
-                    if (optVal === 'admin' || optVal === 'owner') {
-                        roleSelect.remove(i);
-                        i--;
-                    }
-                }
-                if (noticeBox) noticeBox.classList.remove('d-none');
-            }
-        });
+                                                                @section Scripts {
+                                                                    <script>
+                                                                        document.addEventListener('DOMContentLoaded', function () {
+                                                                            const urlParams = new URLSearchParams(window.location.search);
+                                                                            const roleInUrl = urlParams.get('role') || urlParams.get('asRole');
+                                                                            const tabRole = (roleInUrl || sessionStorage.getItem('petshop_tab_role') || "@currentRole").toLowerCase();
+                                                                            const isOwnerTab = tabRole === 'owner';
 
-        function toggleSuspendBox(selectEl, userId) {
-            const box = document.getElementById('suspend-box-' + userId);
-            const reasonInput = document.getElementById('suspend-reason-' + userId);
-            if (!box) return;
-            if (selectEl.value === 'false') {
-                box.classList.remove('d-none');
-                if (reasonInput) {
-                    reasonInput.required = true;
-                    reasonInput.focus();
-                }
-            } else {
-                box.classList.add('d-none');
-                if (reasonInput) {
-                    reasonInput.required = false;
-                }
-            }
-        }
+                                                                            const roleSelect = document.querySelector('#addUserModal select[name="newUserRole"]');
+                                                                            const noticeBox = document.getElementById('adminNoticeBox');
+                                                                            if (roleSelect && !isOwnerTab) {
+                                                                                for (let i = 0; i < roleSelect.options.length; i++) {
+                                                                                    const optVal = roleSelect.options[i].value.toLowerCase();
+                                                                                    if (optVal === 'admin' || optVal === 'owner') {
+                                                                                        roleSelect.remove(i);
+                                                                                        i--;
+                                                                                    }
+                                                                                }
+                                                                                if (noticeBox) noticeBox.classList.remove('d-none');
+                                                                            }
+                                                                        });
 
-        // Live Real-Time Instant Search Filter (กรองตารางทันทีใน 0ms เมื่อผู้ใช้พิมพ์)
-        function filterTableRealtime(query) {
-            const q = (query || '').toLowerCase().trim();
-            const rows = document.querySelectorAll('.user-row');
-            rows.forEach(row => {
-                const u = (row.dataset.username || '').toLowerCase();
-                const f = (row.dataset.fullname || '').toLowerCase();
-                const e = (row.dataset.email || '').toLowerCase();
-                const r = (row.dataset.role || '').toLowerCase();
-                if (!q || u.includes(q) || f.includes(q) || e.includes(q) || r.includes(q)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-    </script>
-}
+                                                                        function toggleSuspendBox(selectEl, userId) {
+                                                                            const box = document.getElementById('suspend-box-' + userId);
+                                                                            const reasonInput = document.getElementById('suspend-reason-' + userId);
+                                                                            if (!box) return;
+                                                                            if (selectEl.value === 'false') {
+                                                                                box.classList.remove('d-none');
+                                                                                if (reasonInput) {
+                                                                                    reasonInput.required = true;
+                                                                                    reasonInput.focus();
+                                                                                }
+                                                                            } else {
+                                                                                box.classList.add('d-none');
+                                                                                if (reasonInput) {
+                                                                                    reasonInput.required = false;
+                                                                                }
+                                                                            }
+                                                                        }
+
+                                                                        // Live Real-Time Instant Search Filter (กรองตารางทันทีใน 0ms เมื่อผู้ใช้พิมพ์)
+                                                                        function filterTableRealtime(query) {
+                                                                            const q = (query || '').toLowerCase().trim();
+                                                                            const rows = document.querySelectorAll('.user-row');
+                                                                            rows.forEach(row => {
+                                                                                const u = (row.dataset.username || '').toLowerCase();
+                                                                                const f = (row.dataset.fullname || '').toLowerCase();
+                                                                                const e = (row.dataset.email || '').toLowerCase();
+                                                                                const r = (row.dataset.role || '').toLowerCase();
+                                                                                if (!q || u.includes(q) || f.includes(q) || e.includes(q) || r.includes(q)) {
+                                                                                    row.style.display = '';
+                                                                                } else {
+                                                                                    row.style.display = 'none';
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    </script>
+                                                                }
