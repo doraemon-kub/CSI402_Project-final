@@ -92,54 +92,56 @@ flowchart TD
 ---
 
 ## ผังงานกระบวนการฝั่ง Admin และพนักงานหลังบ้าน
-แสดงลำดับการทำงานของผู้ดูแลระบบและพนักงานฝ่ายต่างๆ หลังจากล็อกอินสำเร็จแล้วจะเข้าสู่หน้า Dashboard ของแผนกตนเอง โดยมีตัวเชื่อมโยง (Connector `(( ))`) รองรับการวนซ้ำและการรวมจุดกระบวนการ
+แสดงลำดับการทำงานของผู้ดูแลระบบ ผู้บริหารสูงสุด และพนักงานฝ่ายต่างๆ หลังจากล็อกอินสำเร็จแล้วจะเข้าสู่หน้า Dashboard ของแผนกตนเอง โดยมีตัวเชื่อมโยง (Connector `(( ))`) รองรับการวนซ้ำและการรวมจุดกระบวนการ
 
 ```mermaid
 flowchart TD
     Start([start]) --> ConnLogin(( ))
     ConnLogin --> Login[Login]
-    Login --> FillCreds[กรอก email / password\nตรวจสอบข้อมูล]
+    Login --> FillCreds["กรอก email / password\nตรวจสอบข้อมูล"]
     FillCreds --> CheckCreds{ตรวจสอบ}
     CheckCreds -- NO --> ConnLogin
-    CheckCreds -- YES --> CheckRole{Role}
+    CheckCreds -- YES --> CheckRole{"ตรวจสอบ Role"}
     
-    CheckRole -- ลูกค้า --> GoStore[หน้าหลักร้านค้า]
-    CheckRole -- Admin --> AdminBranch[Admin Portal]
-    CheckRole -- พนักงาน --> CheckDept{ตำแหน่ง / แผนก}
+    CheckRole -- "ลูกค้า (Customer)" --> GoStore["หน้าหลักร้านค้า (Storefront)"]
+    CheckRole -- "ผู้บริหารสูงสุด (Owner)" --> OwnerDept["แดชบอร์ดภาพรวมธุรกิจ (Executive KPI BI)\nเข้าถึงข้อมูลทุกแผนก"]
+    CheckRole -- "ผู้ดูแลระบบ (Admin)" --> AdminDept["จัดการสิทธิ์ & เปลี่ยน Role & ระงับบัญชี"]
+    CheckRole -- "คลังสินค้า (Inventory)" --> WhDept["จัดการสินค้า & ปรับสต็อก & Low Stock Alert"]
+    CheckRole -- "คำสั่งซื้อ (Order)" --> OrderDept["ตรวจสอบออเดอร์ & จัดเตรียมและแพ็กสินค้า"]
+    CheckRole -- "จัดส่ง (Shipping)" --> ShipDept["ชั่งน้ำหนักจริง & เจนเลข Tracking & ส่งพัสดุ"]
+    CheckRole -- "การตลาด (Marketing)" --> MktDept["จัดการ 5 แคมเปญโปรโมชั่น & Rule Builder"]
+    CheckRole -- "การเงิน/บัญชี (Accounting)" --> FinDept["ตรวจสอบสลิปโอนเงิน & อนุมัติคืนเงิน"]
+    CheckRole -- "บริการเทคนิค (IT Support)" --> SupportDept["รับแจ้งปัญหา Support Ticket & บันทึกแก้ไข"]
     
-    CheckDept -- แผนกการเงิน --> FinDept[จัดการการเงิน & ตรวจสลิป]
-    FinDept --> CheckSlip[ดูสลิปลูกค้า]
+    AdminDept --> AdminSelect["เลือกผู้ใช้งานในระบบ"]
+    AdminSelect --> AdminAction["เปลี่ยน Role ผ่าน Dropdown หรือ ระงับ/ปลดระงับบัญชี"]
+    AdminAction --> SaveUserDB["บันทึกการเปลี่ยนแปลงลงฐานข้อมูล"]
+    SaveUserDB --> AdminDone["สำเร็จ / หน้าหลัก"]
+    
+    FinDept --> CheckSlip["เปิดดูรูปสลิป / ตรวจสอบยอดโอน"]
     CheckSlip --> IsSlipValid{สลิปถูกต้อง?}
-    IsSlipValid -- YES --> ApprovePay[อนุมัติออเดอร์\nสถานะ = รอจัดส่ง]
-    IsSlipValid -- NO --> RejectPay[ตอบกลับลูกค้า\nให้ส่งสลิปใหม่]
+    IsSlipValid -- YES --> ApprovePay["อนุมัติออเดอร์ (PaymentVerified)"]
+    IsSlipValid -- NO --> RejectPay["ปฏิเสธสลิป / ให้ลูกค้าอัปโหลดใหม่"]
     ApprovePay --> ConnFinDone(( ))
     RejectPay --> ConnFinDone
-    ConnFinDone --> FinDone[สำเร็จ / หน้าหลัก]
+    ConnFinDone --> FinDone["สำเร็จ / อัปเดตสถานะ"]
     
-    CheckDept -- แผนกคลัง --> WhDept[จัดการสินค้า\nเพิ่ม/ลด/อัปเดตสต็อก]
-    WhDept --> WhDone[สำเร็จ / หน้าหลัก]
+    WhDept --> WhDone["สำเร็จ / อัปเดตคลัง"]
+    OrderDept --> OrderDone["สำเร็จ / รอจัดส่ง"]
+    ShipDept --> ShipDone["สำเร็จ / บันทึกเลขพัสดุ"]
+    MktDept --> MktDoneNode["สำเร็จ / อัปเดตโปรโมชั่น"]
+    SupportDept --> SupportDone["สำเร็จ / ปิดตั๋วปัญหา"]
+    OwnerDept --> OwnerDone["สำเร็จ / รายงานผู้บริหาร"]
     
-    CheckDept -- แผนกจัดส่ง --> ShipDept[ชั่งน้ำหนักจริง\nบันทึกเลข Tracking]
-    ShipDept --> ShipDone[สำเร็จ / หน้าหลัก]
-    
-    CheckDept -- แผนกการตลาด --> MktDept[จัดการ 5 โปรโมชั่น\nเปิด/ปิดแคมเปญ]
-    MktDept --> MktDone[สำเร็จ / หน้าหลัก]
-    
-    AdminBranch --> AdminAction[จัดการพนักงาน & สิทธิ์]
-    AdminAction --> ConnUser(( ))
-    ConnUser --> AddUserForm[กรอกข้อมูลพนักงาน\nชื่อ, email, เบอร์, ตำแหน่ง]
-    AddUserForm --> CheckAdminRole{Role ถูกต้อง?}
-    CheckAdminRole -- YES --> SaveUserDB[บันทึกข้อมูลสำเร็จ\nSuccess]
-    CheckAdminRole -- NO --> AlertRoleErr[แจ้ง: ไม่มี Role ที่ถูกต้อง]
-    AlertRoleErr --> ConnUser
-    SaveUserDB --> AdminDone[สำเร็จ / หน้าหลัก]
-    
-    FinDone --> End([End])
-    WhDone --> End
-    ShipDone --> End
-    MktDone --> End
+    GoStore --> End([End])
+    OwnerDone --> End
     AdminDone --> End
-    GoStore --> End
+    WhDone --> End
+    OrderDone --> End
+    ShipDone --> End
+    MktDoneNode --> End
+    FinDone --> End
+    SupportDone --> End
 ```
 
 ---
@@ -160,8 +162,8 @@ flowchart TD
     VerifyUser -- NO --> LoginRetry[Login ไม่สำเร็จ]
     LoginRetry --> ConnLogin
     VerifyUser -- YES --> CheckRoleBranch{ตรวจสอบประเภทบัญชี}
-    CheckRoleBranch -- ลูกค้า --> GoCustHome["เข้าสู่หน้าหลักลูกค้า (Home)"]
-    CheckRoleBranch -- พนักงาน / ผู้บริหาร --> GoStaffPortal[เข้าสู่หน้าหลักพนักงาน / Back-Office]
+    CheckRoleBranch -- "ลูกค้า" --> GoCustHome["เข้าสู่หน้าหลักลูกค้า (Home)"]
+    CheckRoleBranch -- "พนักงาน / ผู้บริหาร" --> GoStaffPortal["เข้าสู่หน้าหลักพนักงาน / Back-Office"]
     GoCustHome --> ConnEnd(( ))
     GoStaffPortal --> ConnEnd
     ConnEnd --> End([End])
@@ -202,20 +204,15 @@ flowchart TD
 ---
 
 ### 4. PRODUCT DETAIL (User) (หน้ารายละเอียดสินค้า)
-หน้ารายละเอียดสินค้า แสดงรูป ชื่อ ราคา น้ำหนัก และข้อมูลสินค้า ลูกค้าสามารถกดเพิ่มลงตะกร้าหรือซื้อเลยได้ โดยมีตัวเชื่อมโยงรวมจุดกระบวนการก่อนบันทึกออเดอร์
+หน้ารายละเอียดสินค้า แสดงรูป ชื่อ ราคา แบรนด์ น้ำหนัก และคำอธิบายสินค้า โดยลูกค้าเลือกจำนวนสินค้าและกดเพิ่มลงตะกร้าเพื่อบันทึกลงระบบตะกร้าสินค้าก่อนดำเนินการสั่งซื้อ
 
 ```mermaid
 flowchart TD
-    Start([start]) --> LoadProductInfo[โหลดข้อมูลสินค้า\nชื่อ, ราคา, รูป, รายละเอียด, น้ำหนัก]
-    LoadProductInfo --> SelectQty[เลือกจำนวนสินค้า]
-    SelectQty --> CheckAction{เพิ่มตะกร้าสินค้า?}
-    CheckAction -- YES --> AddCartDB["บันทึกสินค้าลงตะกร้า\n(CartItem DB)"]
-    CheckAction -- NO --> BuyNow["ซื้อเลย\n(ไปหน้า Checkout)"]
-    AddCartDB --> ConnAction(( ))
-    BuyNow --> ConnAction
-    ConnAction --> MakeOrder[สั่งออเดอร์]
-    MakeOrder --> SaveOrderDetail[บันทึก OrderDetail ลง DB]
-    SaveOrderDetail --> End([End])
+    Start([start]) --> LoadProductInfo["โหลดข้อมูลสินค้า\nชื่อ, ราคา, รูป, รายละเอียด, น้ำหนัก"]
+    LoadProductInfo --> SelectQty["เลือกจำนวนสินค้าที่ต้องการ"]
+    SelectQty --> AddCartDB["บันทึกสินค้าลงตะกร้า (CartItem DB)"]
+    AddCartDB --> GoToCart["ไปที่หน้าตะกร้าสินค้า (Cart)"]
+    GoToCart --> End([End])
 ```
 
 ---
@@ -239,19 +236,17 @@ flowchart TD
 ---
 
 ### 6. CHECKOUT (User) (หน้ายืนยันคำสั่งซื้อและชำระเงิน)
-หน้ายืนยันคำสั่งซื้อ ลูกค้ากรอกที่อยู่จัดส่ง เลือกวิธีชำระเงิน (PromptPay QR) และการจัดส่ง ตรวจสอบโปรโมชั่น และรวมจุดที่ตัวเชื่อมโยงเพื่อยืนยันสร้างออเดอร์
+หน้ายืนยันคำสั่งซื้อ ลูกค้ากรอกข้อมูลและที่อยู่จัดส่ง ระบบคำนวณค่าจัดส่งตามเกณฑ์น้ำหนักและคำนวณส่วนลดจาก 5 แคมเปญโปรโมชั่นให้อัตโนมัติ ลูกค้าสแกนชำระผ่าน PromptPay QR แนบสลิปโอนเงิน และกดยืนยันสั่งซื้อ
 
 ```mermaid
 flowchart TD
-    Start([start]) --> InputAddress[กรอกชื่อ, เบอร์, ที่อยู่จัดส่ง]
-    InputAddress --> SelectCourier[เลือกวิธีจัดส่ง\nKerry / Flash / Thailand Post]
-    SelectCourier --> HasPromo{ใช้โปรโมชั่น?}
-    HasPromo -- YES --> ApplyDiscount[หักส่วนลดโปรโมชั่น]
-    HasPromo -- NO --> CalcStandard[ส่งออกออเดอร์ยอดปกติ]
-    ApplyDiscount --> ConnCheckout(( ))
-    CalcStandard --> ConnCheckout
-    ConnCheckout --> ConfirmCheckout[ยืนยันออเดอร์\nอัปเดต order -> 'รอชำระ/รอตรวจสลิป']
-    ConfirmCheckout --> OrderSuccess[ไปหน้า OrderSuccessUser]
+    Start([start]) --> InputAddress["กรอกชื่อ, เบอร์, ที่อยู่จัดส่ง"]
+    InputAddress --> AutoCalcShipping["ระบบคำนวณค่าจัดส่งอัตโนมัติตามน้ำหนัก\n(เกณฑ์ 10 kg)"]
+    AutoCalcShipping --> AutoApplyPromo["ระบบคำนวณส่วนลด 5 โปรโมชั่นให้อัตโนมัติ\n(บังคับใช้โปรโมชั่นที่ดีที่สุด)"]
+    AutoApplyPromo --> ShowQR["แสดงยอดสุทธิ และ QR Code พร้อมเพย์"]
+    ShowQR --> UploadSlip["ลูกค้าแนบหลักฐานสลิปการโอนเงิน"]
+    UploadSlip --> ConfirmCheckout["ยืนยันออเดอร์\nอัปเดต order -> 'รอตรวจสอบชำระเงิน (PendingPayment)'"]
+    ConfirmCheckout --> OrderSuccess["ไปหน้าสำเร็จ (OrderSuccess)"]
     OrderSuccess --> End([End])
 ```
 
@@ -274,54 +269,55 @@ flowchart TD
 
 ---
 
-### 8. DASHBOARD (Admin / Owner) (หน้าสรุปภาพรวมระบบ)
-หน้าสรุปภาพรวมระบบสำหรับ Admin และ Owner แสดงข้อมูล ยอดขายรวม กำไรสุทธิ ออเดอร์ สต็อกสินค้า และลูกค้า
+### 8. DASHBOARD (Owner) (หน้าสรุปภาพรวมธุรกิจสำหรับผู้บริหารสูงสุด)
+หน้าสรุปภาพรวมธุรกิจสำหรับ Owner (ผู้บริหารสูงสุด) แสดงข้อมูล KPI สถิติยอดขายรวม รายได้ กำไรสุทธิ ออเดอร์ สต็อกสินค้า กราฟสัดส่วนสัตว์เลี้ยง และรายการธุรกรรมล่าสุด
 
 ```mermaid
 flowchart TD
-    Start([start]) --> LoadKPI[โหลดข้อมูล\nยอดขาย, ออเดอร์, สต็อก, กำไร]
-    LoadKPI --> ShowMetricCards[แสดง Cards KPI ผู้บริหาร]
-    ShowMetricCards --> ShowRecentOrders[แสดงออเดอร์ล่าสุด]
-    ShowRecentOrders --> ShowTopProducts[แสดงสินค้าขายดี / สต็อกใกล้หมด]
+    Start([start]) --> LoadKPI["โหลดข้อมูลสถิติภาพรวมธุรกิจ\nยอดขายรวม, กำไรสุทธิ, ออเดอร์, สต็อก"]
+    LoadKPI --> ShowMetricCards["แสดง Cards KPI ผู้บริหาร\n(ยอดขาย, รายได้, ออเดอร์, กำไร)"]
+    ShowMetricCards --> ShowPetRatio["แสดงชาร์ตสัดส่วนยอดขาย สุนัข / แมว"]
+    ShowPetRatio --> ShowRecentOrders["แสดงรายการออเดอร์ล่าสุดและสถานะ"]
+    ShowRecentOrders --> ShowTopProducts["แสดงสินค้าขายดี / แจ้งเตือนสินค้าใกล้หมด"]
     ShowTopProducts --> End([End])
 ```
 
 ---
 
-### 9. AddProduct (Admin / Inventory) (การเพิ่มสินค้าใหม่)
-กระบวนการเพิ่มสินค้าใหม่เข้าระบบ พนักงานกรอกข้อมูลสินค้า น้ำหนัก ช่วงวัย หากข้อมูลไม่ครบจะวนกลับมาที่ตัวเชื่อมโยงเพื่อกรอกใหม่ หากครบจะอัปโหลดรูปภาพและบันทึกลงฐานข้อมูล
+### 9. AddProduct (Inventory Staff) (การเพิ่มสินค้าใหม่)
+กระบวนการเพิ่มสินค้าใหม่เข้าระบบโดยพนักงานคลังสินค้า (Inventory Staff) กรอกข้อมูลสินค้า แบรนด์ หมวดหมู่ ราคา ต้นทุน น้ำหนัก kg และช่วงวัย (Layer) หากข้อมูลไม่ครบจะวนกลับมาที่ตัวเชื่อมโยงเพื่อกรอกใหม่ หากครบจะอัปโหลดรูปภาพและบันทึกลงฐานข้อมูล
 
 ```mermaid
 flowchart TD
     Start([start]) --> ConnAddProd(( ))
-    ConnAddProd --> InputBasic[กรอกข้อมูลสินค้า\nชื่อ, แบรนด์, หมวด, จำนวนสต็อก]
-    InputBasic --> InputDetail[กรอกรายละเอียด\nราคา, รูปสินค้า, ต้นทุน, น้ำหนัก kg, ช่วงวัย]
+    ConnAddProd --> InputBasic["กรอกข้อมูลสินค้า\nชื่อ, แบรนด์, หมวดหมู่, จำนวนสต็อก"]
+    InputBasic --> InputDetail["กรอกรายละเอียด\nราคา, ต้นทุน, น้ำหนัก kg, ช่วงวัย (Layer)"]
     InputDetail --> CheckProductComplete{ข้อมูลครบ?}
     CheckProductComplete -- NO --> ConnAddProd
-    CheckProductComplete -- YES --> UploadImage[upload รูปภาพสินค้า]
-    UploadImage --> SaveProductDB[บันทึก Product ลง DB]
+    CheckProductComplete -- YES --> UploadImage["อัปโหลดรูปภาพสินค้า"]
+    UploadImage --> SaveProductDB["บันทึกข้อมูลสินค้าลงตาราง Product (DB)"]
     SaveProductDB --> End([End])
 ```
 
 ---
 
-### 10. EditProduct (Admin / Inventory) (การแก้ไขสินค้า)
-กระบวนการแก้ไขข้อมูลสินค้า พนักงานเลือกสินค้าที่ต้องการแก้ไข ระบบโหลดข้อมูลเดิมมาให้ หากกรอกข้อมูลไม่ครบจะวนกลับมาที่ตัวเชื่อมโยง หากครบจะตรวจสอบการเปลี่ยนรูปภาพและบันทึกลงฐานข้อมูล
+### 10. EditProduct (Inventory Staff) (การแก้ไขสินค้า)
+กระบวนการแก้ไขข้อมูลสินค้าโดยพนักงานคลังสินค้า (Inventory Staff) เลือกสินค้าที่ต้องการแก้ไข ระบบโหลดข้อมูลเดิมมาให้ หากกรอกข้อมูลไม่ครบจะวนกลับมาที่ตัวเชื่อมโยง หากครบจะตรวจสอบการเปลี่ยนรูปภาพและบันทึกลงฐานข้อมูล
 
 ```mermaid
 flowchart TD
     Start([start]) --> ConnEditProd(( ))
     ConnEditProd --> LoadCurrentPID["โหลดข้อมูลสินค้าปัจจุบัน (PID) จาก DB"]
-    LoadCurrentPID --> DisplayEditForm[แสดงฟอร์มพร้อมข้อมูลเดิม\nชื่อ, แบรนด์, หมวด, จำนวน]
-    DisplayEditForm --> EditFields[แก้ไขราคา / รูปสินค้า\nต้นทุน, น้ำหนัก, จุดสั่งซื้อซ้ำ]
+    LoadCurrentPID --> DisplayEditForm["แสดงฟอร์มพร้อมข้อมูลเดิม\nชื่อ, แบรนด์, หมวด, จำนวนสต็อก"]
+    DisplayEditForm --> EditFields["แก้ไขราคา, รูปสินค้า, ต้นทุน, น้ำหนัก kg, ช่วงวัย"]
     EditFields --> CheckEditComplete{ข้อมูลครบ?}
     CheckEditComplete -- NO --> ConnEditProd
     CheckEditComplete -- YES --> ChangeImage{เปลี่ยนรูปสินค้า?}
-    ChangeImage -- YES --> UploadNewImg[upload รูปใหม่]
-    ChangeImage -- NO --> UseOldImg[ใช้รูปเดิม]
+    ChangeImage -- YES --> UploadNewImg["อัปโหลดรูปภาพใหม่"]
+    ChangeImage -- NO --> UseOldImg["ใช้รูปภาพเดิม"]
     UploadNewImg --> ConnSaveProd(( ))
     UseOldImg --> ConnSaveProd
-    ConnSaveProd --> SaveProductEdit[บันทึกการแก้ไข Product ลง DB]
+    ConnSaveProd --> SaveProductEdit["บันทึกการแก้ไขสินค้าลงตาราง Product (DB)"]
     SaveProductEdit --> End([End])
 ```
 
@@ -333,37 +329,34 @@ flowchart TD
 ```mermaid
 flowchart TD
     Start([start]) --> ConnAddUser(( ))
-    ConnAddUser --> InputStaffInfo[กรอกข้อมูลพนักงาน\nชื่อ, email, password, เบอร์]
-    InputStaffInfo --> SelectRole[เลือก Role / ตำแหน่ง\nAdmin / การเงิน / คลัง / จัดส่ง / การตลาด / IT]
+    ConnAddUser --> InputStaffInfo["กรอกข้อมูลพนักงาน\nชื่อ, email, password, เบอร์"]
+    InputStaffInfo --> SelectRole["เลือก Role / ตำแหน่ง\nAdmin / การเงิน / คลัง / จัดส่ง / การตลาด / IT"]
     SelectRole --> CheckUserComplete{ข้อมูลครบ?}
     CheckUserComplete -- NO --> ConnAddUser
-    CheckUserComplete -- YES --> SaveRoleDB[บันทึก Role และข้อมูลพนักงานลง DB]
+    CheckUserComplete -- YES --> SaveRoleDB["บันทึก Role และข้อมูลพนักงานลง DB"]
     SaveRoleDB --> End([End])
 ```
 
 ---
 
-### 12. EDIT / DELETE USER (Admin) (การแก้ไขหรือลบพนักงาน)
-กระบวนการแก้ไขหรือลบข้อมูลพนักงาน Admin สามารถอัปเดตข้อมูลและสิทธิ์การเข้าถึงของพนักงานแต่ละคน หรือลบ/ระงับบัญชี โดยมีตัวเชื่อมโยงรับการวนกลับตามมาตรฐาน ANSI Flowchart
+### 12. ROLE & PERMISSIONS MANAGEMENT (Admin) (การจัดการสิทธิ์และระงับบัญชีผู้ใช้)
+กระบวนการจัดการสิทธิ์และสถานะบัญชีผู้ใช้โดยผู้ดูแลระบบ (Admin) สามารถเปลี่ยนบทบาท (Role) ของผู้ใช้ผ่าน Dropdown และดำเนินการระงับการใช้งาน (Suspend) หรือปลดระงับบัญชี (Reactivate) ได้โดยตรง โดยไม่มีการลบประวัติข้อมูลผู้ใช้ออกจากระบบ
 
 ```mermaid
 flowchart TD
-    Start([start]) --> ConnUser(( ))
-    ConnUser --> LoadUserCurrent[โหลดข้อมูลผู้ใช้ปัจจุบัน]
-    LoadUserCurrent --> ActionType{Edit หรือ Delete?}
+    Start([start]) --> ConnAdminUser(( ))
+    ConnAdminUser --> LoadUserList["โหลดรายชื่อผู้ใช้ทั้งหมด (Role & Permissions Matrix)"]
+    LoadUserList --> SelectAction{เลือกการดำเนินการ}
     
-    ActionType -- Delete --> ConfirmDelete{ยืนยันลบผู้ใช้?}
-    ConfirmDelete -- YES --> DeleteUserDB[ลบจาก DB / ระงับบัญชี]
-    ConfirmDelete -- NO --> ConnUser
+    SelectAction -- "เปลี่ยนบทบาท (Role)" --> SelectNewRole["เลือกบทบาทใหม่ผ่าน Dropdown\n(Admin, Inventory, Order, Shipping, Marketing, Accounting, IT, Customer)"]
+    SelectNewRole --> SaveRoleChange["บันทึก Role ใหม่ลงตาราง User (DB)"]
     
-    ActionType -- Edit --> InputEditUser[กรอกข้อมูลแก้ไข\nชื่อ, email, เบอร์, Role]
-    InputEditUser --> CheckUserEdit{ข้อมูลครบ?}
-    CheckUserEdit -- NO --> ConnUser
-    CheckUserEdit -- YES --> SaveUserEdit[บันทึกการแก้ไข -> AdminList]
+    SelectAction -- "ระงับ / ปลดระงับบัญชี" --> ToggleSuspend["คลิกปุ่ม ระงับการใช้งาน หรือ ปลดระงับบัญชี"]
+    ToggleSuspend --> SaveStatusChange["อัปเดตสถานะ IsActive ลงตาราง User (DB)"]
     
-    DeleteUserDB --> ConnEnd(( ))
-    SaveUserEdit --> ConnEnd
-    ConnEnd --> End([End])
+    SaveRoleChange --> ConnAdminDone(( ))
+    SaveStatusChange --> ConnAdminDone
+    ConnAdminDone --> End([End])
 ```
 
 ---
