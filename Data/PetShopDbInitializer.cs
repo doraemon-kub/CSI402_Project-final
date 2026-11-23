@@ -172,8 +172,11 @@ namespace CSI402_Project_final.Models
                 db.SaveChanges();
             }
 
-            // 3. Seed สินค้าเริ่มต้นและเพิ่มเติมให้ครอบคลุมทุกหมวดหมู่
-            var existingProductNames = db.Products.Select(p => p.Name.ToLower()).ToHashSet();
+            // 3. Seed สินค้าเริ่มต้นและเพิ่มเติมให้ครอบคลุมทุกหมวดหมู่ พร้อมรูปสินค้าจริงที่ตรงกับชื่อสินค้า 100%
+            var existingProductsByName = db.Products
+                .AsEnumerable()
+                .GroupBy(p => p.Name.ToLower())
+                .ToDictionary(g => g.Key, g => g.First());
 
             var catalog = new List<Product>
             {
@@ -192,7 +195,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 15,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=600&q=80",
+                    ImageUrl = "/images/products/p01_rc_medium_adult.jpg",
                     Description = "อาหารเม็ดสำหรับสุนัขโตพันธุ์กลาง ช่วยเสริมสร้างภูมิคุ้มกันและดูแลทางเดินอาหาร",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -211,7 +214,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 8,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=80",
+                    ImageUrl = "/images/products/p02_rc_puppy_maxi.jpg",
                     Description = "สำหรับลูกสุนัขพันธุ์ใหญ่ อายุ 2-15 เดือน โปรตีนคุณภาพสูง เสริมสร้างโครงสร้างกระดูก",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -230,7 +233,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 10,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1534361960057-19889db98a1e?w=600&q=80",
+                    ImageUrl = "/images/products/p03_rc_mini_ageing.jpg",
                     Description = "เม็ดอาหารแช่น้ำให้นิ่มง่าย สำหรับสุนัขสูงวัย 12 ปีขึ้นไป มีสารต้านอนุมูลอิสระชะลอความเสื่อมของเซลล์ไต",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -249,7 +252,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 12,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80",
+                    ImageUrl = "/images/products/p04_hills_puppy.jpg",
                     Description = "สูตรเม็ดเล็กทานง่าย มี DHA ธรรมชาติจากน้ำมันปลา พัฒนาการสมองและการมองเห็น",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -268,7 +271,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 6,
                     LowStockThreshold = 3,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&q=80",
+                    ImageUrl = "/images/products/p05_smartheart_holistic.jpg",
                     Description = "อาหารเกรดโฮลิสติก โปรตีนจากเนื้อแกะและข้าวกล้อง ปราศจากข้าวโพดและถั่วเหลือง น้ำหนักพอดีเกณฑ์ 10kg",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -287,7 +290,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 4,
                     LowStockThreshold = 2,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1568640347023-a616a30bc3bd?w=600&q=80",
+                    ImageUrl = "/images/products/p06_pedigree_pro.jpg",
                     Description = "กระสอบจัมโบ้ 15 กิโลกรัม เหมาะสำหรับสุนัขพลังงานสูง น้ำหนักเกิน 10kg คำนวณค่าส่งส่วนเกินตามเกณฑ์",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -306,7 +309,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 7,
                     LowStockThreshold = 3,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=600&q=80",
+                    ImageUrl = "/images/products/p07_orijen_original.jpg",
                     Description = "อาหารสุนัขเกรดซูเปอร์พรีเมียมจากแคนาดา ปราศจากธัญพืช เนื้อสัตว์สดคุณภาพ 85%",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -321,11 +324,11 @@ namespace CSI402_Project_final.Models
                     Price = 320m,
                     SpecialDiscountPrice = null,
                     AgeStage = AgeStage.AllAges,
-                    SpecialNeed = "ทั่วไป",
+                    SpecialNeed = "ของเล่นเสริมพัฒนาการ",
                     StockQuantity = 25,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&q=80",
+                    ImageUrl = "/images/products/p08_kong_classic.jpg",
                     Description = "ของเล่นสุนัขยางธรรมชาติสำหรับแทะและขัดฟัน ลดความเครียด สามารถสอดไส้ขนมได้",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -344,7 +347,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 5,
                     LowStockThreshold = 2,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1541599540903-216a46ca1dc0?w=600&q=80",
+                    ImageUrl = "/images/products/p09_orthopedic_dog_bed.jpg",
                     Description = "เบาะนอนเพื่อสุขภาพช่วยกระจายแรงกดทับ สำหรับสุนัขโตและสุนัขสูงอายุที่มีปัญหาข้อสะโพก",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -363,7 +366,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 20,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1551730459-92db2a308d6a?w=600&q=80",
+                    ImageUrl = "/images/products/p10_truelove_harness.jpg",
                     Description = "สายรัดอกสุนัขบุฟองน้ำระบายอากาศ ลดแรงดึงกระชาก พร้อมแถบสะท้อนแสง 3M ปลอดภัยยามค่ำคืน",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -382,7 +385,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 18,
                     LowStockThreshold = 4,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&q=80",
+                    ImageUrl = "/images/products/p11_slow_feeder_bowl.jpg",
                     Description = "ชามดีไซน์เขาวงกตช่วยชะลอความเร็วในการกินอาหารของสุนัข ป้องกันอาการท้องอืดและสำลักอาหาร",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -401,7 +404,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 22,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?w=600&q=80",
+                    ImageUrl = "/images/products/p12_nylabone_puppy.jpg",
                     Description = "ยางเคี้ยวเนื้อนุ่มพิเศษสำหรับลูกสุนัขช่วงฟันน้ำนมขึ้น ช่วยนวดเหงือกและลดพฤติกรรมกัดแทะเฟอร์นิเจอร์",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -420,7 +423,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 6,
                     LowStockThreshold = 2,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=600&q=80",
+                    ImageUrl = "/images/products/p13_wooden_dog_ramp.jpg",
                     Description = "ทางลาดไม้สนธรรมชาติปูพรมกันลื่น ปรับความสูงได้ 4 ระดับ ช่วยถนอมข้อต่อและกระดูกสันหลังสุนัขสูงอายุ",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -439,7 +442,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 24,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?w=600&q=80",
+                    ImageUrl = "/images/products/p14_pet_hoodie.jpg",
                     Description = "เสื้อฮู้ดผ้าคอตตอนผสมฟลีซนุ่มอบอุ่น สวมใส่ง่าย ระบายอากาศดี เหมาะสำหรับห้องแอร์และฤดูหนาว",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -458,7 +461,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 30,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600&q=80",
+                    ImageUrl = "/images/products/p15_sukina_pee_pad.jpg",
                     Description = "แผ่นอนามัยซึมซับเจลพิเศษ ดับกลิ่นสาบและป้องกันแบคทีเรีย ซึมซับไวไม่รั่วซึม",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -477,7 +480,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 18,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1583511655826-05700d52f4d9?w=600&q=80",
+                    ImageUrl = "/images/products/p16_sleeky_shampoo.jpg",
                     Description = "แชมพูอาบน้ำสูตรอ่อนโยนผสมคอนดิชันเนอร์ ป้องกันขนพันกัน กลิ่นหอมสดชื่น",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -498,7 +501,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 20,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&q=80",
+                    ImageUrl = "/images/products/p17_meo_gold_kitten.jpg",
                     Description = "อาหารลูกแมวอุดมด้วย DHA จากน้ำมันปลาทะเล และพรีไบโอติก เสริมภูมิคุ้มกัน",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -517,7 +520,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 15,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&q=80",
+                    ImageUrl = "/images/products/p18_meo_gold_persian.jpg",
                     Description = "อาหารแมวเปอร์เซียและแมวขนยาว เสริมใยอาหารธรรมชาติป้องกันการเกิดก้อนขนอุดตัน",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -536,7 +539,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 12,
                     LowStockThreshold = 4,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=600&q=80",
+                    ImageUrl = "/images/products/p19_rc_hair_skin.jpg",
                     Description = "ช่วยให้ขนเงางามสุขภาพดีขึ้นภายใน 21 วัน มีกรดไขมันโอเมก้า 3 และ 6 สูง",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -555,7 +558,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 9,
                     LowStockThreshold = 3,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=600&q=80",
+                    ImageUrl = "/images/products/p20_rc_indoor_7.jpg",
                     Description = "ชะลอความเสื่อมของไต ควบคุมฟอสฟอรัส เสริมสร้างการทำงานของหัวใจในแมวอายุ 7 ปีขึ้นไป",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -574,7 +577,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 16,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600&q=80",
+                    ImageUrl = "/images/products/p21_kaniva_cat_food.jpg",
                     Description = "โซเดียมต่ำ ไร้ข้าวโพดและกลูเตน ขนสวยเงางาม รสชาติอร่อยถูกใจเจ้านาย",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -593,7 +596,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 8,
                     LowStockThreshold = 3,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=600&q=80",
+                    ImageUrl = "/images/products/p22_whiskas_mackerel.jpg",
                     Description = "อาหารเม็ดกรอบสอดไส้ครีม รสปลาทูยอดนิยม บำรุงสายตาและการมองเห็น",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -612,7 +615,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 6,
                     LowStockThreshold = 2,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=600&q=80",
+                    ImageUrl = "/images/products/p23_cat_condo_tree.jpg",
                     Description = "คอนโดแมวเนื้อผ้ากำมะหยี่นุ่มสบาย เสาหุ้มเชือกป่านธรรมชาติ พร้อมเปลนอนและลูกบอลดึ๋งดั๋ง",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -631,7 +634,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 40,
                     LowStockThreshold = 10,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1561948955-570b270e7c36?w=600&q=80",
+                    ImageUrl = "/images/products/p24_cat_feather_wand.jpg",
                     Description = "ก้านจับยืดหยุ่น ขนนกสีสันสดใส กระตุ้นสัญชาตญาณนักล่าและการออกกำลังกายของแมว",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -650,7 +653,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 14,
                     LowStockThreshold = 3,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&q=80",
+                    ImageUrl = "/images/products/p25_petkit_fountain.jpg",
                     Description = "น้ำพุแมวระบบปั๊มไร้สายเงียบพิเศษ กรองสิ่งสกปรกและคลอรีน 3 ขั้นตอน กระตุ้นให้น้องแมวดื่มน้ำมากขึ้นเพื่อป้องกันโรคไต",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -669,7 +672,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 10,
                     LowStockThreshold = 3,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=600&q=80",
+                    ImageUrl = "/images/products/p26_space_pet_backpack.jpg",
                     Description = "กระเป๋าเป้พกพาสัตว์เลี้ยงพร้อมหน้าต่างใสชมวิว ช่องตาข่ายระบายอากาศ 9 จุด แข็งแรงสะพายสบาย",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -688,7 +691,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 9,
                     LowStockThreshold = 3,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1574158622682-e40e69881006?w=600&q=80",
+                    ImageUrl = "/images/products/p27_catit_litter_box.jpg",
                     Description = "ห้องน้ำแมวแบบโดมปิดเก็บกลิ่นมิดชิด มีฟิลเตอร์คาร์บอนดูดกลิ่นและตะแกรงดักทรายติดเท้าแมว",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -707,7 +710,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 25,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&q=80",
+                    ImageUrl = "/images/products/p28_pet_grooming_brush.jpg",
                     Description = "ซี่แปรงสแตนเลสหุ้มซิลิโคนถนอมผิวหนัง สางขนเสียและลดการเกิดก้อนขนอุดตัน กดปุ่มทำความสะอาดขนออกจากแปรงได้ทันที",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -726,7 +729,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 18,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600&q=80",
+                    ImageUrl = "/images/products/p29_cat_tower_ball_toy.jpg",
                     Description = "รางบอลหมุน 3 ชั้นสีพาสเทล ฝึกทักษะการตะปบและสายตาของลูกแมว พร้อมถุงแคทนิปออร์แกนิก",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -745,7 +748,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 7,
                     LowStockThreshold = 2,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=600&q=80",
+                    ImageUrl = "/images/products/p30_xiaomi_pet_feeder.jpg",
                     Description = "ตั้งเวลาและปริมาณการให้อาหารได้แม่นยำผ่านแอปพลิเคชัน มีถังเก็บความชื้นและระบบสำรองไฟฉุกเฉิน",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -764,7 +767,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 12,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1574158622682-e40e69881006?w=600&q=80",
+                    ImageUrl = "/images/products/p31_ecocatz_tofu_litter.jpg",
                     Description = "จับตัวเป็นก้อนเร็ว ละลายน้ำได้ ทิ้งลงชักโครกได้ ไร้ฝุ่น 99%",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -783,7 +786,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 15,
                     LowStockThreshold = 4,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=600&q=80",
+                    ImageUrl = "/images/products/p32_kasty_tofu_litter.jpg",
                     Description = "เม็ดเล็ก 1.5mm ประหยัดทราย ไร้ฝุ่น คุมกลิ่นยอดเยี่ยม ฟู้ดเกรด ปลอดภัยต่อน้องแมว",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -804,7 +807,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 14,
                     LowStockThreshold = 4,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=600&q=80",
+                    ImageUrl = "/images/products/p33_oxbow_rabbit_food.jpg",
                     Description = "อาหารเม็ดหญ้าทิโมธีคุณภาพสูงสำหรับกระต่ายโต ไฟเบอร์สูง เสริมสร้างระบบทางเดินอาหาร",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -823,7 +826,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 22,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=600&q=80",
+                    ImageUrl = "/images/products/p34_marukan_dried_fruit.jpg",
                     Description = "ขนมผลไม้อบแห้งธรรมชาติ สำหรับแฮมสเตอร์ กระต่าย แกสบี้ และชูการ์ไกลเดอร์ ปราศจากน้ำตาลปรุงแต่ง",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -842,7 +845,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 7,
                     LowStockThreshold = 2,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&q=80",
+                    ImageUrl = "/images/products/p35_rabbit_cage.jpg",
                     Description = "กรงเหล็กพ่นกันสนิมอย่างดี มีบันไดและชั้นลอย ถาดรองด้านล่างดึงล้างทำความสะอาดง่าย สะดวกสบาย",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -861,7 +864,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 16,
                     LowStockThreshold = 4,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=600&q=80",
+                    ImageUrl = "/images/products/p36_silent_spinner_wheel.jpg",
                     Description = "วงล้อออกกำลังกายระบบลูกปืนไร้เสียงรบกวน พื้นผิวกันลื่นปลอดภัยต่ออุ้งเท้าแฮมสเตอร์และเม่นแคระ",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -880,7 +883,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 20,
                     LowStockThreshold = 5,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=600&q=80",
+                    ImageUrl = "/images/products/p37_rabbit_water_bottle_bowl.jpg",
                     Description = "ขวดน้ำหัวลูกกลิ้งสแตนเลสป้องกันน้ำหยด พร้อมชามเซรามิกฐานหนักป้องกันการคว่ำชามอาหาร",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -899,7 +902,7 @@ namespace CSI402_Project_final.Models
                     StockQuantity = 18,
                     LowStockThreshold = 4,
                     CartAddCount = 0,
-                    ImageUrl = "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=600&q=80",
+                    ImageUrl = "/images/products/p38_kaytee_clean_cozy.jpg",
                     Description = "วัสดุรองกรงทำจากเยื่อกระดาษบริสุทธิ์ ไร้ฝุ่น 99.9% ซึมซับดีกว่าขี้เลื่อยทั่วไป 2 เท่า นุ่มฟูปลอดภัยต่อระบบหายใจ",
                     CreatedAt = now,
                     UpdatedAt = now
@@ -908,12 +911,34 @@ namespace CSI402_Project_final.Models
 
             foreach (var item in catalog)
             {
-                if (!existingProductNames.Contains(item.Name.ToLower()))
+                var key = item.Name.ToLower();
+                if (!existingProductsByName.TryGetValue(key, out var existingProd))
                 {
                     db.Products.Add(item);
                 }
+                else
+                {
+                    bool needsUpdate = false;
+                    if (string.IsNullOrEmpty(existingProd.ImageUrl) ||
+                        existingProd.ImageUrl.Contains("images.unsplash.com") ||
+                        (existingProd.ImageUrl.StartsWith("/images/products/") && existingProd.ImageUrl != item.ImageUrl))
+                    {
+                        existingProd.ImageUrl = item.ImageUrl;
+                        needsUpdate = true;
+                    }
+                    if (existingProd.SpecialNeed != item.SpecialNeed)
+                    {
+                        existingProd.SpecialNeed = item.SpecialNeed;
+                        needsUpdate = true;
+                    }
+                    if (needsUpdate)
+                    {
+                        existingProd.UpdatedAt = now;
+                    }
+                }
             }
             db.SaveChanges();
+            PetShopRepository.InvalidateProductCache();
 
             // 4. Seed FinancialSummary เริ่มต้น (หากยังไม่มี)
             if (!db.FinancialSummaries.Any())

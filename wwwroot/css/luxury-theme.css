@@ -389,14 +389,19 @@ body {
 
 .lux-product-media {
     position: relative;
-    height: 196px;
-    background: var(--lux-surface-soft);
+    height: 215px;
+    background: #FFFFFF;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--lux-border);
 }
 .lux-product-media img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .lux-product-card:hover .lux-product-media img {
