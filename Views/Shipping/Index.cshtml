@@ -1,5 +1,6 @@
 @model List<CSI402_Project_final.Models.Order>
 @using CSI402_Project_final.Models
+@using System.Globalization
 @{
     Layout = "_BackOfficeLayout";
     ViewData["Title"] = "5. จัดการการจัดส่งและพัสดุ (Shipping Staff)";
@@ -71,14 +72,14 @@
                         </td>
                         <td class="text-nowrap">
                             <span class="badge @(order.EstimatedWeightKg > 10.0 ? "bg-danger" : "bg-secondary")">
-                                ⚖️ @order.EstimatedWeightKg.ToString("0.##") kg
+                                ⚖️ @order.EstimatedWeightKg.ToString("0.##", CultureInfo.InvariantCulture) kg
                             </span>
                         </td>
 
                         @if (isDispatched)
                         {
                             <td class="text-nowrap">
-                                <span class="fw-bold text-dark">@((order.ActualWeightKg ?? order.EstimatedWeightKg).ToString("0.##")) kg</span>
+                                <span class="fw-bold text-dark">@((order.ActualWeightKg ?? order.EstimatedWeightKg).ToString("0.##", CultureInfo.InvariantCulture)) kg</span>
                             </td>
                             <td class="text-nowrap">
                                 <span class="badge bg-light text-dark border">
