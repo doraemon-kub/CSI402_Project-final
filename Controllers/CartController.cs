@@ -156,6 +156,7 @@ namespace CSI402_Project_final.Controllers
             string customerPhone,
             string shippingAddress,
             string paymentMethod = "โอนผ่านธนาคาร / PromptPay",
+            string courier = "Flash Express",
             IFormFile? paymentSlip = null)
         {
             try
@@ -174,7 +175,7 @@ namespace CSI402_Project_final.Controllers
 
                 var username = User.Identity?.Name ?? "";
                 var (newOrder, errorMessage) = _repo.CheckoutCurrentCart(
-                    username, customerName, customerPhone, shippingAddress, paymentMethod, slipUrl);
+                    username, customerName, customerPhone, shippingAddress, paymentMethod, slipUrl, courier);
 
                 if (newOrder == null)
                 {

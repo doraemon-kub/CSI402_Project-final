@@ -862,7 +862,8 @@ namespace CSI402_Project_final.Models
             string phone,
             string address,
             string paymentMethod = "โอนผ่านธนาคาร / PromptPay",
-            string? paymentSlipUrl = null)
+            string? paymentSlipUrl = null,
+            string courier = "Flash Express")
         {
             var user = _db.Users.FirstOrDefault(u => u.Username == username);
             if (user == null)
@@ -914,6 +915,7 @@ namespace CSI402_Project_final.Models
                     }
 
                     string cleanMethod = string.IsNullOrWhiteSpace(paymentMethod) ? "โอนผ่านธนาคาร / PromptPay" : paymentMethod.Trim();
+                    string cleanCourier = string.IsNullOrWhiteSpace(courier) ? "Flash Express" : courier.Trim();
                     bool isCod = cleanMethod.Contains("COD", StringComparison.OrdinalIgnoreCase);
 
                     var now = DateTime.Now;
@@ -933,6 +935,7 @@ namespace CSI402_Project_final.Models
                         FreeGiftItem = dbCart.FreeGiftItem,
                         Status = isCod ? OrderStatus.PaymentVerified : OrderStatus.PendingPayment,
                         PaymentMethod = cleanMethod,
+                        Courier = cleanCourier,
                         PaymentSlipUrl = paymentSlipUrl,
                         IsPaymentApproved = false,
                         CreatedAt = now,
@@ -1158,7 +1161,9 @@ namespace CSI402_Project_final.Models
             var order = _db.Orders.FirstOrDefault(o => o.OrderId == orderId);
             if (order == null) return false;
 
-            order.Courier = courier;
+            order.Courier = !string.IsNullOrWhiteSpace(order.Courier)
+                ? order.Courier
+                : (string.IsNullOrWhiteSpace(courier) ? "Flash Express" : courier.Trim());
             order.TrackingNumber = trackingNumber;
             order.ActualWeightKg = actualWeightKg;
             order.Status = OrderStatus.Shipped;

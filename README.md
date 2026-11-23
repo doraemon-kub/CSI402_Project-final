@@ -375,7 +375,7 @@ flowchart TD
 flowchart TD
     Start([start]) --> LoadPreparingOrders["โหลดรายการออเดอร์ที่แพ็กเสร็จ (Preparing)"]
     LoadPreparingOrders --> WeighBox[ชั่งน้ำหนักพัสดุจริง]
-    WeighBox --> EnterTracking[กรอกเลขพัสดุ Tracking Number และเลือกบริษัทขนส่ง]
+    WeighBox --> EnterTracking[กรอกเลขพัสดุ Tracking Number ตามขนส่งที่ลูกค้าเลือก]
     EnterTracking --> UpdateShippedDB[อัปเดต OrderStatus = 'Shipped' ลง DB]
     UpdateShippedDB --> NotifyCustomer[ลูกค้าสามารถตรวจสอบเลข Tracking ได้ทันที]
     NotifyCustomer --> End([End])

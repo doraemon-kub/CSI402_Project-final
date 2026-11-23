@@ -89,9 +89,11 @@
                         }
                         else
                         {
+                            string selectedCourier = string.IsNullOrWhiteSpace(order.Courier) ? "Flash Express" : order.Courier;
                             <td style="min-width: 135px; max-width: 150px;">
                                 <form id="shipForm_@order.OrderId" asp-action="DispatchOrder" method="post" class="m-0">
                                     <input type="hidden" name="orderId" value="@order.OrderId" />
+                                    <input type="hidden" name="courier" value="@selectedCourier" />
                                     <input type="hidden" name="role" value="@(ViewContext.HttpContext.Request.Query["role"].FirstOrDefault() ?? User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)" />
                                     <div class="input-group input-group-sm">
                                         <input type="number" step="0.01" min="0.1" name="actualWeightKg" class="form-control" value="@(order.ActualWeightKg ?? order.EstimatedWeightKg)" placeholder="นน. จริง" required />
@@ -99,12 +101,10 @@
                                     </div>
                                 </form>
                             </td>
-                            <td style="min-width: 160px;">
-                                <select name="courier" form="shipForm_@order.OrderId" class="form-select form-select-sm">
-                                    <option value="Flash Express">Flash Express</option>
-                                    <option value="Kerry Express">Kerry Express</option>
-                                    <option value="ไปรษณีย์ไทย (EMS)">ไปรษณีย์ไทย (EMS)</option>
-                                </select>
+                            <td class="text-nowrap">
+                                <span class="badge bg-light text-dark border px-2 py-1" title="บริษัทขนส่งที่ลูกค้าเลือกตอนสั่งซื้อ">
+                                    <i class="bi bi-truck text-primary me-1"></i>@selectedCourier
+                                </span>
                             </td>
                             <td style="min-width: 185px;">
                                 <input type="text" name="trackingNumber" form="shipForm_@order.OrderId" class="form-control form-control-sm" placeholder="กรอกเลขพัสดุ Tracking..." required />

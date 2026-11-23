@@ -149,14 +149,14 @@
                                     {
                                         <div class="p-3 bg-warning-subtle rounded-3 mb-3">
                                             <div class="small text-dark fw-semibold">⏳ รอการตรวจสอบการชำระเงินจากฝ่ายบัญชี</div>
-                                            <div class="small text-muted">น้ำหนักประเมิน: ⚖️ @order.EstimatedWeightKg kg</div>
+                                            <div class="small text-muted">ขนส่งที่เลือก: 🚚 <strong>@(string.IsNullOrWhiteSpace(order.Courier) ? "Flash Express" : order.Courier)</strong> | น้ำหนักประเมิน: ⚖️ @order.EstimatedWeightKg kg</div>
                                         </div>
                                     }
                                     else if (order.Status != OrderStatus.Cancelled && order.Status != OrderStatus.Refunded)
                                     {
                                         <div class="p-3 bg-light rounded-3 mb-3">
                                             <div class="small text-muted">สถานะพัสดุ: <strong>กำลังเตรียมบรรจุหีบห่อ</strong></div>
-                                            <div class="small text-muted">น้ำหนักประเมิน: ⚖️ @order.EstimatedWeightKg kg</div>
+                                            <div class="small text-muted">ขนส่งที่เลือก: 🚚 <strong>@(string.IsNullOrWhiteSpace(order.Courier) ? "Flash Express" : order.Courier)</strong> | น้ำหนักประเมิน: ⚖️ @order.EstimatedWeightKg kg</div>
                                         </div>
                                     }
 
