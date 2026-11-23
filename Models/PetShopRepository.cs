@@ -930,6 +930,10 @@ namespace CSI402_Project_final.Models
                     string cleanCourier = string.IsNullOrWhiteSpace(courier) ? "Flash Express" : courier.Trim();
                     bool isCod = cleanMethod.Contains("COD", StringComparison.OrdinalIgnoreCase);
 
+                    decimal courierSurcharge = Cart.GetCourierSurcharge(cleanCourier);
+                    decimal finalShippingFee = dbCart.ShippingFee + courierSurcharge;
+                    decimal finalGrandTotal = dbCart.NetProductPrice + finalShippingFee;
+
                     var now = DateTime.Now;
                     var newOrder = new Order
                     {
@@ -942,8 +946,8 @@ namespace CSI402_Project_final.Models
                         EstimatedWeightKg = dbCart.TotalWeightKg,
                         ItemsTotal = dbCart.ProductPriceBeforePromo,
                         DiscountTotal = dbCart.TotalPromotionDiscount,
-                        ShippingFee = dbCart.ShippingFee,
-                        GrandTotal = dbCart.GrandTotal,
+                        ShippingFee = finalShippingFee,
+                        GrandTotal = finalGrandTotal,
                         FreeGiftItem = dbCart.FreeGiftItem,
                         Status = isCod ? OrderStatus.PaymentVerified : OrderStatus.PendingPayment,
                         PaymentMethod = cleanMethod,

@@ -65,6 +65,28 @@ namespace CSI402_Project_final.Models
         [NotMapped]
         public decimal GrandTotal => NetProductPrice + ShippingFee;
 
+        // อัตราค่าบริการพิเศษสำหรับขนส่งด่วนพิเศษ (EMS)
+        public static decimal GetCourierSurcharge(string? courier)
+        {
+            if (string.IsNullOrWhiteSpace(courier)) return 0m;
+            if (courier.Contains("EMS", StringComparison.OrdinalIgnoreCase) ||
+                courier.Contains("ไปรษณีย์ไทย", StringComparison.OrdinalIgnoreCase))
+            {
+                return 30m; // ไปรษณีย์ไทย EMS ด่วนพิเศษ คิดเพิ่ม +30 บาท
+            }
+            return 0m;
+        }
+
+        public decimal GetShippingFeeForCourier(string? courier)
+        {
+            return ShippingFee + GetCourierSurcharge(courier);
+        }
+
+        public decimal GetGrandTotalForCourier(string? courier)
+        {
+            return NetProductPrice + GetShippingFeeForCourier(courier);
+        }
+
         // -------------------------------------------------------------
         // ฟังก์ชันคำนวณโปรโมชั่นอัตโนมัติ 5 รูปแบบ (Business Logic ใน Models)
         // -------------------------------------------------------------

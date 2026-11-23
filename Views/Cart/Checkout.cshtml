@@ -53,10 +53,10 @@
                     </h5>
                     <div class="mb-4">
                         <label class="form-label small fw-medium text-lux-muted">เลือกผู้ให้บริการขนส่งพัสดุ</label>
-                        <select name="courier" id="courierSelect" class="form-select" onchange="const el = document.getElementById('summaryCourierText'); if (el) el.textContent = this.value;" required>
-                            <option value="Flash Express" selected>⚡ Flash Express (จัดส่งด่วนทั่วประเทศ 1-2 วัน)</option>
-                            <option value="Kerry Express">🚚 Kerry Express (บริการส่งด่วนถึงหน้าบ้าน 1-2 วัน)</option>
-                            <option value="ไปรษณีย์ไทย (EMS)">📮 ไปรษณีย์ไทย (Thailand Post - EMS ด่วนพิเศษ)</option>
+                        <select name="courier" id="courierSelect" class="form-select" onchange="updateCourierSelection(this.value)" required>
+                            <option value="Flash Express" data-surcharge="0" selected>⚡ Flash Express (จัดส่งด่วนทั่วประเทศ 1-2 วัน) — ค่าจัดส่งปกติ (฿@Model.ShippingFee.ToString("N0"))</option>
+                            <option value="Kerry Express" data-surcharge="0">🚚 Kerry Express (บริการส่งด่วนถึงหน้าบ้าน 1-2 วัน) — ค่าจัดส่งปกติ (฿@Model.ShippingFee.ToString("N0"))</option>
+                            <option value="ไปรษณีย์ไทย (EMS)" data-surcharge="30">📮 ไปรษณีย์ไทย (Thailand Post - EMS ด่วนพิเศษ) — ด่วนพิเศษ (+฿30)</option>
                         </select>
                     </div>
 
@@ -76,9 +76,9 @@
                     <div id="bankTransferBox">
                         <div class="p-4 rounded-4 bg-lux-tint mb-3 text-center" style="border: 1px solid var(--lux-border);">
                             <div class="small fw-medium text-lux-muted mb-2">สแกน PromptPay QR Code (ระบุยอดชำระอัตโนมัติ)</div>
-                            <img src="@qrImageUrl" class="rounded-3 bg-white p-2 mb-2 shadow-sm" style="width: 168px; height: 168px; border: 1px solid var(--lux-border);" alt="PromptPay QR" />
+                            <img id="promptPayQrImg" src="@qrImageUrl" class="rounded-3 bg-white p-2 mb-2 shadow-sm" style="width: 168px; height: 168px; border: 1px solid var(--lux-border);" alt="PromptPay QR" />
                             <div class="small text-lux-muted">พร้อมเพย์: 081-234-5678 · บจก. เพ็ทสโตร์ โปร</div>
-                            <div class="fw-bold text-lux-espresso fs-5 mt-1">ยอดชำระ: ฿@Model.GrandTotal.ToString("N2")</div>
+                            <div class="fw-bold text-lux-espresso fs-5 mt-1">ยอดชำระ: <span id="promptPayTotalText">฿@Model.GrandTotal.ToString("N2")</span></div>
                         </div>
 
                         <div class="mb-4">
@@ -91,7 +91,7 @@
                     </div>
 
                     <div id="codNoticeBox" class="p-3 rounded-3 bg-lux-tint small d-none mb-4" style="border: 1px solid var(--lux-border-strong);">
-                        <i class="bi bi-truck text-lux-gold me-1"></i> เลือกชำระเงินปลายทาง (COD): กรุณาเตรียมชำระเงินจำนวน <strong>฿@Model.GrandTotal.ToString("N2")</strong> กับพนักงานขนส่ง
+                        <i class="bi bi-truck text-lux-gold me-1"></i> เลือกชำระเงินปลายทาง (COD): กรุณาเตรียมชำระเงินจำนวน <strong id="codTotalText">฿@Model.GrandTotal.ToString("N2")</strong> กับพนักงานขนส่ง
                     </div>
 
                     <button type="submit" class="btn btn-pet-primary btn-lg w-100 py-3">
@@ -130,8 +130,11 @@
                     <span class="fw-semibold lux-price-sale">-฿@Model.TotalPromotionDiscount.ToString("N2")</span>
                 </div>
                 <div class="d-flex justify-content-between small mb-2">
-                    <span class="text-lux-muted">ค่าจัดส่ง</span>
-                    <span class="fw-semibold text-lux-espresso">฿@Model.ShippingFee.ToString("N2")</span>
+                    <span class="text-lux-muted">
+                        ค่าจัดส่ง
+                        <span id="emsBadge" class="badge bg-danger-subtle text-danger ms-1 d-none" style="font-size: 0.68rem;">EMS ด่วนพิเศษ +฿30</span>
+                    </span>
+                    <span class="fw-semibold text-lux-espresso" id="summaryShippingFee">฿@Model.ShippingFee.ToString("N2")</span>
                 </div>
 
                 @if (!string.IsNullOrEmpty(Model.FreeGiftItem))
@@ -145,7 +148,7 @@
                 <hr class="my-3" style="border-color: var(--lux-border);" />
                 <div class="d-flex justify-content-between align-items-baseline">
                     <span class="fw-bold text-lux-espresso">ยอดสุทธิ</span>
-                    <span class="fs-4 fw-bold text-lux-espresso">฿@Model.GrandTotal.ToString("N2")</span>
+                    <span class="fs-4 fw-bold text-lux-espresso" id="summaryGrandTotal">฿@Model.GrandTotal.ToString("N2")</span>
                 </div>
             </div>
         </div>
@@ -278,6 +281,58 @@
 
 @section Scripts {
     <script>
+        const baseShippingFee = @Model.ShippingFee;
+        const netProductPrice = @Model.NetProductPrice;
+
+        async function updateCourierSelection(courier) {
+            const courierTextEl = document.getElementById('summaryCourierText');
+            if (courierTextEl) courierTextEl.textContent = courier;
+
+            const selectEl = document.getElementById('courierSelect');
+            const selectedOpt = selectEl ? selectEl.options[selectEl.selectedIndex] : null;
+            const surcharge = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-surcharge') || '0') : 0;
+
+            const newShippingFee = baseShippingFee + surcharge;
+            const newGrandTotal = netProductPrice + newShippingFee;
+
+            // Instant UI update
+            const emsBadge = document.getElementById('emsBadge');
+            if (emsBadge) {
+                emsBadge.classList.toggle('d-none', surcharge <= 0);
+            }
+            const feeEl = document.getElementById('summaryShippingFee');
+            if (feeEl) feeEl.textContent = '฿' + newShippingFee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            const totalEl = document.getElementById('summaryGrandTotal');
+            if (totalEl) totalEl.textContent = '฿' + newGrandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            const promptPayText = document.getElementById('promptPayTotalText');
+            if (promptPayText) promptPayText.textContent = '฿' + newGrandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            const codText = document.getElementById('codTotalText');
+            if (codText) codText.textContent = '฿' + newGrandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Server-verified calculation & updated PromptPay QR
+            try {
+                const resp = await fetch(`/Cart/GetCourierCalculation?courier=${encodeURIComponent(courier)}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.success) {
+                        if (data.qrUrl) {
+                            const qrImg = document.getElementById('promptPayQrImg');
+                            if (qrImg) qrImg.src = data.qrUrl;
+                        }
+                        if (feeEl) feeEl.textContent = '฿' + data.formattedShippingFee;
+                        if (totalEl) totalEl.textContent = '฿' + data.formattedGrandTotal;
+                        if (promptPayText) promptPayText.textContent = '฿' + data.formattedGrandTotal;
+                        if (codText) codText.textContent = '฿' + data.formattedGrandTotal;
+                    }
+                }
+            } catch (e) {
+                // Fallback already performed smoothly
+            }
+        }
+
         function togglePaymentSection() {
             const method = document.getElementById('paymentMethodSelect').value;
             const isCod = method.indexOf('COD') !== -1;

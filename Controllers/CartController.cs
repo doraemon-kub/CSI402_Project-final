@@ -142,6 +142,35 @@ namespace CSI402_Project_final.Controllers
             return View(cart);
         }
 
+        // คำนวณค่าจัดส่งและยอดสุทธิรวมตามผู้ให้บริการขนส่งแบบ Real-Time (EMS ด่วนพิเศษ +30 บาท)
+        [HttpGet]
+        public IActionResult GetCourierCalculation(string courier)
+        {
+            var cart = _repo.CurrentCart;
+            var activePromos = _repo.GetValidPromotions();
+            cart.Recalculate(activePromos);
+
+            decimal surcharge = Cart.GetCourierSurcharge(courier);
+            decimal shippingFee = cart.ShippingFee + surcharge;
+            decimal grandTotal = cart.NetProductPrice + shippingFee;
+            string payload = PromptPayHelper.GeneratePayload("0812345678", grandTotal);
+            string qrUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={Uri.EscapeDataString(payload)}";
+
+            return Json(new
+            {
+                success = true,
+                courier = courier,
+                baseShippingFee = cart.ShippingFee,
+                surcharge = surcharge,
+                shippingFee = shippingFee,
+                grandTotal = grandTotal,
+                qrUrl = qrUrl,
+                formattedShippingFee = shippingFee.ToString("N2"),
+                formattedGrandTotal = grandTotal.ToString("N2"),
+                isEms = surcharge > 0
+            });
+        }
+
         // หากมีการเปิดหน้า /Cart/SubmitOrder ด้วย GET (เช่น กดรีเฟรชหน้า หรือกด Back) ให้กลับไปหน้า Checkout อย่างถูกต้อง
         [HttpGet]
         public IActionResult SubmitOrder()
