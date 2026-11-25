@@ -275,7 +275,8 @@
 <div class="modal fade" id="productModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form asp-action="SaveProduct" method="post" enctype="multipart/form-data">
+            <form asp-action="SaveProduct" asp-route-role="@ViewBag.CurrentRole" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="role" value="@ViewBag.CurrentRole" />
                 <input type="hidden" name="Id" id="prodId" value="0" />
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold" id="productModalTitle">เพิ่มสินค้าใหม่เข้าคลังสินค้า</h5>
@@ -419,5 +420,18 @@
             document.getElementById('prodDescription').value = btn.dataset.description || '';
             getProductModal().show();
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('openCreate') === 'true') {
+                openCreateProductModal();
+            } else if (urlParams.get('editId')) {
+                const editId = urlParams.get('editId');
+                const editBtn = document.querySelector(`button[data-id="${editId}"]`);
+                if (editBtn) {
+                    openEditProductModal(editBtn);
+                }
+            }
+        });
     </script>
 }

@@ -1235,54 +1235,67 @@ namespace CSI402_Project_final.Models
         public bool SaveProduct(Product model, out string message)
         {
             var now = DateTime.Now;
-            if (model.Id == 0)
+            try
             {
+                model.Name = model.Name?.Trim() ?? "";
+                model.Brand = model.Brand?.Trim() ?? "";
+                model.Description = model.Description?.Trim() ?? "";
+                model.SpecialNeed = string.IsNullOrWhiteSpace(model.SpecialNeed) ? "ทั่วไป" : model.SpecialNeed.Trim();
                 if (string.IsNullOrWhiteSpace(model.ImageUrl))
                 {
                     model.ImageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&q=80";
                 }
-                model.CreatedAt = now;
-                model.UpdatedAt = now;
-                _db.Products.Add(model);
-                _db.SaveChanges();
-                InvalidateProductCache();
 
-                LogAudit("CREATE_PRODUCT", "product", model.Id.ToString(), $"เพิ่มสินค้าใหม่ '{model.Name}'");
-                message = $"เพิ่มสินค้า '{model.Name}' สำเร็จ";
-                return true;
+                if (model.Id == 0)
+                {
+                    model.CreatedAt = now;
+                    model.UpdatedAt = now;
+                    _db.Products.Add(model);
+                    _db.SaveChanges();
+                    InvalidateProductCache();
+
+                    LogAudit("CREATE_PRODUCT", "product", model.Id.ToString(), $"เพิ่มสินค้าใหม่ '{model.Name}'");
+                    message = $"เพิ่มสินค้า '{model.Name}' สำเร็จ";
+                    return true;
+                }
+                else
+                {
+                    var existing = _db.Products.FirstOrDefault(p => p.Id == model.Id);
+                    if (existing == null)
+                    {
+                        message = "ไม่พบสินค้าที่ต้องการแก้ไข";
+                        return false;
+                    }
+
+                    existing.Name = model.Name;
+                    existing.Brand = model.Brand;
+                    existing.PetType = model.PetType;
+                    existing.Category = model.Category;
+                    existing.WeightKg = model.WeightKg;
+                    existing.Price = model.Price;
+                    existing.SpecialDiscountPrice = model.SpecialDiscountPrice;
+                    existing.AgeStage = model.AgeStage;
+                    existing.SpecialNeed = model.SpecialNeed;
+                    existing.StockQuantity = model.StockQuantity;
+                    existing.LowStockThreshold = model.LowStockThreshold;
+                    existing.Description = model.Description;
+                    if (!string.IsNullOrWhiteSpace(model.ImageUrl))
+                    {
+                        existing.ImageUrl = model.ImageUrl;
+                    }
+                    existing.UpdatedAt = now;
+
+                    _db.SaveChanges();
+                    InvalidateProductCache();
+                    LogAudit("UPDATE_PRODUCT", "product", existing.Id.ToString(), $"แก้ไขสินค้า '{existing.Name}'");
+                    message = $"แก้ไขข้อมูลสินค้า '{model.Name}' สำเร็จ";
+                    return true;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                var existing = _db.Products.FirstOrDefault(p => p.Id == model.Id);
-                if (existing == null)
-                {
-                    message = "ไม่พบสินค้าที่ต้องการแก้ไข";
-                    return false;
-                }
-
-                existing.Name = model.Name;
-                existing.Brand = model.Brand;
-                existing.PetType = model.PetType;
-                existing.Category = model.Category;
-                existing.WeightKg = model.WeightKg;
-                existing.Price = model.Price;
-                existing.SpecialDiscountPrice = model.SpecialDiscountPrice;
-                existing.AgeStage = model.AgeStage;
-                existing.SpecialNeed = string.IsNullOrWhiteSpace(model.SpecialNeed) ? "ทั่วไป" : model.SpecialNeed;
-                existing.StockQuantity = model.StockQuantity;
-                existing.LowStockThreshold = model.LowStockThreshold;
-                existing.Description = model.Description ?? "";
-                if (!string.IsNullOrWhiteSpace(model.ImageUrl))
-                {
-                    existing.ImageUrl = model.ImageUrl;
-                }
-                existing.UpdatedAt = now;
-
-                _db.SaveChanges();
-                InvalidateProductCache();
-                LogAudit("UPDATE_PRODUCT", "product", existing.Id.ToString(), $"แก้ไขสินค้า '{existing.Name}'");
-                message = $"แก้ไขข้อมูลสินค้า '{model.Name}' สำเร็จ";
-                return true;
+                message = $"ไม่สามารถบันทึกข้อมูลสินค้าได้: {ex.InnerException?.Message ?? ex.Message}";
+                return false;
             }
         }
 

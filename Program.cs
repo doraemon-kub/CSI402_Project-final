@@ -81,8 +81,9 @@ app.Use(async (context, next) =>
     {
         try
         {
-            roleParam = context.Request.Form["role"].FirstOrDefault()
-                        ?? context.Request.Form["asRole"].FirstOrDefault();
+            var form = await context.Request.ReadFormAsync();
+            roleParam = form["role"].FirstOrDefault()
+                        ?? form["asRole"].FirstOrDefault();
         }
         catch { }
     }

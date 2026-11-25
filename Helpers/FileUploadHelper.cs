@@ -13,7 +13,7 @@ namespace CSI402_Project_final.Helpers
 
         public static async Task<(string? Url, string? ErrorMessage)> SaveImageAsync(
             IFormFile? file,
-            string webRootPath,
+            string? webRootPath,
             string subfolder)
         {
             if (file == null || file.Length == 0)
@@ -21,30 +21,41 @@ namespace CSI402_Project_final.Helpers
                 return (null, null);
             }
 
-            if (file.Length > MaxFileSizeBytes)
+            try
             {
-                return (null, "ขนาดไฟล์รูปภาพต้องไม่เกิน 5 MB");
-            }
+                if (file.Length > MaxFileSizeBytes)
+                {
+                    return (null, "ขนาดไฟล์รูปภาพต้องไม่เกิน 5 MB");
+                }
 
-            string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!AllowedImageExtensions.Contains(ext))
+                string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!AllowedImageExtensions.Contains(ext))
+                {
+                    return (null, "รองรับเฉพาะไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif)");
+                }
+
+                string basePath = !string.IsNullOrWhiteSpace(webRootPath)
+                    ? webRootPath
+                    : Path.Combine(AppContext.BaseDirectory, "wwwroot");
+
+                string safeFolder = Path.Combine(basePath, "uploads", subfolder);
+                if (!Directory.Exists(safeFolder))
+                {
+                    Directory.CreateDirectory(safeFolder);
+                }
+
+                string fileName = $"{Guid.NewGuid():N}{ext}";
+                string fullPath = Path.Combine(safeFolder, fileName);
+
+                await using var stream = new FileStream(fullPath, FileMode.Create);
+                await file.CopyToAsync(stream);
+
+                return ($"/uploads/{subfolder}/{fileName}", null);
+            }
+            catch (Exception ex)
             {
-                return (null, "รองรับเฉพาะไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif)");
+                return (null, $"เกิดข้อผิดพลาดในการบันทึกรูปภาพ: {ex.Message}");
             }
-
-            string safeFolder = Path.Combine(webRootPath, "uploads", subfolder);
-            if (!Directory.Exists(safeFolder))
-            {
-                Directory.CreateDirectory(safeFolder);
-            }
-
-            string fileName = $"{Guid.NewGuid():N}{ext}";
-            string fullPath = Path.Combine(safeFolder, fileName);
-
-            await using var stream = new FileStream(fullPath, FileMode.Create);
-            await file.CopyToAsync(stream);
-
-            return ($"/uploads/{subfolder}/{fileName}", null);
         }
     }
 }

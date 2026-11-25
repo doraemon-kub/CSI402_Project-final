@@ -94,39 +94,77 @@ namespace CSI402_Project_final.Controllers
             return RedirectToAction(nameof(Index), new { stockFilter, categoryFilter, search, role });
         }
 
+        // หน้าเพิ่ม/แก้ไขสินค้าแบบ GET (รองรับเมื่อเข้าผ่าน URL หรือรีเฟรชหน้าจอ) -> นำทางไปยังหน้าคลังและเปิด Modal เพิ่มสินค้าทันที
+        [HttpGet]
+        public IActionResult SaveProduct(int? id = null, string? role = null)
+        {
+            return RedirectToAction(nameof(Index), new { role, openCreate = id == null ? "true" : null, editId = id });
+        }
+
+        [HttpGet]
+        public IActionResult CreateProduct(string? role = null)
+        {
+            return RedirectToAction(nameof(Index), new { role, openCreate = "true" });
+        }
+
+        [HttpGet]
+        public IActionResult AddProduct(string? role = null)
+        {
+            return RedirectToAction(nameof(Index), new { role, openCreate = "true" });
+        }
+
         // เพิ่มหรือแก้ไขสินค้า (Req 6, 17) รองรับอัปโหลดรูปภาพและลิงก์รูปภาพ
         [HttpPost]
         public async Task<IActionResult> SaveProduct(Product model, IFormFile? imageFile, string? role = null)
         {
-            if (imageFile != null && imageFile.Length > 0)
+            try
             {
-                var (uploadedUrl, uploadErr) = await FileUploadHelper.SaveImageAsync(imageFile, _env.WebRootPath, "products");
-                if (uploadErr != null)
+                if (imageFile != null && imageFile.Length > 0)
                 {
-                    TempData["ErrorMessage"] = uploadErr;
-                    return RedirectToAction(nameof(Index), new { role });
+                    string webRoot = !string.IsNullOrEmpty(_env.WebRootPath)
+                        ? _env.WebRootPath
+                        : System.IO.Path.Combine(_env.ContentRootPath, "wwwroot");
+
+                    var (uploadedUrl, uploadErr) = await FileUploadHelper.SaveImageAsync(imageFile, webRoot, "products");
+                    if (uploadErr != null)
+                    {
+                        TempData["ErrorMessage"] = uploadErr;
+                        return RedirectToAction(nameof(Index), new { role, openCreate = model.Id == 0 ? "true" : null, editId = model.Id > 0 ? (int?)model.Id : null });
+                    }
+                    if (!string.IsNullOrEmpty(uploadedUrl))
+                    {
+                        model.ImageUrl = uploadedUrl;
+                    }
                 }
-                if (!string.IsNullOrEmpty(uploadedUrl))
+
+                if (_repo.SaveProduct(model, out var message))
                 {
-                    model.ImageUrl = uploadedUrl;
+                    TempData["SuccessMessage"] = message;
+
+                    try
+                    {
+                        // SignalR Real-Time Socket Broadcast
+                        await _hubContext.Clients.All.SendAsync("ReceiveStockUpdate", model.Id, model.StockQuantity);
+                        if (model.IsLowStock)
+                        {
+                            await _hubContext.Clients.All.SendAsync("ReceiveLowStockAlert", model.Name, model.StockQuantity);
+                        }
+                    }
+                    catch
+                    {
+                        // ป้องกัน SignalR error ส่งผลกระทบต่อการบันทึกสินค้า
+                    }
                 }
+                else
+                {
+                    TempData["ErrorMessage"] = message;
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"เกิดข้อผิดพลาดในการบันทึกข้อมูลสินค้า: {ex.Message}";
             }
 
-            if (_repo.SaveProduct(model, out var message))
-            {
-                TempData["SuccessMessage"] = message;
-
-                // SignalR Real-Time Socket Broadcast
-                await _hubContext.Clients.All.SendAsync("ReceiveStockUpdate", model.Id, model.StockQuantity);
-                if (model.IsLowStock)
-                {
-                    await _hubContext.Clients.All.SendAsync("ReceiveLowStockAlert", model.Name, model.StockQuantity);
-                }
-            }
-            else
-            {
-                TempData["ErrorMessage"] = message;
-            }
             return RedirectToAction(nameof(Index), new { role });
         }
 
