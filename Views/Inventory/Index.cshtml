@@ -255,8 +255,12 @@
                                         data-description="@item.Description">
                                     <i class="bi bi-pencil-square"></i> แก้ไข
                                 </button>
-                                <form asp-action="DeleteProduct" method="post" onsubmit="return confirm('ยืนยันลบสินค้านี้?');">
+                                <form asp-action="DeleteProduct" asp-route-role="@ViewBag.CurrentRole" method="post" onsubmit="return confirm('ยืนยันลบสินค้า \'@item.Name\' ออกจากระบบ?');">
                                     <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="role" value="@ViewBag.CurrentRole" />
+                                    <input type="hidden" name="stockFilter" value="@stockFilter" />
+                                    <input type="hidden" name="categoryFilter" value="@categoryFilter" />
+                                    <input type="hidden" name="search" value="@search" />
                                     <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="ลบสินค้า">
                                         <i class="bi bi-trash"></i>
                                     </button>

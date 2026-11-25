@@ -1301,19 +1301,33 @@ namespace CSI402_Project_final.Models
 
         public (bool Success, string Message) DeleteProduct(int id)
         {
-            var existing = _db.Products.FirstOrDefault(p => p.Id == id);
-            if (existing == null) return (false, "ไม่พบสินค้าที่ต้องการลบ");
-
-            if (_db.OrderItems.Any(oi => oi.ProductId == id))
+            try
             {
-                return (false, $"ไม่สามารถลบ '{existing.Name}' ได้ เนื่องจากมีประวัติการสั่งซื้ออ้างอิงอยู่ (แนะนำให้ปรับสต็อกเป็น 0 แทน)");
-            }
+                var existing = _db.Products.FirstOrDefault(p => p.Id == id);
+                if (existing == null) return (false, "ไม่พบสินค้าที่ต้องการลบ");
 
-            _db.Products.Remove(existing);
-            _db.SaveChanges();
-            InvalidateProductCache();
-            LogAudit("DELETE_PRODUCT", "product", id.ToString(), $"ลบสินค้า '{existing.Name}'");
-            return (true, $"ลบสินค้า '{existing.Name}' เรียบร้อยแล้ว");
+                if (_db.OrderItems.Any(oi => oi.ProductId == id))
+                {
+                    return (false, $"ไม่สามารถลบ '{existing.Name}' ได้ เนื่องจากมีประวัติการสั่งซื้ออ้างอิงอยู่ (แนะนำให้ปรับสต็อกเป็น 0 แทน)");
+                }
+
+                // ลบรายการในตะกร้าสินค้า (CartItem) ที่อ้างอิงถึงสินค้านี้ก่อน เพื่อป้องกัน Foreign Key Constraint
+                var relatedCartItems = _db.CartItems.Where(ci => ci.ProductId == id).ToList();
+                if (relatedCartItems.Any())
+                {
+                    _db.CartItems.RemoveRange(relatedCartItems);
+                }
+
+                _db.Products.Remove(existing);
+                _db.SaveChanges();
+                InvalidateProductCache();
+                LogAudit("DELETE_PRODUCT", "product", id.ToString(), $"ลบสินค้า '{existing.Name}'");
+                return (true, $"ลบสินค้า '{existing.Name}' เรียบร้อยแล้ว");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"ไม่สามารถลบสินค้าได้: {ex.InnerException?.Message ?? ex.Message}");
+            }
         }
 
         // ==========================================

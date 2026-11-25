@@ -168,16 +168,39 @@ namespace CSI402_Project_final.Controllers
             return RedirectToAction(nameof(Index), new { role });
         }
 
-        [HttpPost]
-        public IActionResult DeleteProduct(int id, string? role = null)
+        [HttpGet]
+        public IActionResult DeleteProduct(string? role = null)
         {
-            var (success, message) = _repo.DeleteProduct(id);
-            if (success)
-                TempData["SuccessMessage"] = message;
-            else
-                TempData["ErrorMessage"] = message;
-
             return RedirectToAction(nameof(Index), new { role });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProduct(int id, string? stockFilter = null, string? categoryFilter = null, string? search = null, string? role = null)
+        {
+            try
+            {
+                var (success, message) = _repo.DeleteProduct(id);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = message;
+                    try
+                    {
+                        // SignalR Real-Time Socket Broadcast
+                        await _hubContext.Clients.All.SendAsync("ReceiveStockUpdate", id, 0);
+                    }
+                    catch { }
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = message;
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"เกิดข้อผิดพลาดในการลบสินค้า: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Index), new { stockFilter, categoryFilter, search, role });
         }
     }
 }
